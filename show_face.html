@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>提示詞畫廊 - 臉部情緒表達篇</title>
+  <style>
+    /* ===== 全域設定 ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --card-bg: #1e2130;
+      --card-hover: #252840;
+      --border: #2e3350;
+      --accent: #7c6ff7;
+      --accent2: #5bc8d4;
+      --text-main: #e8eaf6;
+      --text-sub: #9ba1c0;
+      --btn-tw-bg: #3d3580;
+      --btn-tw-hover: #5548b0;
+      --btn-en-bg: #1e5a63;
+      --btn-en-hover: #2a7d8a;
+      --radius: 12px;
+      --transition: 0.22s ease;
+
+      /* ===== 可調整：圖片資料夾路徑 ===== */
+      --img-folder: face;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text-main);
+      font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+      min-height: 100vh;
+    }
+
+    /* ===== 頁首 ===== */
+    header {
+      text-align: center;
+      padding: 48px 24px 24px;
+      background: linear-gradient(160deg, #12142099 0%, transparent 100%);
+      border-bottom: 1px solid var(--border);
+    }
+
+    header h1 {
+      font-size: clamp(1.4rem, 4vw, 2.4rem);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 14px;
+    }
+
+    header .subtitle {
+      font-size: clamp(0.8rem, 2vw, 0.95rem);
+      color: var(--text-sub);
+    }
+
+    header .subtitle a {
+      color: var(--accent2);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: border-color var(--transition);
+    }
+    header .subtitle a:hover { border-color: var(--accent2); }
+
+    .img-count {
+      display: inline-block;
+      margin-top: 12px;
+      font-size: 0.82rem;
+      color: var(--text-sub);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 14px;
+    }
+
+    /* ===== 圖片格線 ===== */
+    main {
+      padding: 28px 20px 60px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 20px;
+    }
+
+    /* ===== 圖片卡片 ===== */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: transform var(--transition), box-shadow var(--transition), background var(--transition);
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 28px rgba(124, 111, 247, 0.18);
+      background: var(--card-hover);
+    }
+
+    .card__img-wrap {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      overflow: hidden;
+      cursor: zoom-in;
+      background: #10111a;
+    }
+
+    .card__img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.35s ease, opacity 0.3s ease;
+      opacity: 0;
+    }
+
+    .card__img-wrap img.loaded { opacity: 1; }
+    .card__img-wrap:hover img { transform: scale(1.06); }
+
+    /* 圖片載入失敗時的佔位 */
+    .card__img-wrap .img-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: var(--text-sub);
+      font-size: 0.75rem;
+      background: #14161f;
+      position: absolute;
+      inset: 0;
+    }
+    .card__img-wrap { position: relative; }
+    .card__img-wrap .img-placeholder svg { opacity: 0.35; }
+
+    .card__info {
+      padding: 12px 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1;
+    }
+
+    .card__title {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--text-main);
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    .card__filename {
+      font-size: 0.72rem;
+      color: var(--text-sub);
+      text-align: center;
+      opacity: 0.7;
+    }
+
+    .card__btns {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 6px 4px;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 0.03em;
+      transition: background var(--transition), transform 0.12s ease;
+      font-family: inherit;
+    }
+
+    .btn:active { transform: scale(0.96); }
+
+    .btn--tw {
+      background: var(--btn-tw-bg);
+      color: #ccc8ff;
+    }
+    .btn--tw:hover { background: var(--btn-tw-hover); }
+
+    .btn--en {
+      background: var(--btn-en-bg);
+      color: #b3efef;
+    }
+    .btn--en:hover { background: var(--btn-en-hover); }
+
+    /* ===== Toast 通知 ===== */
+    #toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(30, 33, 55, 0.95);
+      color: var(--text-main);
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      padding: 10px 22px;
+      font-size: 0.88rem;
+      font-weight: 500;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.28s ease, transform 0.28s ease;
+      z-index: 9999;
+      white-space: nowrap;
+      box-shadow: 0 4px 18px rgba(124, 111, 247, 0.3);
+    }
+
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ===== Lightbox 全畫面 ===== */
+    #lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(8, 9, 16, 0.92);
+      z-index: 1000;
+      cursor: zoom-out;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+
+    #lightbox.active { display: flex; }
+
+    #lightbox img {
+      max-width: 92vw;
+      max-height: 88vh;
+      border-radius: 10px;
+      box-shadow: 0 20px 80px rgba(0, 0, 0, 0.7);
+      object-fit: contain;
+      animation: lb-in 0.22s ease;
+    }
+
+    @keyframes lb-in {
+      from { opacity: 0; transform: scale(0.9); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    #lightbox-caption {
+      position: fixed;
+      bottom: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(20, 22, 38, 0.88);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 8px 20px;
+      border-radius: 20px;
+      font-size: 0.88rem;
+      pointer-events: none;
+    }
+
+    #lightbox-close {
+      position: fixed;
+      top: 18px;
+      right: 22px;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: rgba(30, 33, 55, 0.8);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background var(--transition);
+      z-index: 1001;
+      line-height: 1;
+    }
+    #lightbox-close:hover { background: var(--card-hover); }
+
+    /* ===== 頁尾 ===== */
+    footer {
+      text-align: center;
+      padding: 18px 20px;
+      font-size: 0.8rem;
+      color: var(--text-sub);
+      border-top: 1px solid var(--border);
+      opacity: 0.7;
+    }
+
+    /* ===== RWD ===== */
+    @media (max-width: 600px) {
+      header { padding: 32px 16px 18px; }
+      main { padding: 20px 12px 40px; }
+      .gallery-grid { gap: 14px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+      .btn { font-size: 0.72rem; padding: 5px 2px; }
+      .card__title { font-size: 0.85rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== 頁首 ===== -->
+<header>
+  <h1>提示詞畫廊 - 臉部情緒表達篇</h1>
+  <p class="subtitle">
+    <a href="https://vocus.cc/article/69f95329fd89780001bff885" target="_blank" rel="noopener">
+      本頁圖片使用台灣 AutoIP 生圖、動畫產生平台生成。
+    </a>
+  </p>
+  <span class="img-count" id="imgCount"></span>
+</header>
+
+<!-- ===== 畫廊主體 ===== -->
+<main>
+  <div class="gallery-grid" id="gallery"></div>
+</main>
+
+<!-- ===== 頁尾 ===== -->
+<footer>提示詞畫廊 &copy; 2025 ｜ 臉部情緒表達篇</footer>
+
+<!-- ===== Lightbox ===== -->
+<div id="lightbox" role="dialog" aria-modal="true" aria-label="圖片放大檢視">
+  <button id="lightbox-close" aria-label="關閉" title="關閉 (點擊任意處也可關閉)">✕</button>
+  <img id="lightbox-img" src="" alt="" />
+  <div id="lightbox-caption"></div>
+</div>
+
+<!-- ===== Toast ===== -->
+<div id="toast" role="alert" aria-live="polite"></div>
+
+<script>
+  /* =========================================================
+   * 設定區 — 如需修改只需調整此處
+   * ========================================================= */
+  const CONFIG = {
+    imgFolder: "face",          // 圖片資料夾路徑（相對於 HTML 檔案）
+    imgExt:    ".png",          // 圖片副檔名
+    pageTitle: "提示詞畫廊 - 臉部情緒表達篇",
+    siteLink:  "https://vocus.cc/article/69f95329fd89780001bff885",
+    siteLinkText: "本頁圖片使用台灣 AutoIP 生圖、動畫產生平台生成。",
+    toastTW:   "已經複製提示詞至剪貼簿中",
+    toastEN:   "The prompt has been copied to the clipboard.",
+    toastDuration: 2000,        // 毫秒
+  };
+
+  /* =========================================================
+   * 圖片資料 — 新增圖片只需在此陣列加入物件
+   * ========================================================= */
+  const IMAGES = [{"檔案名稱": "Face001", "主題": "喜悅 Joyful", "中文生圖用提示詞": "一個 25 歲台灣女人， 燦爛笑容，眼角有笑紋。 雙手交疊在胸口，身體前傾。 明亮的自然陽光。", "English Prompt": "A 25-year-old Taiwanese woman, Radiant smile, crinkled eyes. Hands on heart, leaning forward. Bright natural sunlight."}, {"檔案名稱": "Face002", "主題": "憂鬱 Melancholy", "中文生圖用提示詞": "一個 25 歲台灣女人， 眼神空洞，眉頭微蹙。 單手托腮，肩膀沉重。 陰天的窗邊冷光。", "English Prompt": "A 25-year-old Taiwanese woman, Vacant gaze, slightly knitted brows. Chin on hand, heavy shoulders. Overcast window light."}, {"檔案名稱": "Face003", "主題": "憤怒 Furious", "中文生圖用提示詞": "一個 25 歲台灣女人， 咬牙切齒，鼻翼張開。 雙臂交叉，背部挺直。 高對比的硬影。", "English Prompt": "A 25-year-old Taiwanese woman, Clenched teeth, flared nostrils. Arms crossed, straight back. High contrast, hard shadows."}, {"檔案名稱": "Face004", "主題": "驚訝 Surprised", "中文生圖用提示詞": "一個 25 歲台灣女人， 嘴巴微張成O型，瞳孔收縮。 雙手捂住口鼻。 突如其來的側光。", "English Prompt": "A 25-year-old Taiwanese woman, Mouth agape, constricted pupils. Hands covering mouth. Sudden side lighting."}, {"檔案名稱": "Face005", "主題": "羞怯 Shy", "中文生圖用提示詞": "一個 25 歲台灣女人， 眼神低垂，臉頰泛紅。 手指糾纏衣角。 柔和的粉色系濾鏡。", "English Prompt": "A 25-year-old Taiwanese woman, Downcast eyes, blushing. Fidgeting with clothes. Soft pastel color palette."}, {"檔案名稱": "Face006", "主題": "自信 Confident", "中文生圖用提示詞": "一個 25 歲台灣女人， 嘴角微揚，眼神堅定。 雙手叉腰，挺胸。 廣闊的戶外景致。", "English Prompt": "A 25-year-old Taiwanese woman, Slight smirk, steady gaze. Hands on hips, chest out. Wide outdoor scenery."}, {"檔案名稱": "Face007", "主題": "哀慟 Grieving", "中文生圖用提示詞": "一個 25 歲台灣女人， 眼眶紅腫，淚流滿面。 雙手掩面，雙肩顫抖。 低沉暗淡的室內光。", "English Prompt": "A 25-year-old Taiwanese woman, Swollen eyes, streaming tears. Hands covering face, trembling. Dim, gloomy indoor light."}, {"檔案名稱": "Face008", "主題": "思索 Pensive", "中文生圖用提示詞": "一個 25 歲台灣女人， 專注注視，眉頭緊鎖。 手指抵住太陽穴。 圖書館或書齋背景。", "English Prompt": "A 25-year-old Taiwanese woman, Focused gaze, deep brow furrow. Finger on temple. Library or study setting."}, {"檔案名稱": "Face009", "主題": "輕蔑 Scornful", "中文生圖用提示詞": "一個 25 歲台灣女人， 單側冷笑，斜睨。 肩膀不對稱抬高。 冷峻的辦公室燈光。", "English Prompt": "A 25-year-old Taiwanese woman, One-sided sneer, side-eye. Asymmetrical shoulders. Cold office lighting."}, {"檔案名稱": "Face010", "主題": "疲憊 Exhausted", "中文生圖用提示詞": "一個 25 歲台灣女人， 眼皮下垂，表情鬆垮。 癱坐在椅背上。 深夜的微弱檯燈。", "English Prompt": "A 25-year-old Taiwanese woman, Drooping eyelids, slack face. Slumped in a chair. Faint late-night lamp."}, {"檔案名稱": "Face011", "主題": "陶醉 Enchanted", "中文生圖用提示詞": "一個 25 歲台灣女人， 雙眼輕閉，神情安詳。 臉龐微揚，指尖觸髮。 夢幻的波克圓斑光影。", "English Prompt": "A 25-year-old Taiwanese woman, Eyes closed, serene face. Chin up, touching hair. Dreamy bokeh lights."}, {"檔案名稱": "Face012", "主題": "恐懼 Terrified", "中文生圖用提示詞": "一個 25 歲台灣女人， 臉色蒼白，冷汗直流。 雙手緊抓衣領縮脖。 深邃的陰影與暗巷。", "English Prompt": "A 25-year-old Taiwanese woman, Pale face, cold sweat. Gripping collar, cowering. Deep shadows, dark alley."}, {"檔案名稱": "Face013", "主題": "好奇 Curious", "中文生圖用提示詞": "一個 25 歲台灣女人， 歪著頭，眼睛發亮。 身體大幅前傾。 充滿奇異物件的實驗室。", "English Prompt": "A 25-year-old Taiwanese woman, Tilted head, sparkling eyes. Leaning far forward. Exotic curio shop."}, {"檔案名稱": "Face014", "主題": "厭惡 Disgusted", "中文生圖用提示詞": "一個 25 歲台灣女人， 皺起鼻子，上唇翻起。 雙手做推拒狀。 雜亂、骯髒的視覺背景。", "English Prompt": "A 25-year-old Taiwanese woman, Wrinkled nose, curled lip. Hands pushing away. Messy, dingy background."}, {"檔案名稱": "Face015", "主題": "無聊 Bored", "中文生圖用提示詞": "一個 25 歲台灣女人， 眼神呆滯，下巴靠掌心。 手指無聊敲擊桌面。 平淡、重複的幾何背景。", "English Prompt": "A 25-year-old Taiwanese woman, Blank stare, chin on palm. Fingers tapping table. Dull geometric patterns."}, {"檔案名稱": "Face016", "主題": "挑逗 Flirty", "中文生圖用提示詞": "一個 25 歲台灣女人， 眼神迷離，輕咬下唇。 手指滑過頸部。 霓虹燈與昏暗酒吧。", "English Prompt": "A 25-year-old Taiwanese woman, Sultry eyes, biting lower lip. Finger sliding down neck. Neon lights, dim bar."}, {"檔案名稱": "Face017", "主題": "焦慮 Anxious", "中文生圖用提示詞": "一個 25 歲台灣女人， 咬指甲，眼神飄忽。 雙手緊扣，肩膀緊繃。 混亂、破碎的光影效果。", "English Prompt": "A 25-year-old Taiwanese woman, Biting nails, wandering eyes. Clasped hands, tense frame. Fragmented light patterns."}, {"檔案名稱": "Face018", "主題": "滿足 Content", "中文生圖用提示詞": "一個 25 歲台灣女人， 溫暖微笑，神情平和。 身體靠在軟墊上。 溫馨的壁爐火光。", "English Prompt": "A 25-year-old Taiwanese woman, Warm smile, peaceful look. Leaning on soft cushions. Cozy fireplace glow."}, {"檔案名稱": "Face019", "主題": "疑惑 Confused", "中文生圖用提示詞": "一個 25 歲台灣女人， 瞇眼，眉頭歪斜。 一手抓頭，一手叉腰。 充滿謎團的濃霧環境。", "English Prompt": "A 25-year-old Taiwanese woman, Squinting, skewed brows. Scratching head, hand on hip. Misty, foggy environment."}, {"檔案名稱": "Face020", "主題": "傲慢 Arrogant", "中文生圖用提示詞": "一個 25 歲台灣女人， 俯視，鼻孔微張。 下巴抬高，手放身後。 奢華的宮廷式背景。", "English Prompt": "A 25-year-old Taiwanese woman, Looking down, flared nostrils. Chin up, hands behind back. Luxurious palace interior."}, {"檔案名稱": "Face021", "主題": "驚喜 Thrilled", "中文生圖用提示詞": "一個 25 歲台灣女人， 嘴巴張大驚呼，眼含光芒。 雙手拍掌，身體跳動。 五彩繽紛的碎紙花環境。", "English Prompt": "A 25-year-old Taiwanese woman, Mouth wide, eyes glowing. Clapping hands, bouncing. Colorful confetti spray."}, {"檔案名稱": "Face022", "主題": "懷疑 Skeptical", "中文生圖用提示詞": "一個 25 歲台灣女人， 挑眉，眼神審視。 雙臂抱胸，頭部側歪。 側向強光，明暗分明。", "English Prompt": "A 25-year-old Taiwanese woman, Raised brow, scrutinizing. Arms crossed, head tilted. Strong side-lit shadows."}, {"檔案名稱": "Face023", "主題": "平靜 Serene", "中文生圖用提示詞": "一個 25 歲台灣女人， 呼吸平穩，表情柔和。 禪坐姿勢，雙手放平。 靜謐的湖泊晨霧。", "English Prompt": "A 25-year-old Taiwanese woman, Steady breathing, soft face. Zen sitting, flat palms. Quiet lake morning mist."}, {"檔案名稱": "Face024", "主題": "悔恨 Remorseful", "中文生圖用提示詞": "一個 25 歲台灣女人， 低頭，眼角含淚。 雙手捂住胸膛。 傾盆大雨的窗外景。", "English Prompt": "A 25-year-old Taiwanese woman, Head bowed, teary eyes. Hands clutching chest. Pouring rain background."}, {"檔案名稱": "Face025", "主題": "熱情 Enthusiastic", "中文生圖用提示詞": "一個 25 歲台灣女人， 笑容洋溢，充滿朝氣。 雙手揮舞，動作誇張。 充滿活力的亮橘色光影。", "English Prompt": "A 25-year-old Taiwanese woman, Energetic smile, vibrant. Waving hands, big gestures. Vibrant orange lighting."}, {"檔案名稱": "Face026", "主題": "渴望 Yearning", "中文生圖用提示詞": "一個 25 歲台灣女人， 眼神深情，嘴唇微張。 手伸向鏡頭，指尖顫抖。 朦朧的晨曦微光。", "English Prompt": "A 25-year-old Taiwanese woman, Soulful gaze, parted lips. Reaching out, trembling. Hazy dawn light."}, {"檔案名稱": "Face027", "主題": "受辱 Humiliated", "中文生圖用提示詞": "一個 25 歲台灣女人， 臉色漲紅，眼神閃避。 雙手遮住臉側。 冷冽、刺眼的聚光燈。", "English Prompt": "A 25-year-old Taiwanese woman, Flushed face, avoiding eyes. Hands shielding side of face. Harsh, glaring spotlight."}, {"檔案名稱": "Face028", "主題": "頑皮 Mischievous", "中文生圖用提示詞": "一個 25 歲台灣女人， 眨眼，帶著壞笑。 指尖抵住嘴唇。 充滿色彩變化的塗鴉牆。", "English Prompt": "A 25-year-old Taiwanese woman, Winking, wicked smirk. Finger against lips. Colorful graffiti wall."}, {"檔案名稱": "Face029", "主題": "決絕 Determined", "中文生圖用提示詞": "一個 25 歲台灣女人， 眼神凌厲，面如冰霜。 緊握拳頭，站姿筆直。 暴風雨前的低壓感。", "English Prompt": "A 25-year-old Taiwanese woman, Piercing eyes, icy face. Clenched fists, rigid stance. Stormy atmospheric gloom."}, {"檔案名稱": "Face030", "主題": "尷尬 Embarrassed", "中文生圖用提示詞": "一個 25 歲台灣女人， 僵硬笑容，臉紅。 手抓後頸，肩膀縮起。 過度明亮、侷促的空間。", "English Prompt": "A 25-year-old Taiwanese woman, Stiff smile, blushing. Rubbing neck, hunched. Overly bright, cramped room."}, {"檔案名稱": "Face031", "主題": "懷舊 Nostalgic", "中文生圖用提示詞": "一個 25 歲台灣女人， 遙望遠方，柔和憂愁。 撫摸舊相片或項鍊。 泛黃的復古膠片色調。", "English Prompt": "A 25-year-old Taiwanese woman, Distant gaze, soft sorrow. Touching old photo/locket. Sepia vintage film tone."}, {"檔案名稱": "Face032", "主題": "驚艷 Awestruck", "中文生圖用提示詞": "一個 25 歲台灣女人， 屏息，瞳孔放大。 雙手按住胸口。 壯麗的星空銀河。", "English Prompt": "A 25-year-old Taiwanese woman, Breathless, dilated pupils. Hands on chest. Majestic starry galaxy."}, {"檔案名稱": "Face033", "主題": "冷漠 Nonchalant", "中文生圖用提示詞": "一個 25 歲台灣女人， 半瞇眼，神情無聊。 懶散側坐，玩弄手指。 簡約、冷色調背景。", "English Prompt": "A 25-year-old Taiwanese woman, Half-closed eyes, bored. Slumped, playing with fingers. Minimalist cold-toned area."}, {"檔案名稱": "Face034", "主題": "隱忍 Restrained", "中文生圖用提示詞": "一個 25 歲台灣女人， 咬牙，眼含怒火。 指節泛白，身體緊繃。 壓抑的暗室，單一光源。", "English Prompt": "A 25-year-old Taiwanese woman, Biting lip, suppressed fire. White knuckles, tense frame. Oppressive dark room, solo light."}, {"檔案名稱": "Face035", "主題": "欣慰 Relieved", "中文生圖用提示詞": "一個 25 歲台灣女人， 閉眼微笑，釋重感。 肩膀放鬆下沉。 溫暖的午後夕陽。", "English Prompt": "A 25-year-old Taiwanese woman, Closed eyes, weightless. Shoulders dropped. Warm afternoon sunset."}, {"檔案名稱": "Face036", "主題": "挑釁 Defiant", "中文生圖用提示詞": "一個 25 歲台灣女人， 抬高下巴，挑釁眼神。 拇指指向自己，不屑。 廢棄工廠、工業風。", "English Prompt": "A 25-year-old Taiwanese woman, Raised chin, defiant look. Thumb pointing at self. Abandoned factory, industrial."}, {"檔案名稱": "Face037", "主題": "自豪 Proud", "中文生圖用提示詞": "一個 25 歲台灣女人， 神采飛揚，面帶微笑。 挺胸抬頭，手插口袋。 舞台聚光燈效果。", "English Prompt": "A 25-year-old Taiwanese woman, Gleaming eyes, proud smile. Chest out, hands in pockets. Stage spotlight effect."}, {"檔案名稱": "Face038", "主題": "迷惘 Bewildered", "中文生圖用提示詞": "一個 25 歲台灣女人， 眼神空洞，嘴唇微動。 手懸空中，手足無措。 鏡像折射、幻覺背景。", "English Prompt": "A 25-year-old Taiwanese woman, Blank gaze, trembling lips. Hands mid-air, lost. Mirrored reflections, surreal."}, {"檔案名稱": "Face039", "主題": "慈愛 Maternal", "中文生圖用提示詞": "一個 25 歲台灣女人， 眼神充滿溫情，微笑。 做出擁抱或輕撫動作。 柔軟的自然光與植物。", "English Prompt": "A 25-year-old Taiwanese woman, Warm gaze, tender smile. Hugging or stroking gesture. Soft natural light and plants."}, {"檔案名稱": "Face040", "主題": "狂喜 Ecstatic", "中文生圖用提示詞": "一個 25 歲台灣女人， 仰天長笑，雙眼緊閉。 雙臂張開，迎接姿態。 爆炸性的亮光或色彩。", "English Prompt": "A 25-year-old Taiwanese woman, Head back laughing, eyes shut. Arms wide, embracing. Explosive light and color."}, {"檔案名稱": "Face041", "主題": "恍惚 Trance", "中文生圖用提示詞": "一個 25 歲台灣女人， 眼神失焦，神情空靈。 身體隨意擺動。 煙霧繚繞、迷幻光效。", "English Prompt": "A 25-year-old Taiwanese woman, Out of focus eyes, ethereal. Swaying body. Smoky, psychedelic light."}, {"檔案名稱": "Face042", "主題": "狂熱 Fanatical", "中文生圖用提示詞": "一個 25 歲台灣女人， 眼神瘋狂，瞳孔放大。 抓著頭部，身體前傾。 燃燒的火焰背景。", "English Prompt": "A 25-year-old Taiwanese woman, Manic glint, dilated pupils. Grabbing head, leaning in. Burning fire background."}, {"檔案名稱": "Face043", "主題": "優雅 Elegant", "中文生圖用提示詞": "一個 25 歲台灣女人， 表情內斂，帶著貴氣。 動作流暢，指尖修長。 古典歐式建築背景。", "English Prompt": "A 25-year-old Taiwanese woman, Poised, noble expression. Fluid motion, long fingers. Classical European interior."}, {"檔案名稱": "Face044", "主題": "憤恨 Resentful", "中文生圖用提示詞": "一個 25 歲台灣女人， 眼神陰沉，咬牙。 雙手在大腿旁握拳。 暴雨中的街道。", "English Prompt": "A 25-year-old Taiwanese woman, Dark gaze, clenched jaw. Fists at sides. Rainy city street."}, {"檔案名稱": "Face045", "主題": "虛無 Existential Dread", "中文生圖用提示詞": "一個 25 歲台灣女人， 絕望注視，眼神無根。 雙手抱頭，蜷縮。 荒涼的沙漠、虛無空間。", "English Prompt": "A 25-year-old Taiwanese woman, Desperate, rootless gaze. Head in hands, curled up. Desolate desert, void."}, {"檔案名稱": "Face046", "主題": "憐憫 Compassionate", "中文生圖用提示詞": "一個 25 歲台灣女人， 悲憐眼神，神情溫潤。 伸出一手，試圖觸摸。 晨光中的森林。", "English Prompt": "A 25-year-old Taiwanese woman, Pitiful gaze, warm face. Reaching out a hand. Forest in morning light."}, {"檔案名稱": "Face047", "主題": "算計 Scheming", "中文生圖用提示詞": "一個 25 歲台灣女人， 狡黠眼神，半遮面孔。 手指尖尖對碰。 陰影交錯的棋局室。", "English Prompt": "A 25-year-old Taiwanese woman, Sly gaze, half-covered face. Fingertips touching. Shadowy chess room."}, {"檔案名稱": "Face048", "主題": "覺醒 Enlightened", "中文生圖用提示詞": "一個 25 歲台灣女人， 眼神通透，神情超凡。 掌心向上，靜心姿態。 神聖、垂直的強光。", "English Prompt": "A 25-year-old Taiwanese woman, Translucent eyes, holy. Palms up, meditative. Holy vertical beam of light."}, {"檔案名稱": "Face049", "主題": "麻木 Numb", "中文生圖用提示詞": "一個 25 歲台灣女人， 眼神死寂，毫無波瀾。 身體僵硬，雙手垂落。 灰暗、單調的都市。", "English Prompt": "A 25-year-old Taiwanese woman, Dead eyes, stone-faced. Rigid body, hanging arms. Gray, monotone city."}, {"檔案名稱": "Face050", "主題": "魅惑 Seductive", "中文生圖用提示詞": "一個 25 歲台灣女人， 眼神誘人，半瞇雙眼。 輕拉領口，肩膀傾斜。 琥珀色的昏暗光線。", "English Prompt": "A 25-year-old Taiwanese woman, Alluring gaze, bedroom eyes. Pulling collar, tilted shoulders. Amber dim lighting."}, {"檔案名稱": "Face051", "主題": "嫉妒 Envious", "中文生圖用提示詞": "一個 25 歲台灣女人， 緊抿嘴唇，眼神嫉恨。 指甲陷進皮膚。 綠色系陰暗濾鏡。", "English Prompt": "A 25-year-old Taiwanese woman, Pursed lips, resentful eyes. Nails digging into skin. Greenish dark filter."}, {"檔案名稱": "Face052", "主題": "釋懷 At peace", "中文生圖用提示詞": "一個 25 歲台灣女人， 舒展笑容，神情放鬆。 仰望天空，深呼吸。 海邊、清透的日光。", "English Prompt": "A 25-year-old Taiwanese woman, Relaxed smile, peaceful. Looking up, deep breath. Seaside, clear daylight."}, {"檔案名稱": "Face053", "主題": "孤寂 Lonely", "中文生圖用提示詞": "一個 25 歲台灣女人， 眼神憂傷，注視虛空。 環抱雙膝，縮在一角。 孤零零的長椅背景。", "English Prompt": "A 25-year-old Taiwanese woman, Sad gaze, staring at void. Hugging knees, in corner. Lonely park bench."}, {"檔案名稱": "Face054", "主題": "嘲弄 Mocking", "中文生圖用提示詞": "一個 25 歲台灣女人， 歪歪的笑，眼神戲弄。 伸出手指指點。 華麗但扭曲的背景。", "English Prompt": "A 25-year-old Taiwanese woman, Crooked smile, teasing. Pointing finger. Grand yet distorted background."}, {"檔案名稱": "Face055", "主題": "出神 Mesmerized", "中文生圖用提示詞": "一個 25 歲台灣女人， 嘴巴微張，專注某物。 手指輕碰臉頰。 旋轉的極光效果。", "English Prompt": "A 25-year-old Taiwanese woman, Mouth agape, hypnotized. Finger touching cheek. Swirling aurora lights."}, {"檔案名稱": "Face056", "主題": "心碎 Heartbroken", "中文生圖用提示詞": "一個 25 歲台灣女人， 眼眶含淚，支離破碎。 手捂心臟，肩膀顫抖。 破碎的玻璃或鏡子背景。", "English Prompt": "A 25-year-old Taiwanese woman, Teary, broken-hearted. Hand on heart, trembling. Broken glass background."}, {"檔案名稱": "Face057", "主題": "警覺 Vigilant", "中文生圖用提示詞": "一個 25 歲台灣女人， 眼神銳利掃視。 防禦手勢，隨時待發。 茂密的草叢或暗處。", "English Prompt": "A 25-year-old Taiwanese woman, Sharp scanning gaze. Defensive stance. Dense bushes or dark spot."}, {"檔案名稱": "Face058", "主題": "不信任 Distrustful", "中文生圖用提示詞": "一個 25 歲台灣女人， 瞇眼斜看，抿唇。 保持社交距離，退縮。 監視器視角濾鏡。", "English Prompt": "A 25-year-old Taiwanese woman, Squinting, pursed lips. Keeping distance, recoiling. Surveillance camera style."}, {"檔案名稱": "Face059", "主題": "敬畏 Reverent", "中文生圖用提示詞": "一個 25 歲台灣女人， 充滿敬意的仰望。 雙手合十，低頭。 宏偉的大教堂內部。", "English Prompt": "A 25-year-old Taiwanese woman, Look of deep respect. Clasped hands, bowing. Grand cathedral interior."}, {"檔案名稱": "Face060", "主題": "自責 Guilt-ridden", "中文生圖用提示詞": "一個 25 歲台灣女人， 緊閉雙眼，眉頭緊皺。 雙手掩面，自省姿態。 狹小的審訊室感。", "English Prompt": "A 25-year-old Taiwanese woman, Squeezed eyes, furrowed brow. Hands covering face. Small interrogation room feel."}, {"檔案名稱": "Face061", "主題": "崩潰 Hysterical", "中文生圖用提示詞": "一個 25 歲台灣女人， 撕心裂肺大哭大笑。 抓扯衣服，癱倒。 暴風雨、雷電閃光。", "English Prompt": "A 25-year-old Taiwanese woman, Crying and laughing wildly. Tearing clothes, collapsing. Stormy thunder flashes."}, {"檔案名稱": "Face062", "主題": "迷戀 Infatuated", "中文生圖用提示詞": "一個 25 歲台灣女人， 眼神陶醉，笑容痴狂。 雙手托腮，眼冒桃心。 粉紅、溫馨的居家光影。", "English Prompt": "A 25-year-old Taiwanese woman, Infatuated gaze, doting smile. Chin on hands, starry-eyed. Pinkish warm home light."}, {"檔案名稱": "Face063", "主題": "冷酷 Ruthless", "中文生圖用提示詞": "一個 25 歲台灣女人， 眼神無情，嘴角下壓。 雙手負於身後。 冰冷的冰川或雪地。", "English Prompt": "A 25-year-old Taiwanese woman, Heartless gaze, down-turned mouth. Hands behind back. Icy glacier or snowfield."}, {"檔案名稱": "Face064", "主題": "侷促 Awkward", "中文生圖用提示詞": "一個 25 歲台灣女人， 眼神閃躲，局促不安。 手指不斷擺弄戒指。 吵鬧擁擠的派對場景。", "English Prompt": "A 25-year-old Taiwanese woman, Shifting gaze, restless. Fiddling with a ring. Crowded party background."}, {"檔案名稱": "Face065", "主題": "期待 Anticipatory", "中文生圖用提示詞": "一個 25 歲台灣女人， 笑容滿溢，眼睛睜大。 身體前傾，手按桌緣。 正在開啟的門縫光光束。", "English Prompt": "A 25-year-old Taiwanese woman, Beaming smile, wide eyes. Leaning in, hands on edge. Light beam from opening door."}, {"檔案名稱": "Face066", "主題": "不耐煩 Impatient", "中文生圖用提示詞": "一個 25 歲台灣女人， 翻白眼，嘴角不屑。 手指敲打，看手錶。 漫長的排隊背景。", "English Prompt": "A 25-year-old Taiwanese woman, Rolling eyes, dismissive mouth. Tapping fingers, checking watch. Long queue background."}, {"檔案名稱": "Face067", "主題": "懷疑自己 Self-doubting", "中文生圖用提示詞": "一個 25 歲台灣女人， 眼神閃爍，面部緊繃。 抓著領口，縮起肩膀。 模糊、失焦的環境。", "English Prompt": "A 25-year-old Taiwanese woman, Flimsy gaze, tense face. Clutching collar, hunched. Blurred, out-of-focus setting."}, {"檔案名稱": "Face068", "主題": "被冒犯 Offended", "中文生圖用提示詞": "一個 25 歲台灣女人， 臉部僵硬，眉頭緊皺。 身體後仰，雙臂環抱。 莊嚴、冷淡的社交場合。", "English Prompt": "A 25-year-old Taiwanese woman, Stiff face, deep frown. Leaning back, arms crossed. Formal, distant social event."}, {"檔案名稱": "Face069", "主題": "驚魂未定 Rattled", "中文生圖用提示詞": "一個 25 歲台灣女人， 呼吸急促，眼神戰慄。 雙手抱胸，身體發抖。 黑暗中唯一的強光源。", "English Prompt": "A 25-year-old Taiwanese woman, Panting, shuddering eyes. Hugging chest, shivering. Solo strong light in dark."}, {"檔案名稱": "Face070", "主題": "英勇 Heroic", "中文生圖用提示詞": "一個 25 歲台灣女人， 眼神無畏，神情剛毅。 下巴微抬，挺立。 戰火與煙硝背景。", "English Prompt": "A 25-year-old Taiwanese woman, Fearless gaze, gritty. Chin up, standing tall. Fire and smoke background."}, {"檔案名稱": "Face071", "主題": "沉思過後 Afterthought", "中文生圖用提示詞": "一個 25 歲台灣女人， 恍然大悟的眼神，微笑。 手指輕彈額頭。 夕陽照進實驗室。", "English Prompt": "A 25-year-old Taiwanese woman, Epiphany gaze, smile. Flicking forehead. Sunset in a laboratory."}, {"檔案名稱": "Face072", "主題": "溫柔的絕望 Tender Despair", "中文生圖用提示詞": "一個 25 歲台灣女人， 哀傷但平靜的眼神。 垂下手，指尖鬆脫。 枯萎的花園，黃昏。", "English Prompt": "A 25-year-old Taiwanese woman, Sad yet calm eyes. Letting go, limp fingers. Withered garden at twilight."}];
+
+  /* =========================================================
+   * 工具函式
+   * ========================================================= */
+  let toastTimer = null;
+
+  function showToast(msg) {
+    const el = document.getElementById("toast");
+    el.textContent = msg;
+    el.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove("show"), CONFIG.toastDuration);
+  }
+
+  async function copyToClipboard(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      // 降級方案
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.cssText = "position:fixed;top:-999px;left:-999px;opacity:0";
+      document.body.appendChild(ta);
+      ta.focus(); ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return ok;
+    }
+  }
+
+  /* =========================================================
+   * Lightbox
+   * ========================================================= */
+  const lightbox     = document.getElementById("lightbox");
+  const lightboxImg  = document.getElementById("lightbox-img");
+  const lightboxCap  = document.getElementById("lightbox-caption");
+  const lightboxClose= document.getElementById("lightbox-close");
+
+  function openLightbox(src, title) {
+    lightboxImg.src = src;
+    lightboxImg.alt = title;
+    lightboxCap.textContent = title;
+    lightbox.classList.add("active");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeLightbox() {
+    lightbox.classList.remove("active");
+    document.body.style.overflow = "";
+    // 延遲清空避免閃爍
+    setTimeout(() => { lightboxImg.src = ""; }, 300);
+  }
+
+  lightbox.addEventListener("click", e => { if (e.target === lightbox || e.target === lightboxImg) closeLightbox(); });
+  lightboxClose.addEventListener("click", closeLightbox);
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closeLightbox(); });
+
+  /* =========================================================
+   * 建立圖片卡片
+   * ========================================================= */
+  function buildCard(item) {
+    const filename = item["檔案名稱"];
+    const title    = item["主題"];
+    const twPrompt = item["中文生圖用提示詞"];
+    const enPrompt = item["English Prompt"];
+    const imgSrc   = `${CONFIG.imgFolder}/${filename}${CONFIG.imgExt}`;
+
+    const card = document.createElement("div");
+    card.className = "card";
+
+    // 圖片區域
+    const imgWrap = document.createElement("div");
+    imgWrap.className = "card__img-wrap";
+    imgWrap.title = "點擊放大";
+
+    // 佔位（當圖片尚未載入或不存在時顯示）
+    const placeholder = document.createElement("div");
+    placeholder.className = "img-placeholder";
+    placeholder.innerHTML = `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><span>${filename}</span>`;
+    imgWrap.appendChild(placeholder);
+
+    const img = document.createElement("img");
+    img.alt   = title;
+    img.loading = "lazy";
+    img.src   = imgSrc;
+
+    img.addEventListener("load",  () => { img.classList.add("loaded"); placeholder.style.display = "none"; });
+    img.addEventListener("error", () => { img.style.display = "none"; });
+
+    imgWrap.appendChild(img);
+    imgWrap.addEventListener("click", () => openLightbox(imgSrc, title));
+
+    // 資訊區域
+    const info = document.createElement("div");
+    info.className = "card__info";
+
+    const titleEl = document.createElement("div");
+    titleEl.className = "card__title";
+    titleEl.textContent = title;
+
+    const filenameEl = document.createElement("div");
+    filenameEl.className = "card__filename";
+    filenameEl.textContent = filename;
+
+    const btns = document.createElement("div");
+    btns.className = "card__btns";
+
+    const btnTW = document.createElement("button");
+    btnTW.className = "btn btn--tw";
+    btnTW.textContent = "tw Prompt";
+    btnTW.title = twPrompt;
+    btnTW.addEventListener("click", async () => {
+      await copyToClipboard(twPrompt);
+      showToast(CONFIG.toastTW);
+    });
+
+    const btnEN = document.createElement("button");
+    btnEN.className = "btn btn--en";
+    btnEN.textContent = "en Prompt";
+    btnEN.title = enPrompt;
+    btnEN.addEventListener("click", async () => {
+      await copyToClipboard(enPrompt);
+      showToast(CONFIG.toastEN);
+    });
+
+    btns.appendChild(btnTW);
+    btns.appendChild(btnEN);
+
+    info.appendChild(titleEl);
+    info.appendChild(filenameEl);
+    info.appendChild(btns);
+
+    card.appendChild(imgWrap);
+    card.appendChild(info);
+
+    return card;
+  }
+
+  /* =========================================================
+   * 初始化
+   * ========================================================= */
+  const gallery = document.getElementById("gallery");
+  IMAGES.forEach(item => gallery.appendChild(buildCard(item)));
+
+  document.getElementById("imgCount").textContent = `共 ${IMAGES.length} 張圖片`;
+</script>
+</body>
+</html>
