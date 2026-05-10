@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>提示詞畫廊 - 車內副駕動作姿勢篇</title>
+  <style>
+    /* ===== 全域設定 ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --card-bg: #1e2130;
+      --card-hover: #252840;
+      --border: #2e3350;
+      --accent: #7c6ff7;
+      --accent2: #5bc8d4;
+      --text-main: #e8eaf6;
+      --text-sub: #9ba1c0;
+      --btn-tw-bg: #3d3580;
+      --btn-tw-hover: #5548b0;
+      --btn-en-bg: #1e5a63;
+      --btn-en-hover: #2a7d8a;
+      --radius: 12px;
+      --transition: 0.22s ease;
+
+      /* ===== 可調整：圖片資料夾路徑 ===== */
+      --img-folder: face;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text-main);
+      font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+      min-height: 100vh;
+    }
+
+    /* ===== 頁首 ===== */
+    header {
+      text-align: center;
+      padding: 48px 24px 24px;
+      background: linear-gradient(160deg, #12142099 0%, transparent 100%);
+      border-bottom: 1px solid var(--border);
+    }
+
+    header h1 {
+      font-size: clamp(1.4rem, 4vw, 2.4rem);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 14px;
+    }
+
+    header .subtitle {
+      font-size: clamp(0.8rem, 2vw, 0.95rem);
+      color: var(--text-sub);
+    }
+
+    header .subtitle a {
+      color: var(--accent2);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: border-color var(--transition);
+    }
+    header .subtitle a:hover { border-color: var(--accent2); }
+
+    .img-count {
+      display: inline-block;
+      margin-top: 12px;
+      font-size: 0.82rem;
+      color: var(--text-sub);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 14px;
+    }
+
+    /* ===== 圖片格線 ===== */
+    main {
+      padding: 28px 20px 60px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 20px;
+    }
+
+    /* ===== 圖片卡片 ===== */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: transform var(--transition), box-shadow var(--transition), background var(--transition);
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 28px rgba(124, 111, 247, 0.18);
+      background: var(--card-hover);
+    }
+
+    .card__img-wrap {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      overflow: hidden;
+      cursor: zoom-in;
+      background: #10111a;
+    }
+
+    .card__img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.35s ease, opacity 0.3s ease;
+      opacity: 0;
+    }
+
+    .card__img-wrap img.loaded { opacity: 1; }
+    .card__img-wrap:hover img { transform: scale(1.06); }
+
+    /* 圖片載入失敗時的佔位 */
+    .card__img-wrap .img-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: var(--text-sub);
+      font-size: 0.75rem;
+      background: #14161f;
+      position: absolute;
+      inset: 0;
+    }
+    .card__img-wrap { position: relative; }
+    .card__img-wrap .img-placeholder svg { opacity: 0.35; }
+
+    .card__info {
+      padding: 12px 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1;
+    }
+
+    .card__title {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--text-main);
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    .card__filename {
+      font-size: 0.72rem;
+      color: var(--text-sub);
+      text-align: center;
+      opacity: 0.7;
+    }
+
+    .card__btns {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 6px 4px;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 0.03em;
+      transition: background var(--transition), transform 0.12s ease;
+      font-family: inherit;
+    }
+
+    .btn:active { transform: scale(0.96); }
+
+    .btn--tw {
+      background: var(--btn-tw-bg);
+      color: #ccc8ff;
+    }
+    .btn--tw:hover { background: var(--btn-tw-hover); }
+
+    .btn--en {
+      background: var(--btn-en-bg);
+      color: #b3efef;
+    }
+    .btn--en:hover { background: var(--btn-en-hover); }
+
+    /* ===== Toast 通知 ===== */
+    #toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(30, 33, 55, 0.95);
+      color: var(--text-main);
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      padding: 10px 22px;
+      font-size: 0.88rem;
+      font-weight: 500;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.28s ease, transform 0.28s ease;
+      z-index: 9999;
+      white-space: nowrap;
+      box-shadow: 0 4px 18px rgba(124, 111, 247, 0.3);
+    }
+
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ===== Lightbox 全畫面 ===== */
+    #lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(8, 9, 16, 0.92);
+      z-index: 1000;
+      cursor: zoom-out;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+
+    #lightbox.active { display: flex; }
+
+    #lightbox img {
+      max-width: 92vw;
+      max-height: 88vh;
+      border-radius: 10px;
+      box-shadow: 0 20px 80px rgba(0, 0, 0, 0.7);
+      object-fit: contain;
+      animation: lb-in 0.22s ease;
+    }
+
+    @keyframes lb-in {
+      from { opacity: 0; transform: scale(0.9); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    #lightbox-caption {
+      position: fixed;
+      bottom: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(20, 22, 38, 0.88);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 8px 20px;
+      border-radius: 20px;
+      font-size: 0.88rem;
+      pointer-events: none;
+    }
+
+    #lightbox-close {
+      position: fixed;
+      top: 18px;
+      right: 22px;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: rgba(30, 33, 55, 0.8);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background var(--transition);
+      z-index: 1001;
+      line-height: 1;
+    }
+    #lightbox-close:hover { background: var(--card-hover); }
+
+    /* ===== 頁尾 ===== */
+    footer {
+      text-align: center;
+      padding: 18px 20px;
+      font-size: 0.8rem;
+      color: var(--text-sub);
+      border-top: 1px solid var(--border);
+      opacity: 0.7;
+    }
+
+    /* ===== RWD ===== */
+    @media (max-width: 600px) {
+      header { padding: 32px 16px 18px; }
+      main { padding: 20px 12px 40px; }
+      .gallery-grid { gap: 14px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+      .btn { font-size: 0.72rem; padding: 5px 2px; }
+      .card__title { font-size: 0.85rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== 頁首 ===== -->
+<header>
+  <a href="https://vocus.cc/salon/aicg18" target="_blank"><img src="logo.png" border="0" ?</a>
+  <h1>提示詞畫廊 - 車內副駕動作姿勢篇</h1>
+  <p class="subtitle">
+    <a href="https://vocus.cc/article/69f95329fd89780001bff885" target="_blank" rel="noopener">
+      推薦您去玩玩台灣 AutoIP 生圖、動畫產生平台生成。
+    </a> (※審查程度較低)
+  </p>
+  <p>
+  <b>本頁中展示的圖片，因牽涉拍攝視角說明，建議使用 nano banana pro 或 GPT-Image-2 模型，成功機率較高。</b>
+  </p>
+  <span class="img-count" id="imgCount"></span>
+</header>
+
+<!-- ===== 畫廊主體 ===== -->
+<main>
+  <div class="gallery-grid" id="gallery"></div>
+</main>
+
+<!-- ===== 頁尾 ===== -->
+<footer>提示詞畫廊 &copy; 2026 ｜ 車內副駕動作姿勢篇</footer>
+
+<!-- ===== Lightbox ===== -->
+<div id="lightbox" role="dialog" aria-modal="true" aria-label="圖片放大檢視">
+  <button id="lightbox-close" aria-label="關閉" title="關閉 (點擊任意處也可關閉)">✕</button>
+  <img id="lightbox-img" src="" alt="" />
+  <div id="lightbox-caption"></div>
+</div>
+
+<!-- ===== Toast ===== -->
+<div id="toast" role="alert" aria-live="polite"></div>
+
+<script>
+  /* =========================================================
+   * 設定區 — 如需修改只需調整此處
+   * ========================================================= */
+  const CONFIG = {
+    imgFolder: "car",          // 圖片資料夾路徑（相對於 HTML 檔案）
+    imgExt:    ".jpg",          // 圖片副檔名
+    pageTitle: "提示詞畫廊 - 車內副駕動作姿勢篇",
+    siteLink:  "https://vocus.cc/article/69f95329fd89780001bff885",
+    siteLinkText: "推薦您玩玩台灣 AutoIP 生圖、動畫產生平台生成。",
+    toastTW:   "已經複製提示詞至剪貼簿中",
+    toastEN:   "The prompt has been copied to the clipboard.",
+    toastDuration: 2000,        // 毫秒
+  };
+
+  /* =========================================================
+   * 圖片資料 — 新增圖片只需在此陣列加入物件
+   * ========================================================= */
+  const IMAGES = [
+ {"檔案名稱": "car001", "主題": "側頭熟睡 Deeply Asleep", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  頭部向右側靠在車窗邊，雙眼閉合，身體略微縮在安全帶內，雙手自然放在大腿上。  午後的陽光透過車窗灑在臉上，車外是模糊的高速公路景色。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Head leaning right against the window, eyes closed, body slightly tucked into the seatbelt, hands resting naturally on laps.  Afternoon sunlight streaming through the window, blurry highway scenery outside."},
+ {"檔案名稱": "car002", "主題": "愜意看風景 Enjoying the View", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  上半身微轉向車窗，單手托腮肘部撐在車門扶手，眼神望向窗外遠方，帶著淺淺微笑。  窗外是沿海公路，蔚藍的大海與天空相接，光線明亮。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Upper body turned toward the window, chin resting on one hand with elbow on the armrest, gazing into the distance with a faint smile.  Coastal road outside, blue ocean meeting the sky, bright natural lighting."},
+ {"檔案名稱": "car003", "主題": "滑手機 Using Smartphone", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  低頭專注於手中的手機，雙手握持在胸前高度，髮絲自然垂落在臉頰兩側。  夜間車內，手機螢幕的藍光映照在女性臉上，車外是城市的霓虹燈火。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Looking down at the phone held with both hands at chest height, hair falling naturally around the cheeks.  Nighttime interior, blue light from the phone screen illuminating her face, city neon lights outside."},
+ {"檔案名稱": "car004", "主題": "回頭取物 Reaching for Backseat", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  身體向左後方扭轉，右手扶著椅背，左手向後座伸展嘗試拿取東西，雙腿微併。  車內空間溫暖，後座放著購物袋，光線柔和均勻。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Body twisted toward the back left, right hand on the seatback, left hand reaching to the backseat, legs slightly together.  Warm interior space, shopping bags on the back seat, soft and even lighting."},
+ {"檔案名稱": "car005", "主題": "補妝中 Applying Makeup", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  面向遮陽板的小鏡子，一手拿著口紅，另一手輕拉嘴角，眼神專注於鏡中的自己。  清晨的自然光，光線柔和地從前方照射進來。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Facing the vanity mirror on the sun visor, holding a lipstick in one hand, lightly touching the corner of the mouth with the other.  Soft early morning natural light shining from the front."},
+ {"檔案名稱": "car006", "主題": "遞咖啡給駕駛 Passing Coffee", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  身體向左微傾，右手握著咖啡杯遞向左側駕駛位，左手扶著杯底，眼神溫柔看向駕駛。  車內瀰漫暖色調，車窗外是早晨的街道景致。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Leaning slightly to the left, holding a coffee cup in the right hand toward the driver, left hand supporting the bottom, looking warmly at the driver.  Warm tones inside the car, morning street views through the windows."},
+ {"檔案名稱": "car007", "主題": "舉手伸懶腰 Stretching", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  雙手向上高舉交疊，背部挺直，頭微後仰，展現放鬆的姿態，雙腿向前微伸。  陽光充足的郊外小徑，綠色樹蔭透過擋風玻璃投下斑駁光影。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Both hands raised high and interlaced, back straight, head tilted back slightly, stretching relaxedly with legs extended forward.  Sunny suburban path, dappled shadows from green trees through the windshield."},
+ {"檔案名稱": "car008", "主題": "整理長髮 Fixing Hair", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  雙手抬起至腦後，做出紮馬尾或撥弄長髮的動作，腋下線條微露，眼神看著前方。  傍晚的夕陽金光照射入車內，營造出唯美氛圍。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Both hands raised behind the head, tying a ponytail or adjusting hair, looking forward.  Golden sunset light glowing inside the car, creating an aesthetic atmosphere."},
+ {"檔案名稱": "car009", "主題": "喝瓶裝水 Drinking Water", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  頭部微仰，右手拿著水瓶喝水，左手搭在腿上，喉嚨線條清晰。  夏日正午，車外光線強烈，車內顯得涼爽。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Head tilted back slightly, drinking from a water bottle in the right hand, left hand on the lap, clear throat line.  High noon in summer, intense outdoor light, cool interior vibe."},
+ {"檔案名稱": "car010", "主題": "思考人生 Lost in Thought", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  頭部靠在椅背，雙眼平視前方擋風玻璃，雙臂交疊在胸前，表情平靜且深沉。  雨天的陰鬱光線，車窗上有密集的雨滴，冷色調氛圍。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Head against the headrest, eyes looking straight through the windshield, arms crossed over the chest, calm and deep expression.  Gloomy rainy day lighting, dense raindrops on the window, cool-toned atmosphere."},
+ {"檔案名稱": "car011", "主題": "開窗吹風 Feeling the Breeze", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  身體靠近降下的車窗，一手搭在窗緣，頭髮隨風飄揚，雙眼微瞇享受涼風。  鄉間小路，動感的動態模糊感，光影交錯。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Leaning close to the lowered window, one hand on the windowsill, hair blowing in the wind, eyes squinting slightly to enjoy the breeze.  Country road, sense of motion blur, flickering light and shadow."},
+ {"檔案名稱": "car012", "主題": "興奮指向遠方 Pointing Excitedly", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  身體前傾，右手指向擋風玻璃外的某處，左手抓著安全帶，轉頭興奮地對駕駛說話。  景點入口處，明亮歡樂的色調。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Leaning forward, right hand pointing at something outside the windshield, left hand grabbing the seatbelt, looking excitedly at the driver.  Entrance of a tourist attraction, bright and cheerful tones."},
+ {"檔案名稱": "car013", "主題": "翻閱書籍 Reading a Book", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  頭微垂，雙手在大腿上捧著一本書翻閱，神情專注，眼鏡滑落在鼻樑上。  靜謐的林蔭道，柔和的漫反射光線。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Head slightly lowered, holding and reading a book on the lap, focused expression, glasses slipping down the nose.  Quiet tree-lined avenue, soft diffused light."},
+ {"檔案名稱": "car014", "主題": "調整空調出風口 Adjusting Air Vent", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  身體向中控台微伸，手指輕撥空調出風口葉片，另一手扶在排檔桿座旁。  都市夜景，儀表板的橘紅色燈光與路燈交織。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Reaching slightly toward the center console, fingers adjusting the air vent slats, other hand resting near the gear shifter.  Urban night view, orange-red dashboard lights mixed with streetlights."},
+ {"檔案名稱": "car015", "主題": "穿外套 Putting on Jacket", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  雙手正試圖套入外套袖子，身體在座椅上扭動調整，表情顯得有些匆忙。  寒冷的清晨，車窗玻璃上有淡淡霧氣。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Hands trying to slide into jacket sleeves, body twisting in the seat to adjust, looking slightly hurried.  Cold early morning, faint mist on the windows."},
+ {"檔案名稱": "car016", "主題": "聽音樂打拍子 Tapping to Music", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  閉目養神，頭部隨節奏擺動，右手食指在腿上輕輕敲打，腳尖也跟著微動。  隧道內，週期性掠過的黃色隧道燈光。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Resting with eyes closed, head nodding to the beat, right index finger tapping on the thigh, toes moving slightly.  Inside a tunnel, periodic flashes of yellow tunnel lights."},
+ {"檔案名稱": "car017", "主題": "拿紙巾擦臉 Wiping Face", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  左手拿著小鏡子，右手拿著濕紙巾輕按臉部或額頭，神情略顯疲憊。  剛運動完的午後，車內光線明亮乾淨。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Left hand holding a small mirror, right hand pressing a wet wipe against the face or forehead, looking slightly tired.  After-workout afternoon, bright and clean interior lighting."},
+ {"檔案名稱": "car018", "主題": "把腳抬到仪表板 Feet on Dashboard", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  身體向後仰，雙腿交疊抬高放在儀表板上（車停時），雙手抱頭，極度放鬆。  露營地草坪，前方是開闊的風景，自然陽光。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Reclining back, legs crossed and resting on the dashboard (parked), hands behind the head, extremely relaxed.  Campsite lawn, open view ahead, natural sunlight."},
+ {"檔案名稱": "car019", "主題": "與寵物互動 Playing with Pet", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  大腿上坐著一隻小狗，女性低頭逗弄寵物，雙手環抱，笑容燦爛。  溫暖的居家風格車內，充滿愛與溫馨的光線。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  A small dog sitting on her lap, looking down playing with the pet, arms wrapped around it, bright smile.  Warm home-style car interior, light filled with love and warmth."},
+ {"檔案名稱": "car020", "主題": "滑平板電腦 Using Tablet", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  平板電腦斜放在大腿與腹部間，單手滑動螢幕，另一手撐著下巴。  商務氛圍，車內配有皮革裝飾，光線均勻。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Tablet placed diagonally between lap and stomach, one hand scrolling, the other propping up the chin.  Business vibe, leather interior trim, even lighting."},
+ {"檔案名稱": "car021", "主題": "吃零食 Eating Snacks", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  手拿著一包洋芋片，嘴巴微張正要吃入，眼神看著前方，腿部隨意擺放。  歡樂的自駕旅行途中，車內有些雜亂但溫馨。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Holding a bag of chips, mouth slightly open to eat, looking forward, legs positioned casually.  Cheerful road trip, messy but cozy interior."},
+ {"檔案名稱": "car022", "主題": "整理皮包 Searching Bag", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  腿上放著大皮包，雙手在包內翻找東西，身體微弓，神情專注。  停車場內，來自上方日光燈的冷光。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Large handbag on the lap, both hands searching inside, body slightly hunched, focused expression.  In a parking lot, cold light from overhead fluorescent lamps."},
+ {"檔案名稱": "car023", "主題": "繫安全帶 Buckling Up", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  側身向左，右手拉過安全帶扣環，左手協助調整帶子，準備出發。  出發前的車內，陽光從擋風玻璃射入。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Turning to the left, right hand pulling the seatbelt buckle, left hand helping adjust the strap, getting ready.  Interior before departure, sunlight streaming through the windshield."},
+ {"檔案名稱": "car024", "主題": "雙手抱胸生悶氣 Pouting/Sulking", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  雙手用力交疊在胸前，身體背對駕駛轉向窗邊，嘴巴微嘟，眼神看向窗外地板。  陰天，光線灰暗，雨後潮濕的車窗。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Arms tightly crossed, body turned away from the driver toward the window, pouting, looking down at the ground outside.  Cloudy day, dim lighting, wet windows after rain."},
+ {"檔案名稱": "car025", "主題": "塗指甲油 Painting Nails", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  身體端正，一手平放在腿上的護照或書本上，另一手專注地塗抹指甲油。  安靜的車內，光線集中在手部。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Sitting upright, one hand flat on a passport or book on the lap, the other carefully painting nails.  Quiet interior, light concentrated on the hands."},
+ {"檔案名稱": "car026", "主題": "抱著大娃娃 Hugging Plushie", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  懷裡抱著一個巨大的絨毛玩偶，頭靠在娃娃上面，笑容甜美滿足。  遊樂園外的路邊，五彩繽紛的背景色彩。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Hugging a giant plush toy, head resting on top of it, sweet and satisfied smile.  Roadside outside a theme park, colorful background colors."},
+ {"檔案名稱": "car027", "主題": "對鏡理妝髮 Checking Mirror", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  翻下擋風玻璃遮陽板，對著鏡子左顧右盼，手撥動瀏海，神情自信。  明亮的日間光線，車內整潔乾淨。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Sun visor flipped down, checking the mirror from side to side, fixing bangs, confident expression.  Bright daylight, tidy and clean car interior."},
+ {"檔案名稱": "car028", "主題": "側坐看駕駛 Looking at Driver", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  身體完全轉向左側駕駛，雙腿收縮在座椅上，雙手環抱膝蓋，眼神深情。  溫暖的黃昏光線，充滿浪漫氣息。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Body completely turned toward the driver, legs tucked up on the seat, arms hugging knees, affectionate gaze.  Warm twilight light, romantic atmosphere."},
+ {"檔案名稱": "car029", "主題": "戴太陽眼鏡 Putting on Shades", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  雙手拿著太陽眼鏡架在耳朵上，頭微仰，展現時尚感。  沙灘旁，極強的光照與高對比陰影。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Holding sunglasses with both hands to put them on, head slightly tilted back, showing a stylish look.  Next to a beach, very strong lighting and high-contrast shadows."},
+ {"檔案名稱": "car030", "主題": "脫掉高跟鞋 Removing Heels", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  身體微彎，一手提著一隻高跟鞋，腳部赤裸踩在車墊上，神情放鬆。  晚宴結束後的深夜，安靜且微弱的車內燈光。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Bending slightly, one hand holding a high heel, bare feet on the floor mat, relaxed expression.  Late night after a gala, quiet and dim interior lighting."},
+ {"檔案名稱": "car031", "主題": "在筆記本寫字 Writing in Notebook", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  膝蓋上放著硬殼筆記本，右手握筆疾書，左手按住紙張，表情認真。  陰天的路邊，均勻的冷色調自然光。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Hardcover notebook on knees, writing fast with the right hand, left hand holding the page, serious expression.  Roadside on a cloudy day, even cool-toned natural light."},
+ {"檔案名稱": "car032", "主題": "玩弄掛飾 Playing with Charms", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  手指輕輕撥弄掛在車內後視鏡上的吊飾，眼神帶著一點放空。  停車等待中，車外人流移動的模糊光影。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Fingers lightly flicking a charm hanging from the rearview mirror, eyes looking a bit spaced out.  Waiting while parked, blurry moving lights of people outside."},
+ {"檔案名稱": "car033", "主題": "驚訝摀嘴 Surprised/Gasping", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  雙眼圓睜看向前方，一手摀住嘴巴，另一手緊抓著車門扶手。  突發狀況的街道，強烈的光線變化與陰影。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Eyes wide open looking forward, one hand covering the mouth, the other gripping the door handle.  Sudden street incident, intense lighting changes and shadows."},
+ {"檔案名稱": "car034", "主題": "側臥休息 Reclining to Sleep", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  座椅向後傾斜，女性近乎平躺，身上蓋著一件薄毯，神態安詳。  深夜長途旅程，微弱儀表板光與窗外星光。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Seat reclined back, woman almost lying flat, covered with a thin blanket, peaceful expression.  Long night drive, dim dashboard light and starlight outside."},
+ {"檔案名稱": "car035", "主題": "對窗哈氣畫圖 Drawing on Window", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  對著起霧的車窗哈氣，然後用手指在上面畫一個愛心，神情俏皮。  寒冷的雨天或冬日，車內外溫差大，霧氣濃厚。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Breathing on a foggy window and drawing a heart with a finger, playful expression.  Cold rainy or winter day, high temperature difference, thick fog on glass."},
+ {"檔案名稱": "car036", "主題": "遞零食給駕駛 Feeding the Driver", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  右手拿著一小塊餅乾，伸向左側駕駛嘴邊，左手接在下方防止掉屑。  歡樂的午後陽光，充滿笑聲的氛圍。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Holding a small piece of cookie in the right hand toward the driver's mouth, left hand underneath to catch crumbs.  Cheerful afternoon sun, atmosphere full of laughter."},
+ {"檔案名稱": "car037", "主題": "繫緊馬尾 Tying a Ponytail", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  雙臂高舉過頭，腋下線條微露，雙手正用力抓取髮束，頭部微仰，展現優美的頸部曲線。  清晨陽光從擋風玻璃斜射入，車內充滿清新空氣感。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Arms raised high above the head, hands gripping hair to tie it, head slightly tilted back, revealing the curve of the neck.  Early morning sunlight slanted through the windshield, fresh atmosphere inside."},
+ {"檔案名稱": "car038", "主題": "專注拍路邊風景 Photographing Scenery", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  雙手緊握單眼相機貼近臉部，身體微向車窗傾斜，右眼對準觀景窗，左眼緊閉。  車窗外是五彩斑斕的花海或楓林，動態模糊效果。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Holding a DSLR camera close to her face with both hands, leaning toward the window, right eye on the viewfinder.  Colorful flower fields or maple forests outside with motion blur."},
+ {"檔案名稱": "car039", "主題": "戴上單邊耳機 Putting on Earbud", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  一手撥開耳際髮絲，另一手拿著無線耳機正要塞入右耳，眼神專注地看著倒車鏡。  陰天光線柔和，車內儀表板亮著冷色調白光。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  One hand tucking hair behind the ear, the other inserting a wireless earbud into the right ear, looking at the side mirror.  Soft overcast light, cool white dashboard lighting inside."},
+ {"檔案名稱": "car040", "主題": "興奮擊掌 High-Five", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  身體向左側駕駛座大角度傾斜，右手掌心向前高舉準備擊掌，臉上帶著大大的驚喜笑容。  比賽獲勝或達成目標後的喜悅，車內光線明亮。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Leaning heavily toward the driver, right palm raised for a high-five, wearing a big surprised smile.  Joy after a win, bright and vibrant interior lighting."},
+ {"檔案名稱": "car041", "主題": "遞出地圖 Handing Documents", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  手拿著展開的紙質地圖，伸向駕駛方，另一手壓住文件邊緣，表情嚴肅。  雨夜路邊停靠，車內閱讀燈亮起，聚焦在紙張上。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Holding an unfolded paper map, stretching it toward the driver, holding down the edge.  Parked roadside on a rainy night, map light on, focusing on the paper."},
+ {"檔案名稱": "car042", "主題": "撕開零食包裝 Opening a Snack", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  雙手用力拉扯餅乾袋，嘴巴微用力咬唇，雙腿併攏蜷縮在座位上。  溫馨的深夜長途車，只有中控台微弱的燈光。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Pulling a snack bag hard with both hands, biting her lip slightly, legs curled up together on the seat.  Cozy late-night drive, only dim light from the center console."},
+ {"檔案名稱": "car043", "主題": "專注塗抹護手霜 Applying Hand Cream", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  雙手在胸前交織搓揉，正將護手霜均勻抹開，頭部低垂，幾縷髮絲垂落在臉前，神情恬靜。  寧靜的森林公路，從樹葉間漏下的丁達爾效應（耶穌光）灑在手部。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Hands interlaced and rubbing at chest height to spread hand cream, head lowered, a few strands of hair falling over her face, peaceful expression.  Quiet forest road, Tyndall effect (sunbeams) filtering through leaves onto her hands."},
+ {"檔案名稱": "car044", "主題": "整理耳環 Adjusting Earrings", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  雙手抬起至耳垂處，指尖輕捏耳環針腳，頭部向左側微偏，手肘擋住部分臉頰，眼神專注於虛擬的鏡像。  華燈初上的都市街道，窗外流動的車燈形成五彩斑斕的光斑（Bokeh）。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Both hands raised to earlobes, fingertips pinching the earring post, head tilted slightly left, elbows partially obscuring cheeks, focused gaze.  Urban streets at dusk, flowing car lights outside creating colorful bokeh circles."},
+ {"檔案名稱": "car045", "主題": "整理腳踏墊物品 Sorting Floor Items", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  上半身完全俯下，消失在儀表板下方，只露出的背部與伸在外面調整重心的一隻手。  車內空間略顯侷促，陽光照不到的陰影處。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Upper body bent down completely below the dashboard, only showing her back and one hand for balance.  Slightly cramped interior, in the shadows away from sunlight."},
+ {"檔案名稱": "car046", "主題": "驚呼指著儀表板 Pointing at Dashboard", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  臉部轉向左側，一手驚訝地指向車速表或警告燈，雙眼睜大，神情緊張。  黃昏時分，車內警示燈閃爍著橘光。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Turning face to the left, pointing surprisingly at the speedometer or warning light, eyes wide open.  Twilight, orange warning lights flashing on the dashboard."},
+ {"檔案名稱": "car047", "主題": "雙手握著熱飲 Cupping Hot Drink", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  雙手環抱著保溫瓶或紙杯，頭部埋在圍巾裡，眼神空靈地望著前方。  冬季雪景，車窗邊緣有淡淡的霜花。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Both hands cupping a thermos or paper cup, head buried in a scarf, looking ahead dreamily.  Winter snow scene, faint frost on the window edges."},
+ {"檔案名稱": "car048", "主題": "搖下車窗招手 Waving Out Window", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  身體側向窗外，右手伸出車窗外用力揮手，頭部跟著探出一半，表情興奮。  畢業季或派對場景，校園或住宅區背景。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Leaning out the window, waving her right hand vigorously, half of her head outside, excited expression.  Graduation or party scene, campus or residential background."},
+ {"檔案名稱": "car049", "主題": "低頭看手錶 Checking Wristwatch", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  抬起左手腕查看時間，右手正調整袖口，眉頭微鎖顯得有些匆忙。  辦公區早晨，車外是繁忙的上班族人流。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Raising left wrist to check the time, right hand adjusting the cuff, looking a bit hurried with a slight frown.  Office district morning, busy commuters outside."},
+ {"檔案名稱": "car050", "主題": "抱著一大束花 Holding a Bouquet", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  懷裡抱著大束玫瑰或向日葵，臉貼在花瓣邊緣，眼神幸福且帶著羞澀。  浪漫約會後的傍晚，暖色調的車內氛圍。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Holding a large bouquet of roses or sunflowers, face against the petals, looking happy and shy.  Evening after a romantic date, warm-toned interior."},
+ {"檔案名稱": "car051", "主題": "遞出口罩 Handing a Mask", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  從包包拿出一個口罩遞向駕駛側，手臂伸直，另一手扣住包包開口。  醫院門口或公共場所停車場。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Taking a mask from her bag and handing it to the driver, arm extended, other hand on the bag opening.  Hospital entrance or public parking lot."},
+ {"檔案名稱": "car052", "主題": "調整安全帶位置 Adjusting Seatbelt", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  手指伸入安全帶與肩膀間撥弄，頭微歪，似乎覺得安全帶太勒。  陽光普照的郊外，車內皮革質感細緻。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Fingers pulling between the seatbelt and shoulder, head tilted, looking uncomfortable with the belt.  Sunny countryside, detailed leather texture inside."},
+ {"檔案名稱": "car053", "主題": "用手扇風吹熱氣 Fanning Herself", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  臉部微紅，一手不斷在臉側扇風，另一手調整出風口方向，嘴巴微張呼吸。  酷熱盛夏，窗外是熱浪扭曲的柏油路。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Face slightly flushed, fanning herself with one hand, adjusting the vent with the other.  Scorching summer, heatwaves distorting the asphalt outside."},
+ {"檔案名稱": "car054", "主題": "專注剪指甲 Clipping Nails", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  身體微弓，低頭看著膝蓋上的手，正專心地使用指甲剪，雙腿緊併。  平靜的午休時間，安靜且均勻的車內光影。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Hunching slightly, looking down at hands on knees, carefully using a nail clipper.  Quiet lunch break, calm and even light and shadow."},
+ {"檔案名稱": "car055", "主題": "向左側靠在駕駛肩上 Leaning on Shoulder", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  身體大幅度向左傾斜，頭靠在駕駛的右肩（或椅背邊緣），眼神平靜。  溫暖的家庭旅行或甜蜜情侶，柔和的光線。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Leaning heavily to the left, head resting on the driver's right shoulder or seat edge.  Warm family trip or sweet couple, soft lighting."},
+ {"檔案名稱": "car056", "主題": "整理護照機票 Checking Passports", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  大腿上放著護照和登機證，雙手翻開確認資訊，表情帶著期待。  機場航廈外，後方有大型飛機掠過的視覺感。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Passports and boarding passes on her lap, hands opening them to check, expectant expression.  Outside the airport terminal, sense of a plane passing by."},
+ {"檔案名稱": "car057", "主題": "手撐車頂架 Holding Roof Grab Handle", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  一手緊握車內上方的抓手把，身體隨著車輛轉彎而微晃，眼神緊盯路況。  山路彎道，窗外是快速移動的樹林綠影。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Grasping the grab handle above the door, body swaying with the turn, staring at the road.  Mountain curves, fast-moving green trees outside."},
+ {"檔案名稱": "car058", "主題": "對著手機自拍 Taking a Selfie", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  手持手機高舉，側過臉對著鏡頭比出勝利手勢（V手勢），嘴角上揚。  充滿活力的城市光影，五彩的街頭招牌背景。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Holding a phone high, tilting face toward the camera with a peace sign, smiling.  Vibrant city lights, colorful street signs in the background."},
+ {"檔案名稱": "car059", "主題": "悠閒吃冰淇淋 Eating Ice Cream Cone", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  右手拿著冰淇淋甜筒，左手掌心托在下方防止滴落，舌尖輕舔冰淇淋，眼神調皮地看向駕駛。  炎熱的午後小鎮，窗外是復古的街道建築，光線明亮且對比鮮明。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Holding an ice cream cone in the right hand, left palm underneath to catch drips, licking the ice cream, looking playfully at the driver.  Hot afternoon in a small town, vintage street architecture outside, bright and high-contrast lighting."},
+ {"檔案名稱": "car060", "主題": "用腳尖點車門 Tapping the Door", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  側身坐著，一隻腳的腳尖輕輕踢著副駕車門板，手隨意搭在窗緣。  等人時的無聊時刻，窗外是安靜的住宅區。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Sitting sideways, toes of one foot tapping the door panel, hand resting on the windowsill.  Bored moment waiting, quiet residential area outside."},
+ {"檔案名稱": "car061", "主題": "剝橘子皮 Peeling an Orange", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  雙手專注於剝開橘子，指尖帶著果汁感，頭部微垂，眼神看著果實。  清新的自然光，車內空氣彷彿帶著果香味。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Hands focused on peeling an orange, fingertips looking juicy, head slightly lowered.  Fresh natural light, interior feeling citrus-scented."},
+ {"檔案名稱": "car062", "主題": "抓著安全把手驚恐 Gripping Grab Handle", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  雙手緊抓扶手與車門把手，身體緊貼椅背，雙眼驚恐地看著前方。  險峻的斷崖邊緣或急轉彎，強烈明暗對比。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Gripping both grab handle and door handle, pressed against the seat, eyes wide with fear.  Steep cliff edge or sharp turn, strong light-dark contrast."},
+ {"檔案名稱": "car063", "主題": "展示新買的戒指 Showing New Ring", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  右手伸向駕駛視野中心，張開五指展示無名指上的戒指，神情雀躍。  珠寶店門口，燈光讓戒指產生細碎閃光。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Stretching right hand toward the driver's view, fingers spread to show a ring, excited.  Outside a jewelry store, lights creating sparkles on the ring."},
+ {"檔案名稱": "car064", "主題": "拿濕紙巾擦儀表板 Cleaning Dashboard", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  身體前傾，一手拿著濕紙巾輕輕擦拭中控台的灰塵，動作細緻。  乾淨整潔的現代車內，充足的自然散射光。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Leaning forward, wiping dust off the console with a wet wipe, meticulous movement.  Clean modern interior, ample natural diffused light."},
+ {"檔案名稱": "car065", "主題": "試戴新帽子 Trying on a Hat", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  雙手拿著貝雷帽或草帽正要戴在頭上，對著擋風玻璃反射整理。  度假勝地風格，車窗外有棕櫚樹。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Both hands holding a beret or straw hat, putting it on while looking at the windshield reflection.  Vacation resort style, palm trees outside."},
+ {"檔案名稱": "car066", "主題": "揉疲憊的雙眼 Rubbing Tired Eyes", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  一手摘下眼鏡放在大腿，另一手用指尖按壓眼角，露出疲憊的神態。  長途夜車後半段，儀表板光線柔和。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Removing glasses and placing them on lap, rubbing eyes with fingertips, looking exhausted.  Late stage of a long night drive, soft dashboard glow."},
+ {"檔案名稱": "car067", "主題": "把零錢投入置物盒 Dropping Coins", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  手指捏著硬幣正投入擋風玻璃下的置物盒，另一手扶著蓋子。  過路費站或停車場入口，強烈的頂部光線。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Holding a coin and dropping it into the dashboard storage, other hand holding the lid.  Toll booth or parking entrance, strong overhead lighting."},
+ {"檔案名稱": "car068", "主題": "對窗外揮別 Saying Goodbye", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  手掌貼在封閉的車窗上，眼神帶著依依不捨，看著窗外的某人。  離別的火車站或機場，陰雨綿綿的背景。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Palm pressed against the closed window, looking sadly at someone outside.  Departing train station or airport, rainy background."},
+ {"檔案名稱": "car069", "主題": "檢查牙縫 Checking Teeth", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  對著小鏡子張開嘴巴，手指輕觸嘴角檢查是否有異物，神情略顯滑稽。  餐後的車內，明亮且直射的陽光。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Opening mouth at a small mirror, touching corner of mouth to check teeth, funny expression.  Inside after a meal, bright and direct sunlight."},
+ {"檔案名稱": "car070", "主題": "整理長裙裙擺 Smoothing Skirt", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  彎腰側身，用雙手整理被安全帶壓皺的長裙，眼神看著下方。  參加婚禮前，盛裝打扮，細緻的絲質布料光澤。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Bending and leaning, smoothing a long skirt wrinkled by the seatbelt, looking down.  Before a wedding, dressed up, detailed silk fabric sheen."},
+ {"檔案名稱": "car071", "主題": "指著導航螢幕 Pointing at GPS", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  身體湊近導航螢幕，一根手指指著路徑，臉湊向駕駛側解釋方向。  迷路的十字路口，城市複雜的交通燈火。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Leaning toward the GPS screen, finger pointing at the route, explaining to the driver.  Lost at an intersection, complex city traffic lights."},
+ {"檔案名稱": "car072", "主題": "遞出一張面紙 Offering a Tissue", "中文生圖用提示詞": "從左駕車駕駛的視角，望向副駕駛座上的台灣25歲女性乘客。  手從紙巾盒抽出一張面紙，伸向駕駛，眼神充滿關懷。  感冒或情緒激動的時刻，車內光線柔和安靜。", "English Prompt": "From the perspective of the driver of the left-hand drive vehicle, looking at the 25-year-old Taiwanese female passenger in the front passenger seat.  Pulling a tissue from a box and reaching toward the driver, caring gaze.  Cold or emotional moment, soft and quiet interior light."}
+ ];
+
+  /* =========================================================
+   * 工具函式
+   * ========================================================= */
+  let toastTimer = null;
+
+  function showToast(msg) {
+    const el = document.getElementById("toast");
+    el.textContent = msg;
+    el.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove("show"), CONFIG.toastDuration);
+  }
+
+  async function copyToClipboard(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      // 降級方案
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.cssText = "position:fixed;top:-999px;left:-999px;opacity:0";
+      document.body.appendChild(ta);
+      ta.focus(); ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return ok;
+    }
+  }
+
+  /* =========================================================
+   * Lightbox
+   * ========================================================= */
+  const lightbox     = document.getElementById("lightbox");
+  const lightboxImg  = document.getElementById("lightbox-img");
+  const lightboxCap  = document.getElementById("lightbox-caption");
+  const lightboxClose= document.getElementById("lightbox-close");
+
+  function openLightbox(src, title) {
+    lightboxImg.src = src;
+    lightboxImg.alt = title;
+    lightboxCap.textContent = title;
+    lightbox.classList.add("active");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeLightbox() {
+    lightbox.classList.remove("active");
+    document.body.style.overflow = "";
+    // 延遲清空避免閃爍
+    setTimeout(() => { lightboxImg.src = ""; }, 300);
+  }
+
+  lightbox.addEventListener("click", e => { if (e.target === lightbox || e.target === lightboxImg) closeLightbox(); });
+  lightboxClose.addEventListener("click", closeLightbox);
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closeLightbox(); });
+
+  /* =========================================================
+   * 建立圖片卡片
+   * ========================================================= */
+  function buildCard(item) {
+    const filename = item["檔案名稱"];
+    const title    = item["主題"];
+    const twPrompt = item["中文生圖用提示詞"];
+    const enPrompt = item["English Prompt"];
+    const imgSrc   = `${CONFIG.imgFolder}/${filename}${CONFIG.imgExt}`;
+
+    const card = document.createElement("div");
+    card.className = "card";
+
+    // 圖片區域
+    const imgWrap = document.createElement("div");
+    imgWrap.className = "card__img-wrap";
+    imgWrap.title = "點擊放大";
+
+    // 佔位（當圖片尚未載入或不存在時顯示）
+    const placeholder = document.createElement("div");
+    placeholder.className = "img-placeholder";
+    placeholder.innerHTML = `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><span>${filename}</span>`;
+    imgWrap.appendChild(placeholder);
+
+    const img = document.createElement("img");
+    img.alt   = title;
+    img.loading = "lazy";
+    img.src   = imgSrc;
+
+    img.addEventListener("load",  () => { img.classList.add("loaded"); placeholder.style.display = "none"; });
+    img.addEventListener("error", () => { img.style.display = "none"; });
+
+    imgWrap.appendChild(img);
+    imgWrap.addEventListener("click", () => openLightbox(imgSrc, title));
+
+    // 資訊區域
+    const info = document.createElement("div");
+    info.className = "card__info";
+
+    const titleEl = document.createElement("div");
+    titleEl.className = "card__title";
+    titleEl.textContent = title;
+
+    const filenameEl = document.createElement("div");
+    filenameEl.className = "card__filename";
+    filenameEl.textContent = filename;
+
+    const btns = document.createElement("div");
+    btns.className = "card__btns";
+
+    const btnTW = document.createElement("button");
+    btnTW.className = "btn btn--tw";
+    btnTW.textContent = "tw Prompt";
+    btnTW.title = twPrompt;
+    btnTW.addEventListener("click", async () => {
+      await copyToClipboard(twPrompt);
+      showToast(CONFIG.toastTW);
+    });
+
+    const btnEN = document.createElement("button");
+    btnEN.className = "btn btn--en";
+    btnEN.textContent = "en Prompt";
+    btnEN.title = enPrompt;
+    btnEN.addEventListener("click", async () => {
+      await copyToClipboard(enPrompt);
+      showToast(CONFIG.toastEN);
+    });
+
+    btns.appendChild(btnTW);
+    btns.appendChild(btnEN);
+
+    info.appendChild(titleEl);
+    info.appendChild(filenameEl);
+    info.appendChild(btns);
+
+    card.appendChild(imgWrap);
+    card.appendChild(info);
+
+    return card;
+  }
+
+  /* =========================================================
+   * 初始化
+   * ========================================================= */
+  const gallery = document.getElementById("gallery");
+  IMAGES.forEach(item => gallery.appendChild(buildCard(item)));
+
+  document.getElementById("imgCount").textContent = `共 ${IMAGES.length} 張圖片`;
+</script>
+</body>
+</html>
