@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>提示詞畫廊 - 山林寫真姿勢篇</title>
+  <style>
+    /* ===== 全域設定 ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --card-bg: #1e2130;
+      --card-hover: #252840;
+      --border: #2e3350;
+      --accent: #7c6ff7;
+      --accent2: #5bc8d4;
+      --text-main: #e8eaf6;
+      --text-sub: #9ba1c0;
+      --btn-tw-bg: #3d3580;
+      --btn-tw-hover: #5548b0;
+      --btn-en-bg: #1e5a63;
+      --btn-en-hover: #2a7d8a;
+      --radius: 12px;
+      --transition: 0.22s ease;
+
+      /* ===== 可調整：圖片資料夾路徑 ===== */
+      --img-folder: face;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text-main);
+      font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+      min-height: 100vh;
+    }
+
+    /* ===== 頁首 ===== */
+    header {
+      text-align: center;
+      padding: 48px 24px 24px;
+      background: linear-gradient(160deg, #12142099 0%, transparent 100%);
+      border-bottom: 1px solid var(--border);
+    }
+
+    header h1 {
+      font-size: clamp(1.4rem, 4vw, 2.4rem);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 14px;
+    }
+
+    header .subtitle {
+      font-size: clamp(0.8rem, 2vw, 0.95rem);
+      color: var(--text-sub);
+    }
+
+    header .subtitle a {
+      color: var(--accent2);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: border-color var(--transition);
+    }
+    header .subtitle a:hover { border-color: var(--accent2); }
+
+    .img-count {
+      display: inline-block;
+      margin-top: 12px;
+      font-size: 0.82rem;
+      color: var(--text-sub);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 14px;
+    }
+
+    /* ===== 圖片格線 ===== */
+    main {
+      padding: 28px 20px 60px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 20px;
+    }
+
+    /* ===== 圖片卡片 ===== */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: transform var(--transition), box-shadow var(--transition), background var(--transition);
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 28px rgba(124, 111, 247, 0.18);
+      background: var(--card-hover);
+    }
+
+    .card__img-wrap {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      overflow: hidden;
+      cursor: zoom-in;
+      background: #10111a;
+    }
+
+    .card__img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.35s ease, opacity 0.3s ease;
+      opacity: 0;
+    }
+
+    .card__img-wrap img.loaded { opacity: 1; }
+    .card__img-wrap:hover img { transform: scale(1.06); }
+
+    /* 圖片載入失敗時的佔位 */
+    .card__img-wrap .img-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: var(--text-sub);
+      font-size: 0.75rem;
+      background: #14161f;
+      position: absolute;
+      inset: 0;
+    }
+    .card__img-wrap { position: relative; }
+    .card__img-wrap .img-placeholder svg { opacity: 0.35; }
+
+    .card__info {
+      padding: 12px 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1;
+    }
+
+    .card__title {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--text-main);
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    .card__filename {
+      font-size: 0.72rem;
+      color: var(--text-sub);
+      text-align: center;
+      opacity: 0.7;
+    }
+
+    .card__btns {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 6px 4px;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 0.03em;
+      transition: background var(--transition), transform 0.12s ease;
+      font-family: inherit;
+    }
+
+    .btn:active { transform: scale(0.96); }
+
+    .btn--tw {
+      background: var(--btn-tw-bg);
+      color: #ccc8ff;
+    }
+    .btn--tw:hover { background: var(--btn-tw-hover); }
+
+    .btn--en {
+      background: var(--btn-en-bg);
+      color: #b3efef;
+    }
+    .btn--en:hover { background: var(--btn-en-hover); }
+
+    /* ===== Toast 通知 ===== */
+    #toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(30, 33, 55, 0.95);
+      color: var(--text-main);
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      padding: 10px 22px;
+      font-size: 0.88rem;
+      font-weight: 500;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.28s ease, transform 0.28s ease;
+      z-index: 9999;
+      white-space: nowrap;
+      box-shadow: 0 4px 18px rgba(124, 111, 247, 0.3);
+    }
+
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ===== Lightbox 全畫面 ===== */
+    #lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(8, 9, 16, 0.92);
+      z-index: 1000;
+      cursor: zoom-out;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+
+    #lightbox.active { display: flex; }
+
+    #lightbox img {
+      max-width: 92vw;
+      max-height: 88vh;
+      border-radius: 10px;
+      box-shadow: 0 20px 80px rgba(0, 0, 0, 0.7);
+      object-fit: contain;
+      animation: lb-in 0.22s ease;
+    }
+
+    @keyframes lb-in {
+      from { opacity: 0; transform: scale(0.9); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    #lightbox-caption {
+      position: fixed;
+      bottom: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(20, 22, 38, 0.88);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 8px 20px;
+      border-radius: 20px;
+      font-size: 0.88rem;
+      pointer-events: none;
+    }
+
+    #lightbox-close {
+      position: fixed;
+      top: 18px;
+      right: 22px;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: rgba(30, 33, 55, 0.8);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background var(--transition);
+      z-index: 1001;
+      line-height: 1;
+    }
+    #lightbox-close:hover { background: var(--card-hover); }
+
+    /* ===== 頁尾 ===== */
+    footer {
+      text-align: center;
+      padding: 18px 20px;
+      font-size: 0.8rem;
+      color: var(--text-sub);
+      border-top: 1px solid var(--border);
+      opacity: 0.7;
+    }
+
+    /* ===== RWD ===== */
+    @media (max-width: 600px) {
+      header { padding: 32px 16px 18px; }
+      main { padding: 20px 12px 40px; }
+      .gallery-grid { gap: 14px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+      .btn { font-size: 0.72rem; padding: 5px 2px; }
+      .card__title { font-size: 0.85rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== 頁首 ===== -->
+<header>
+  <a href="https://vocus.cc/salon/aicg18" target="_blank"><img src="logo.png" border="0" ?</a>
+  <h1>提示詞畫廊 - 山林寫真姿勢篇</h1>
+  <p class="subtitle">
+    <a href="https://vocus.cc/article/69f95329fd89780001bff885" target="_blank" rel="noopener">
+      推薦您去玩玩台灣 AutoIP 生圖、動畫產生平台生成。
+    </a> (※審查程度較低)
+  </p>
+  <p>
+  </p>
+  <span class="img-count" id="imgCount"></span>
+</header>
+
+<!-- ===== 畫廊主體 ===== -->
+<main>
+  <div class="gallery-grid" id="gallery"></div>
+</main>
+
+<!-- ===== 頁尾 ===== -->
+<footer>提示詞畫廊 &copy; 2026 ｜ 山林寫真姿勢篇</footer>
+
+<!-- ===== Lightbox ===== -->
+<div id="lightbox" role="dialog" aria-modal="true" aria-label="圖片放大檢視">
+  <button id="lightbox-close" aria-label="關閉" title="關閉 (點擊任意處也可關閉)">✕</button>
+  <img id="lightbox-img" src="" alt="" />
+  <div id="lightbox-caption"></div>
+</div>
+
+<!-- ===== Toast ===== -->
+<div id="toast" role="alert" aria-live="polite"></div>
+
+<script>
+  /* =========================================================
+   * 設定區 — 如需修改只需調整此處
+   * ========================================================= */
+  const CONFIG = {
+    imgFolder: "show",          // 圖片資料夾路徑（相對於 HTML 檔案）
+    imgExt:    ".jpg",          // 圖片副檔名
+    pageTitle: "提示詞畫廊 - 山林寫真姿勢篇",
+    siteLink:  "https://vocus.cc/article/69f95329fd89780001bff885",
+    siteLinkText: "推薦您玩玩台灣 AutoIP 生圖、動畫產生平台生成。",
+    toastTW:   "已經複製提示詞至剪貼簿中",
+    toastEN:   "The prompt has been copied to the clipboard.",
+    toastDuration: 2000,        // 毫秒
+  };
+
+  /* =========================================================
+   * 圖片資料 — 新增圖片只需在此陣列加入物件
+   * ========================================================= */
+  const IMAGES = [
+ {"檔案名稱": "show001", "主題": "晨曦山稜甦醒 Dawn Ridge Awakening", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為晨曦中的高山稜線，薄霧穿過層層山峰，柔和金色輪廓光灑落。模特兒筆直站立，一手輕撥黑色短髮，露出沉穩自信的微笑。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a high mountain ridge at sunrise, mist drifting through layered peaks, soft golden rim light. The model should stand tall with one hand brushing her short black hair, giving a calm confident smile. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show002", "主題": "霧中蕨徑 Misty Fern Trail", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為雨後狹窄的蕨類森林小徑，杉木樹幹間飄著淡霧，葉片帶著露珠。模特兒自然向前行走，眼神望向鏡頭，嘴角放鬆。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a narrow fern-covered forest trail after rain, pale fog between cedar trunks, dewy leaves. The model should walk forward naturally, eyes looking into the camera, lips relaxed. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show003", "主題": "瀑布小憩 Waterfall Pause", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為清澈山林瀑布旁，空氣中有細緻水霧，岩石覆滿苔蘚並被綠意包圍。模特兒坐在平滑岩石上，一膝微微抬起，表情溫柔而若有所思。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a clear mountain waterfall, fine spray in the air, mossy rocks and lush greenery. The model should sit on a smooth rock with one knee raised, wearing a gentle thoughtful expression. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show004", "主題": "松影肖像 Pine Shadow Portrait", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為高大松樹下，午後樹影形成圖案，地面有泥土步道與松針。模特兒輕靠樹幹，柔和側望，帶著淡淡微笑。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is tall pine trees with patterned afternoon shadows, earthy trail and pine needles on the ground. The model should lean lightly against a tree trunk, soft side glance, subtle smile. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show005", "主題": "溪石微光 River Stone Glow", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為淺淺山溪中的圓石之間，水面反光閃爍，上午光線明亮。模特兒在溪石上保持平衡，雙臂微張，神情俏皮又自信。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a shallow mountain stream with rounded stones, sparkling water reflections, late morning light. The model should balance on river stones with arms slightly open, playful confident expression. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show006", "主題": "雲海遠望 Cloud Sea Vista", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為高山展望點俯瞰雲海，天空清澈湛藍，遠處山稜層層延伸。模特兒以四分之三側身站立，下巴微抬，安靜望向遠方。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is an alpine viewpoint overlooking a sea of clouds, crisp blue sky, distant ridgelines. The model should stand in three-quarter profile, chin slightly lifted, serene gaze toward the horizon. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show007", "主題": "竹林微風 Bamboo Grove Breeze", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為安靜竹林中，翠綠直線構成背景，斑駁光影在小徑上移動。模特兒回眸望向鏡頭，短髮被微風吹起，笑容明亮自然。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a quiet bamboo grove, vertical green lines, dappled light moving across the path. The model should turn back over her shoulder, short hair lifted by breeze, bright natural smile. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show008", "主題": "苔園靜謐 Moss Garden Calm", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為古老原始森林中的苔蘚地景，翠綠地被、柔和濾光與潮濕石塊交織。模特兒單膝輕跪，雙手自然放置，表情平和。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a mossy old-growth forest, emerald ground cover, soft filtered light, damp stones. The model should kneel gently on one knee, hands resting naturally, peaceful expression. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show009", "主題": "林間光束 Sunbeam Clearing", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為小型森林空地中，陽光穿過葉片形成光束，空氣有溫暖微塵感。模特兒站在光束中，閉上雙眼，神情放鬆而發亮。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a small forest clearing where sunbeams cut through leaves, warm dust and pollen in the air. The model should stand in the light beam, eyes closed, face relaxed and radiant. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show010", "主題": "野花山坡 Wildflower Slope", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為點綴細小野花的綠色山坡，天空開闊，丘陵起伏。模特兒側坐在花草間，一手向後支撐，露出清新愉快的笑容。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a green mountain slope dotted with tiny wildflowers, open sky and rolling hills. The model should sit sideways among flowers, one hand behind her for support, fresh cheerful smile. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show011", "主題": "岩峰邊界 Rocky Summit Edge", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為粗獷峰頂邊緣附近，花崗岩質感鮮明，雲層戲劇化且山風清爽。模特兒雙腳穩穩站開，姿態有力量，眼神專注堅定。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a rugged summit edge with textured granite, dramatic clouds, strong clean wind. The model should stand with feet apart in a powerful pose, focused determined eyes. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show012", "主題": "雨洗杉林 Rainwashed Cedar", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為雨後深色杉木林中，樹皮濕潤，葉面發亮，氣氛帶冷藍灰調。模特兒一手微微抬起感受細雨，眼神柔和內斂。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is rain-dark cedar trees, wet bark, glossy leaves, cool blue-gray atmosphere. The model should raise one hand as if feeling light rain, soft introspective gaze. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show013", "主題": "金草步道 Golden Grass Trail", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為兩側長滿金色高草的山徑，低角度陽光穿過草穗。模特兒向前走後回頭望向鏡頭，笑容溫暖親切。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a mountain trail lined with tall golden grasses, low sun glowing through seed heads. The model should walk away then look back, warm inviting smile. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show014", "主題": "森林木橋瞬間 Forest Bridge Moment", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為跨越森林溪流的小木橋上，欄杆有苔蘚，背景為陰影中的綠意。模特兒雙手輕放欄杆，身體微微前傾，眼神靈動。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a small wooden bridge over a forest creek, moss on railings, shaded green background. The model should rest both hands on the railing, lean forward slightly, lively eyes. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show015", "主題": "楓光肖像 Maple Light Portrait", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為山區楓葉下，紅橘色葉片點綴背景，秋日光線柔和。模特兒站在枝葉下，一手靠近臉頰，表情優雅安靜。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is mountain maple leaves with red and orange accents, soft autumn light. The model should stand beneath branches, hand near cheek, elegant quiet expression. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show016", "主題": "崖邊山風 Cliffside Wind", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為安全的崖邊展望處，風吹草動，山谷開闊，天空明亮。模特兒迎著山風轉身，肩膀放鬆，露出自信淺笑。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a safe cliffside lookout with wind-swept grasses, open valley below, bright sky. The model should turn into the wind, shoulders relaxed, confident half smile. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show017", "主題": "晨湖倒影 Morning Lake Reflection", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為靜止的高山湖畔，湖面倒映森林與山脈，清晨光線清澈。模特兒坐在湖畔，雙腿斜向一側，夢幻地望著倒影。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a still alpine lake reflecting forest and mountains, clear early light. The model should sit at the shore with legs angled to one side, dreamy gaze at reflection. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show018", "主題": "杉木階梯上行 Cedar Stair Ascent", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為穿過濃密森林的老木階梯上，線條引導感強，清晨空氣濕潤。模特兒呈現上階中的動作，望向步道上方，神情有活力且充滿期待。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is old wooden steps climbing through dense forest, strong leading lines, humid morning air. The model should pause mid-step, looking up the trail, energetic hopeful expression. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show019", "主題": "幽蘭小徑 Hidden Orchid Path", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為幽靜森林小徑旁有小型蘭花與蕨類，葉片形成柔和綠色隧道。模特兒微微蹲下觀察花朵，露出溫柔好奇的笑容。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a secluded forest path with tiny orchids and ferns, soft green tunnel of leaves. The model should crouch slightly to observe flowers, gentle curious smile. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show020", "主題": "銀霧寫真 Silver Mist Portrait", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為濃厚銀色山霧中，森林輪廓朦朧，光線柔軟低對比。模特兒近距離肖像姿勢，肩膀微斜，平靜直視鏡頭。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is thick silver mountain mist, muted forest silhouettes, soft low-contrast light. The model should pose for a close portrait, shoulders angled, calm direct eye contact. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show021", "主題": "日照溪彎 Sunlit Creek Bend", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為明亮溪流轉彎處，清水流過卵石，陽光在肌膚與水面上形成波紋。模特兒站在及踝淺水中，自然大笑，姿態放鬆。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a bright bend in a creek, clear water over pebbles, sunlight rippling on skin. The model should stand ankle-deep in shallow water, laughing naturally, relaxed posture. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show022", "主題": "古樹相依 Ancient Tree Embrace", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為巨大的古樹旁，樹根紋理強烈，森林氣氛深邃。模特兒一手輕放樹皮上，表情敬重而安靜。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a massive ancient tree with textured roots, deep forest atmosphere. The model should rest one palm on the bark, respectful quiet expression. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show023", "主題": "稜線奔跑 Ridgeline Sprint", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為草地稜線步道上，雲朵快速移動，山景遼闊。模特兒呈現輕跑動作，短髮跳動，笑容開朗喜悅。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a grassy ridgeline trail, moving clouds overhead, expansive mountain backdrop. The model should move in a light jogging motion, short hair bouncing, joyful open smile. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show024", "主題": "林中野餐岩 Forest Picnic Rock", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為寧靜森林凹地中的平坦岩石上，岩邊有苔蘚與落葉，陰影溫暖。模特兒隨性坐著，雙手撐在身後，神情像週末般放鬆。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a flat moss-edged rock in a peaceful forest hollow, scattered leaves, warm shade. The model should sit casually with hands behind her, relaxed weekend expression. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show025", "主題": "茶山晨光 Tea Mountain Dawn", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為黎明時的山區茶園梯田，整齊綠色茶行與柔和薄霧交錯。模特兒站在茶樹行列之間，一手輕觸茶葉，笑容清新優雅。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is terraced mountain tea fields at dawn, neat green rows and soft haze. The model should stand between rows, one hand touching tea leaves, elegant fresh smile. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show026", "主題": "藍調松林 Blue Hour Pines", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為藍調時刻的松林中，環境光偏冷，地平線帶一點暖光。模特兒居中靜站成肖像構圖，眼神神秘而平靜。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a pine forest during blue hour, cool ambient light, faint warm glow on the horizon. The model should stand still in a centered portrait, mysterious calm gaze. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show027", "主題": "落葉迴身 Falling Leaves Turn", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為秋葉飄落的森林小徑上，琥珀色逆光帶有輕柔動態。模特兒身體輕輕旋轉，一手抬起，表情自然欣喜。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a forest path with falling autumn leaves, amber backlight, gentle motion. The model should twirl slightly with one arm lifted, delighted candid expression. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show028", "主題": "花崗岩姿態 Granite Boulder Pose", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為山谷中的大型花崗岩巨石間，陽光與陰影對比清晰。模特兒坐在高處巨石上，一腿彎曲，神情堅定沉著。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is large granite boulders in a mountain valley, crisp sunlight and shadow contrast. The model should sit high on a boulder, one leg bent, strong composed expression. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show029", "主題": "杜鵑花開 Rhododendron Bloom", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為盛開的山杜鵑旁，粉色花朵鮮明，陰天光線柔和。模特兒靠近花叢站立，臉龐微轉向鏡頭，帶著甜美淡笑。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is blooming mountain rhododendrons, vivid pink flowers, soft cloudy light. The model should stand close to blossoms, face angled toward camera, sweet subtle smile. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show030", "主題": "霧中吊橋 Foggy Rope Bridge", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為穿越森林溪谷的安全吊橋上，霧氣柔化遠方景色。模特兒一手握著側繩，眼神明亮且富冒險感。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a safe rope bridge across a forest ravine, fog softening the distance. The model should hold the side rope with one hand, adventurous bright eyes. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show031", "主題": "夕陽展望 Sunset Overlook", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為夕陽時分的山區展望點，天空橘紅，山谷陰影帶紫色。模特兒站在帶有剪影邊光的位置，雙手放在腰側，笑容平和滿足。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a mountain overlook during sunset, orange sky, violet valley shadows. The model should stand in silhouette-edge light, hands resting on hips, peaceful satisfied smile. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show032", "主題": "綠谷下行 Lush Ravine Descent", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為通往翠綠溪谷的下坡路，蕨類層層、石頭濕潤，光線冷而柔和。模特兒小心向下踏步，眼神專注並帶著柔和微笑。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a lush ravine with layered ferns, wet stones, cool diffuse light. The model should step down carefully, eyes focused then smiling softly. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show033", "主題": "檜木小徑優雅 Cypress Path Elegance", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為檜木森林小徑上，溫暖褐色樹幹與深綠樹冠形成背景。模特兒交叉腳踝站立，雙手自然垂放，表情精緻自然。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a cypress forest path, warm brown trunks and deep green canopy. The model should stand with crossed ankles, hands relaxed at sides, refined natural expression. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show034", "主題": "山泉肖像 Mountain Spring Portrait", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為清澈山泉自岩石間湧出，水光閃爍，周圍有細小植物。模特兒跪坐在水邊，指尖靠近水面，露出寧靜微笑。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a clear mountain spring emerging from rocks, sparkling highlights, tiny plants. The model should kneel by the water, fingertips near the surface, serene smile. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show035", "主題": "高山草甸清風 High Meadow Air", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為高山草甸中，天空寬廣，草浪在乾淨山風中擺動。模特兒雙臂向微風輕輕張開，神情自由喜悅。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a high mountain meadow with wide sky, grasses bending in clean wind. The model should open her arms gently to the breeze, joyful free expression. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show036", "主題": "幽谷光影 Shadowed Gorge", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為狹窄陰影峽谷內，垂直石壁高聳，細窄光束落下。模特兒站在岩壁旁，以側臉姿勢呈現，表情沉思。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a narrow shaded gorge, vertical stone walls, thin shafts of light. The model should stand near the rock wall in profile, contemplative expression. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show037", "主題": "森林活力 Forest Fitness Energy", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為森林運動步道上，有天然木構與綠色樹冠，早晨氣氛明亮有活力。模特兒一手向上伸展，露出有運動感的自信笑容。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a forest exercise trail, natural logs and green canopy, bright morning energy. The model should stretch one arm overhead, athletic confident smile. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show038", "主題": "露珠晨葉 Dewy Morning Leaves", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為被露珠覆蓋的大葉植物之間，近距離水珠閃光，山晨清新。模特兒近距離肖像，一手輕觸葉片，神情柔和清醒。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is dew-covered broad leaves, macro sparkle, fresh mountain morning. The model should pose close to camera with one hand lightly touching a leaf, soft awake expression. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show039", "主題": "登頂標誌肖像 Peak Marker Portrait", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為簡潔登頂標誌旁，後方是山脈全景，中午光線清晰。模特兒驕傲站在標誌旁，露出完成登頂的開朗笑容。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a simple summit marker, panoramic mountains behind, clear noon light. The model should stand proudly beside the marker, cheerful accomplishment smile. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show040", "主題": "溪畔笑顏 Streamside Laugh", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為活潑溪流旁，白色水紋、綠色石頭與明亮自然對比交織。模特兒蹲在水邊，視線微微離開鏡頭並自然笑著。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a lively stream with white ripples, green stones, bright natural contrast. The model should crouch near the water, laughing while looking slightly off-camera. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show041", "主題": "林窗光線 Forest Window Light", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為昏暗森林中的天然開口被光照亮，背景葉片明亮如窗。模特兒站在半陰半亮的位置，眼神沉著且具電影感。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a dark forest opening lit like a natural window, luminous background leaves. The model should stand half in shadow and half in light, composed cinematic gaze. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show042", "主題": "陰天峰頂靜謐 Cloudy Summit Calm", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為多雲的峰頂平台上，灰色天空、低飽和綠意與岩石形成安靜氛圍。模特兒坐在低矮岩石上，姿態挺直，表情安靜自信。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a cloudy summit plateau, soft gray sky, muted greens and rocks. The model should sit on a low rock with straight posture, quiet confident expression. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show043", "主題": "鳥鳴步道 Birdsong Trail", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為被層層植物包圍的安靜步道上，溫暖晨光穿過葉片。模特兒緩慢行走並向上聆聽，露出溫柔愉悅的笑容。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a peaceful trail surrounded by layered foliage, warm morning sun filtering through. The model should walk slowly while listening upward, gentle delighted smile. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show044", "主題": "藤蔓綠拱 Vine Covered Arch", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為藤蔓與葉片形成的天然綠拱下，背景深綠，側光柔和。模特兒站在綠拱構圖中，一側肩膀向前，笑容優雅。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a natural arch of vines and leaves, deep green background, soft side light. The model should stand framed by the arch, one shoulder forward, elegant smile. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show045", "主題": "山路彎道 Mountain Road Curve", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為安靜山路彎道上，道路兩旁是森林，透視深長、空氣清新。模特兒沿著山路邊緣行走，雙手放鬆，呈現自信的雜誌感表情。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a quiet mountain road curve bordered by forest, long perspective and clean air. The model should walk along the road edge, hands relaxed, confident editorial expression. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show046", "主題": "夕草剪影 Sunset Grass Silhouette", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為夕陽中的高山長草之間，草穗發光並形成溫暖逆光。模特兒側臉剪影姿態，臉微微轉向鏡頭，帶著平和微笑。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is tall mountain grasses at sunset, glowing seed heads and warm backlight. The model should pose in side profile silhouette, face turned slightly to camera, peaceful smile. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show047", "主題": "清潭靜影 Crystal Pool Stillness", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為清澈森林水潭邊，水色帶藍綠，石頭平滑，樹蔭安靜。模特兒坐在水邊，雙腳靠近水面，表情寧靜夢幻。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a crystal-clear forest pool, turquoise water, smooth stones, shaded trees. The model should sit at the edge, feet near water, tranquil dreamy expression. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show048", "主題": "風中高山花 Windy Alpine Flowers", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為高山花田中，細小彩色花朵在風中擺動，天空明亮。模特兒站立時短髮被風吹向一側，自然大笑，雙臂放鬆。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is an alpine flower field with wind movement, colorful tiny blossoms, bright sky. The model should stand with hair blown sideways, laughing naturally, arms relaxed. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show049", "主題": "林石坐姿 Forest Rock Seat", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為寬大的森林岩石上，岩面有局部苔蘚，周圍是柔和綠蔭。模特兒坐著並輕抱一膝，眼神親近放鬆。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a broad forest rock covered with patches of moss, gentle green shade. The model should sit with one knee hugged loosely, intimate relaxed gaze. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show050", "主題": "谷中金線 Ravine Sun Ribbon", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為溪谷中有一道狹窄陽光橫越步道，四周深綠陰影包圍。模特兒正好站在陽光帶中，直視鏡頭且神情從容。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a ravine where a narrow ribbon of sunlight crosses the trail, dark green surroundings. The model should stand exactly in the sunlit strip, direct poised expression. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show051", "主題": "山霧漫步 Mountain Mist Walk", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為山霧流動的森林步道上，背景柔化，空氣清涼。模特兒呈現行走中的步伐，眼神微低並露出淺笑。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is rolling mountain mist on a forest path, softened background, cool air. The model should walk mid-stride, eyes down then slight smile. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show052", "主題": "葉冠肖像 Leaf Canopy Portrait", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為濃密葉冠下，背景有圓形散景與柔和綠色高光。模特兒特寫肖像，頭部微微傾斜，笑容溫暖親切。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a dense leaf canopy with circular bokeh, soft green highlights. The model should pose in close-up, head tilted slightly, warm approachable smile. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show053", "主題": "遙望群峰 Distant Peak Gaze", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為面向遠方鋸齒狀山峰的展望點，藍色山脈層層堆疊，空氣清澈。模特兒背部部分轉向鏡頭並露出側臉，眼神若有所思。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a viewpoint facing distant jagged peaks, layered blue mountains, crisp atmosphere. The model should stand with back partly turned and face in profile, thoughtful gaze. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show054", "主題": "雨後森林閃光 Forest Rain Sparkle", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為森林小雨過後，枝葉上的水滴閃爍，色調乾淨且帶泥土感。模特兒站在濕潤葉片下，肩膀放鬆，微笑柔和明亮。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a forest after light rain, droplets sparkling on branches, clean earthy tones. The model should stand beneath wet leaves, shoulders relaxed, gentle bright smile. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show055", "主題": "登山步道專注 Climbing Trail Focus", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為佈滿樹根與石頭的陡峭自然山徑上，構圖具有動態斜線。模特兒以前傾登山步伐呈現，表情專注且有運動感。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a steep natural trail with roots and stones, dynamic diagonal composition. The model should lean forward in a climbing step, focused athletic expression. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show056", "主題": "綠隧道步伐 Green Tunnel Stride", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為濃密綠葉形成的隧道中，景深強，日光柔和漫射。模特兒居中沿路行走，步伐自信如伸展台。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a tunnel of dense green foliage, strong depth, soft diffused daylight. The model should walk centered down the path, confident runway-like stride. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show057", "主題": "日出茶梯 Sunrise Tea Terrace", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為日出時的階梯式茶園，橘色晨霧與重複的綠色線條交錯。模特兒站在梯田邊，一手遮住晨光，露出充滿希望的笑容。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is stepped tea terraces at sunrise, warm orange haze, repeating green patterns. The model should stand on a terrace edge, hand shading eyes, hopeful smile. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show058", "主題": "靜謐神木林 Quiet Shrine Forest", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為小型山林神木祠附近，氣氛安靜敬謹，老木與苔蘚相伴。模特兒安靜站立，雙手自然輕合，表情平和尊重。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a small mountain forest shrine, respectful atmosphere, aged wood and moss. The model should stand quietly with hands loosely together, peaceful respectful expression. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show059", "主題": "瀑霧笑顏 Waterfall Spray Smile", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為高大瀑布前方可見水霧，崖壁植物茂密，陰天光線明亮。模特兒站在安全距離外，因水霧微瞇雙眼並開心笑著。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a tall waterfall with visible mist, lush cliff plants, bright overcast light. The model should stand at a safe distance, laughing with eyes slightly squinted from spray. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show060", "主題": "松果小徑細節 Pinecone Trail Detail", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為散落松果的森林小徑上，側光溫暖，森林地面質感豐富。模特兒蹲下拾起松果，神情好奇俏皮。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a pinecone-strewn trail, warm side light, textured forest floor. The model should crouch to pick up a pinecone, curious playful expression. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show061", "主題": "高山木棧道 Alpine Boardwalk", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為穿越草地與低矮灌木的高山木棧道上，天空遼闊。模特兒以輕盈自在的步態行走，腳步安全自然，笑容無拘無束。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is an alpine wooden boardwalk crossing grasses and low shrubs, vast sky. The model should walk with a light carefree posture, trail-safe footing, carefree smile. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show062", "主題": "峽谷邊肖像 Canyon Edge Portrait", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為有安全視角的峽谷展望處，岩層戲劇化且光線乾淨。模特兒站在展望處附近，將短髮撥到耳後，眼神沉穩。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a protected canyon viewpoint, dramatic stone layers, clean light. The model should stand near the overlook, hair tucked behind ear, composed gaze. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show063", "主題": "逆光森林光暈 Forest Backlight Glow", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為逆光森林中，葉片邊緣發亮，光暈溫暖。模特兒肩膀微斜站立，眼神望向鏡頭，表情明亮平靜。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a backlit forest with glowing edges around leaves, warm halo light. The model should stand with shoulders angled, eyes toward camera, radiant calm expression. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show064", "主題": "藍溪穿越 Blue Stream Crossing", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為踩著踏石穿越清澈藍色山溪，陰影清涼，高光明亮。模特兒一腳踏上溪石，雙臂保持平衡，笑容活潑有冒險感。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a clear blue mountain stream crossed on stepping stones, cool shadows, bright highlights. The model should place one foot forward on a stone, arms balanced, lively adventurous smile. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show065", "主題": "霧湖清晨 Fog Lake Morning", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為清晨霧氣籠罩的山湖邊，湖面如鏡，樹木安靜。模特兒站在岸邊，雙手放在短褲口袋中，露出沉思的柔和微笑。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a misty mountain lake at early morning, mirror water, quiet trees. The model should stand near shore with hands in pockets of shorts, contemplative soft smile. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show066", "主題": "野草斜倚 Wild Grass Recline", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為柔和草坡上，低角度拍攝，天空與山脈在後方展開。模特兒在草地上以單肘斜倚，笑容放鬆自信。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a gentle grassy hillside, low camera angle, sky and mountains behind. The model should recline on one elbow in the grass, relaxed confident smile. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show067", "主題": "蕨牆肖像 Fern Wall Portrait", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為巨大蕨類形成的綠色牆面前，質感濃郁，森林陰影柔和。模特兒靠近蕨類站立，一手靠近肩膀，優雅直視鏡頭。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a wall of giant ferns, rich green texture, soft forest shade. The model should stand close to the ferns, one hand near shoulder, elegant direct gaze. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show068", "主題": "岩潭倒影 Rock Pool Reflection", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為小岩潭邊倒映著樹冠，水面清澈安靜，光線帶自然情緒。模特兒微微俯身靠近水潭，臉龐倒映在水中，表情好奇寧靜。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a small rock pool reflecting the canopy, clear still water, moody natural light. The model should lean slightly over the pool, face reflected below, curious serene expression. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show069", "主題": "山風伸展 Mountain Wind Stretch", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為開闊山鞍上，山風強勁，視野遼闊，日光明亮乾淨。模特兒做出溫和側身伸展，神情兼具運動感與優雅。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is an open mountain saddle with strong wind and sweeping views, bright clean daylight. The model should perform a gentle side stretch, athletic graceful expression. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show070", "主題": "杉霧層次 Cedar Fog Layers", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為層層杉木在霧中逐漸消失，景深具電影感，色彩冷靜低飽和。模特兒站在樹幹之間的中央，眼神嚴謹且具雜誌感。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is layered cedar trees disappearing into fog, cinematic depth, cool muted palette. The model should stand centered between trunks, serious editorial gaze. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show071", "主題": "金色步道 Golden Hour Trail", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為金色時刻的森林步道上，溫暖光線照在葉片與肌膚，影子拉長。模特兒肩膀放鬆地走向鏡頭，露出發光般自信的笑容。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a forest trail during golden hour, warm light hitting leaves and skin, long shadows. The model should walk toward camera with relaxed shoulders, glowing confident smile. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."},
+ {"檔案名稱": "show072", "主題": "峰頂餘暉 Summit Afterglow", "中文生圖用提示詞": "一張令人驚豔的女性山林寫真照片，主角是一位 25 歲、黑色短髮的台灣女人，固定穿著粉紅色短版運動上衣與藍色牛仔短褲。場景為日落後的峰頂上，天空有粉藍餘暉，山脈剪影安靜。模特兒坐在安全岩石邊，雙膝斜放，表情沉靜而帶反思感。自然膚色、真實布料質感、清晰五官、專業時尚寫真攝影、淺景深、細膩自然背景層次、電影感但自然的色調、高細節。避免文字、浮水印、商標、過度修圖、變形手部或手指、額外人物。", "English Prompt": "A stunning outdoor female mountain portrait photo featuring a 25-year-old Taiwanese woman with short black hair, wearing a fixed outfit: a pink cropped sports top and blue denim shorts. The scene is a summit after sunset with pink-blue afterglow, quiet silhouettes of mountains. The model should sit on a safe rock ledge, knees angled, reflective peaceful expression. Natural skin tone, realistic fabric texture, clear facial features, professional fashion portrait photography, shallow depth of field, rich natural background layers, cinematic yet natural color grading, high detail. Avoid text, watermark, logos, over-retouching, distorted hands or fingers, extra people."}
+ ];
+
+  /* =========================================================
+   * 工具函式
+   * ========================================================= */
+  let toastTimer = null;
+
+  function showToast(msg) {
+    const el = document.getElementById("toast");
+    el.textContent = msg;
+    el.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove("show"), CONFIG.toastDuration);
+  }
+
+  async function copyToClipboard(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      // 降級方案
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.cssText = "position:fixed;top:-999px;left:-999px;opacity:0";
+      document.body.appendChild(ta);
+      ta.focus(); ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return ok;
+    }
+  }
+
+  /* =========================================================
+   * Lightbox
+   * ========================================================= */
+  const lightbox     = document.getElementById("lightbox");
+  const lightboxImg  = document.getElementById("lightbox-img");
+  const lightboxCap  = document.getElementById("lightbox-caption");
+  const lightboxClose= document.getElementById("lightbox-close");
+
+  function openLightbox(src, title) {
+    lightboxImg.src = src;
+    lightboxImg.alt = title;
+    lightboxCap.textContent = title;
+    lightbox.classList.add("active");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeLightbox() {
+    lightbox.classList.remove("active");
+    document.body.style.overflow = "";
+    // 延遲清空避免閃爍
+    setTimeout(() => { lightboxImg.src = ""; }, 300);
+  }
+
+  lightbox.addEventListener("click", e => { if (e.target === lightbox || e.target === lightboxImg) closeLightbox(); });
+  lightboxClose.addEventListener("click", closeLightbox);
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closeLightbox(); });
+
+  /* =========================================================
+   * 建立圖片卡片
+   * ========================================================= */
+  function buildCard(item) {
+    const filename = item["檔案名稱"];
+    const title    = item["主題"];
+    const twPrompt = item["中文生圖用提示詞"];
+    const enPrompt = item["English Prompt"];
+    const imgSrc   = `${CONFIG.imgFolder}/${filename}${CONFIG.imgExt}`;
+
+    const card = document.createElement("div");
+    card.className = "card";
+
+    // 圖片區域
+    const imgWrap = document.createElement("div");
+    imgWrap.className = "card__img-wrap";
+    imgWrap.title = "點擊放大";
+
+    // 佔位（當圖片尚未載入或不存在時顯示）
+    const placeholder = document.createElement("div");
+    placeholder.className = "img-placeholder";
+    placeholder.innerHTML = `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><span>${filename}</span>`;
+    imgWrap.appendChild(placeholder);
+
+    const img = document.createElement("img");
+    img.alt   = title;
+    img.loading = "lazy";
+    img.src   = imgSrc;
+
+    img.addEventListener("load",  () => { img.classList.add("loaded"); placeholder.style.display = "none"; });
+    img.addEventListener("error", () => { img.style.display = "none"; });
+
+    imgWrap.appendChild(img);
+    imgWrap.addEventListener("click", () => openLightbox(imgSrc, title));
+
+    // 資訊區域
+    const info = document.createElement("div");
+    info.className = "card__info";
+
+    const titleEl = document.createElement("div");
+    titleEl.className = "card__title";
+    titleEl.textContent = title;
+
+    const filenameEl = document.createElement("div");
+    filenameEl.className = "card__filename";
+    filenameEl.textContent = filename;
+
+    const btns = document.createElement("div");
+    btns.className = "card__btns";
+
+    const btnTW = document.createElement("button");
+    btnTW.className = "btn btn--tw";
+    btnTW.textContent = "tw Prompt";
+    btnTW.title = twPrompt;
+    btnTW.addEventListener("click", async () => {
+      await copyToClipboard(twPrompt);
+      showToast(CONFIG.toastTW);
+    });
+
+    const btnEN = document.createElement("button");
+    btnEN.className = "btn btn--en";
+    btnEN.textContent = "en Prompt";
+    btnEN.title = enPrompt;
+    btnEN.addEventListener("click", async () => {
+      await copyToClipboard(enPrompt);
+      showToast(CONFIG.toastEN);
+    });
+
+    btns.appendChild(btnTW);
+    btns.appendChild(btnEN);
+
+    info.appendChild(titleEl);
+    info.appendChild(filenameEl);
+    info.appendChild(btns);
+
+    card.appendChild(imgWrap);
+    card.appendChild(info);
+
+    return card;
+  }
+
+  /* =========================================================
+   * 初始化
+   * ========================================================= */
+  const gallery = document.getElementById("gallery");
+  IMAGES.forEach(item => gallery.appendChild(buildCard(item)));
+
+  document.getElementById("imgCount").textContent = `共 ${IMAGES.length} 張圖片`;
+</script>
+</body>
+</html>
