@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>把光帶下山</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #21302a;
+      --muted: #64746a;
+      --paper: #fbfaf6;
+      --line: #d8ded4;
+      --leaf: #4f7b58;
+      --river: #377c92;
+      --sun: #b87935;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
+      line-height: 1.8;
+    }
+
+    header {
+      min-height: 82vh;
+      display: grid;
+      align-items: end;
+      position: relative;
+      overflow: hidden;
+      background: #20352f;
+    }
+
+    header::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(180deg, rgba(15, 25, 22, 0.18), rgba(15, 25, 22, 0.72)),
+        linear-gradient(90deg, rgba(15, 25, 22, 0.62), rgba(15, 25, 22, 0.05));
+    }
+
+    header img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .hero-copy {
+      width: min(920px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 0 0 9vh;
+      position: relative;
+      z-index: 1;
+      color: #fffdf4;
+    }
+
+    h1 {
+      margin: 0 0 16px;
+      font-size: clamp(2.4rem, 5vw, 5.4rem);
+      line-height: 1.05;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .deck {
+      max-width: 720px;
+      margin: 0;
+      font-size: clamp(1.02rem, 2vw, 1.24rem);
+      color: rgba(255, 253, 244, 0.9);
+    }
+
+    main {
+      width: min(1040px, calc(100% - 36px));
+      margin: 0 auto;
+      padding: 56px 0 88px;
+    }
+
+    .intro {
+      max-width: 760px;
+      margin: 0 auto 44px;
+      font-size: 1.08rem;
+    }
+
+    .scene {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(280px, 0.95fr);
+      gap: 28px;
+      align-items: center;
+      padding: 34px 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .scene:nth-child(even) {
+      grid-template-columns: minmax(280px, 0.95fr) minmax(0, 1.05fr);
+    }
+
+    .scene:nth-child(even) figure {
+      order: 2;
+    }
+
+    figure {
+      margin: 0;
+    }
+
+    figure img {
+      display: block;
+      width: 100%;
+      aspect-ratio: 4 / 5;
+      object-fit: cover;
+      border-radius: 8px;
+      box-shadow: 0 18px 42px rgba(33, 48, 42, 0.18);
+    }
+
+    figcaption {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      font-size: clamp(1.45rem, 2.6vw, 2.15rem);
+      line-height: 1.28;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0 0 14px;
+    }
+
+    .tag {
+      display: inline-block;
+      margin-bottom: 12px;
+      color: var(--river);
+      font-size: 0.92rem;
+      font-weight: 700;
+    }
+
+    .used {
+      margin-top: 14px;
+      color: var(--sun);
+      font-size: 0.92rem;
+      font-weight: 700;
+    }
+
+    .closing {
+      max-width: 780px;
+      margin: 42px auto 0;
+      padding-top: 32px;
+      border-top: 1px solid var(--line);
+      font-size: 1.08rem;
+    }
+
+    @media (max-width: 780px) {
+      header {
+        min-height: 76vh;
+      }
+
+      main {
+        width: min(100% - 28px, 640px);
+        padding-top: 38px;
+      }
+
+      .scene,
+      .scene:nth-child(even) {
+        grid-template-columns: 1fr;
+        gap: 18px;
+        padding: 28px 0;
+      }
+
+      .scene:nth-child(even) figure {
+        order: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="show001.jpg" alt="晨曦山稜上的模特寫真">
+    <div class="hero-copy">
+      <h1>把光帶下山</h1>
+      <p class="deck">我原本只是去拍一組山林寫真，最後卻和模特一起，把一整天的風、霧、溪水，還有幾個被人忘在山裡的小東西，安安靜靜帶回了山下。</p>
+    </div>
+  </header>
+
+  <main>
+    <section class="intro">
+      <p>那天清晨，我把相機包背上肩時，還以為今天的任務很單純：用粉色運動背心、牛仔短褲和山光，拍出一組乾淨、明亮、有呼吸感的照片。模特阿晴站在稜線上整理短髮，風把霧推過來，她看著我笑說：「如果今天山神願意，我們就拍到夕陽。」</p>
+      <p>我當時只顧著測光，沒想到她說的「山神願意」，後來會變成一個比通告表還嚴格的行程。</p>
+    </section>
+
+    <section class="scene">
+      <figure>
+        <img src="show001.jpg" alt="晨曦山稜甦醒">
+        <figcaption>使用圖片：show001.jpg｜晨曦山稜甦醒</figcaption>
+      </figure>
+      <div>
+        <span class="tag">第一道光</span>
+        <h2>我在稜線上等她變成早晨的一部分</h2>
+        <p>日出剛爬上遠峰，金邊落在阿晴的肩線和髮梢。我請她站直，手輕輕撥過短髮，表情不要太用力，只要像剛剛聽見一個好消息。</p>
+        <p>快門聲響起的時候，霧像幕布一樣掀開。她忽然低頭，從鞋邊撿起一小片銀色糖果紙，塞進我相機包側袋。我們都愣了一下，然後她說：「第一張就拍到山的漂亮，也順手收走山不需要的東西，挺好。」</p>
+        <p class="used">本段用圖：show001.jpg</p>
+      </div>
+    </section>
+
+    <section class="scene">
+      <figure>
+        <img src="show002.jpg" alt="霧中蕨徑">
+        <figcaption>使用圖片：show002.jpg｜霧中蕨徑</figcaption>
+      </figure>
+      <div>
+        <span class="tag">霧中的小路</span>
+        <h2>她一邊走向鏡頭，一邊替蕨葉讓路</h2>
+        <p>進入杉林後，山徑變窄，蕨類從兩側探出來。阿晴照著我的指示慢慢走近，眼睛看鏡頭，嘴角放鬆。她走得很輕，像怕踩痛雨後的泥。</p>
+        <p>我蹲低取景時，發現一條被踩歪的小枝卡在步道中央。她沒有急著擺下一個姿勢，而是先把枝條移到旁邊，笑我：「攝影師，你拍的是自然，不是把自然排除在畫面外。」那句話讓我整天都不太敢亂挪東西。</p>
+        <p class="used">本段用圖：show002.jpg</p>
+      </div>
+    </section>
+
+    <section class="scene">
+      <figure>
+        <img src="show003.jpg" alt="瀑布小憩">
+        <figcaption>使用圖片：show003.jpg｜瀑布小憩</figcaption>
+      </figure>
+      <div>
+        <span class="tag">水聲旁邊</span>
+        <h2>瀑布把我們的玩笑都洗得很亮</h2>
+        <p>瀑布下方水氣很細，我用鏡頭布擦了三次還是起霧。阿晴坐在光滑的石頭上，一膝抬起，表情安靜，像正在聽水替她講話。</p>
+        <p>拍完後她突然指著我外套說：「你現在看起來像一台會走路的除濕機。」我笑到對焦點跑掉。那是今天第一個真正失敗的快門，但也讓她接下來的笑都變得很自然。</p>
+        <p class="used">本段用圖：show003.jpg</p>
+      </div>
+    </section>
+
+    <section class="scene">
+      <figure>
+        <img src="show005.jpg" alt="溪石微光">
+        <figcaption>使用圖片：show005.jpg｜溪石微光</figcaption>
+      </figure>
+      <div>
+        <span class="tag">溪石遊戲</span>
+        <h2>我叫她保持平衡，她叫我先管好相機</h2>
+        <p>溪水淺得透明，石頭被早上的光照得像一串小小的舞台。我請阿晴張開手臂，在石上保持一點搖晃的活力。</p>
+        <p>她剛站穩，我就踩進水裡半隻鞋。她笑到差點真的失去平衡，還很有禮貌地問：「這是為了捕捉溪流生態做出的犧牲嗎？」我說是，並且要求她不要把這段寫進工作花絮。</p>
+        <p class="used">本段用圖：show005.jpg</p>
+      </div>
+    </section>
+
+    <section class="scene">
+      <figure>
+        <img src="show012.jpg" alt="雨洗杉林">
+        <figcaption>使用圖片：show012.jpg｜雨洗杉林</figcaption>
+      </figure>
+      <div>
+        <span class="tag">一場細雨</span>
+        <h2>雨下來時，我們決定不躲得太快</h2>
+        <p>午後前的杉林忽然轉冷，細雨落在樹皮上，把整片林子染成藍灰色。我請她抬手，像在確認雨是不是真的到了。</p>
+        <p>她看著掌心說，這種雨最容易讓人想起水從哪裡來。山替城市存著水，也替我們的懶惰收著帳。那一刻，我沒有立刻按快門，因為她的語氣太輕，輕到我怕相機聲會把它打斷。</p>
+        <p class="used">本段用圖：show012.jpg</p>
+      </div>
+    </section>
+
+    <section class="scene">
+      <figure>
+        <img src="show019.jpg" alt="幽蘭小徑">
+        <figcaption>使用圖片：show019.jpg｜幽蘭小徑</figcaption>
+      </figure>
+      <div>
+        <span class="tag">小花的高度</span>
+        <h2>為了拍一朵蘭，我們一起蹲得很低</h2>
+        <p>在一條不起眼的小徑上，阿晴發現幾朵藏在蕨葉旁的迷你蘭花。我本來想讓它只是背景，她卻蹲下來看了很久，像在跟一個很害羞的朋友打招呼。</p>
+        <p>我用長焦壓低角度，讓她的好奇心和那片綠色隧道疊在一起。拍完她說：「很多東西不是不重要，只是我們平常站太高。」我點頭，順便把背包裡的空水瓶壓扁，提醒自己今天不要製造新的麻煩。</p>
+        <p class="used">本段用圖：show019.jpg</p>
+      </div>
+    </section>
+
+    <section class="scene">
+      <figure>
+        <img src="show022.jpg" alt="古樹相依">
+        <figcaption>使用圖片：show022.jpg｜古樹相依</figcaption>
+      </figure>
+      <div>
+        <span class="tag">古樹面前</span>
+        <h2>她把掌心放上樹皮，我把聲音放小</h2>
+        <p>我們抵達神木時，整隊人都自然安靜下來。阿晴把手貼在粗糙樹皮上，沒有擺誇張姿勢，只是站著，像在向一位很老的長輩問好。</p>
+        <p>我拍了幾張後放下相機。那棵樹不需要我們替它加戲。它只是活得夠久，久到可以讓兩個趕通告的人突然記得：森林不是拍攝場景，森林本來就在這裡。</p>
+        <p class="used">本段用圖：show022.jpg</p>
+      </div>
+    </section>
+
+    <section class="scene">
+      <figure>
+        <img src="show025.jpg" alt="茶山晨光">
+        <figcaption>使用圖片：show025.jpg｜茶山晨光</figcaption>
+      </figure>
+      <div>
+        <span class="tag">茶壟之間</span>
+        <h2>到了茶園，綠色突然變得有秩序</h2>
+        <p>茶山的線條像被人用梳子梳過，整齊到我一開始反而不知道怎麼構圖。阿晴站進茶壟之間，手指輕碰葉尖，笑得很清爽。</p>
+        <p>茶農經過時提醒我們不要踩進剛修過的區域。阿晴立刻道歉，還拉著我重新走回步道。她小聲說：「美感如果要靠破壞才能成立，那就太沒本事了。」我把這句記在手機裡，後來成了這組照片的隱形標題。</p>
+        <p class="used">本段用圖：show025.jpg</p>
+      </div>
+    </section>
+
+    <section class="scene">
+      <figure>
+        <img src="show058.jpg" alt="靜謐神木林">
+        <figcaption>使用圖片：show058.jpg｜靜謐神木林</figcaption>
+      </figure>
+      <div>
+        <span class="tag">山中小祠</span>
+        <h2>我們沒有許願，只把袋子綁緊</h2>
+        <p>下午的森林裡有一座小小的山祠，木頭舊了，苔也厚了。阿晴站在前方，雙手自然合著，不像表演虔誠，更像是在提醒自己不要吵。</p>
+        <p>那時我們的垃圾袋已經裝了糖果紙、斷掉的塑膠束帶、半片濕掉的標籤。她說：「這些東西如果留在山裡，會比我們的照片待得更久。」我突然覺得背上的相機包變輕了，垃圾袋反而變得很有重量。</p>
+        <p class="used">本段用圖：show058.jpg</p>
+      </div>
+    </section>
+
+    <section class="scene">
+      <figure>
+        <img src="show060.jpg" alt="松果小徑細節">
+        <figcaption>使用圖片：show060.jpg｜松果小徑細節</figcaption>
+      </figure>
+      <div>
+        <span class="tag">松果與誤會</span>
+        <h2>她撿起松果，我差點以為又發現垃圾</h2>
+        <p>在松果鋪滿的小徑上，我請阿晴蹲下，手剛碰到一顆松果，我就本能地把垃圾袋遞過去。她抬頭看我三秒，然後笑到整個肩膀都抖。</p>
+        <p>「攝影師，這顆是山自己做的。」她把松果放回原位，像替它辦理無罪釋放。我拍下她那個調皮表情，覺得今天最環保的教育，可能就是學會分辨什麼該帶走，什麼該留下。</p>
+        <p class="used">本段用圖：show060.jpg</p>
+      </div>
+    </section>
+
+    <section class="scene">
+      <figure>
+        <img src="show064.jpg" alt="藍溪穿越">
+        <figcaption>使用圖片：show064.jpg｜藍溪穿越</figcaption>
+      </figure>
+      <div>
+        <span class="tag">第二次過溪</span>
+        <h2>這次我終於沒有把鞋踩濕</h2>
+        <p>藍色溪水從石縫間穿過，亮處像玻璃，陰影像墨。阿晴一步踩上石頭，雙手自然打開，笑得像早就知道我會緊張。</p>
+        <p>我在岸邊退了半步，給她留出完整的水面和身體線條。她安全走過來後，第一句不是問拍得怎樣，而是問：「剛剛那邊是不是有一個瓶蓋？」我們回頭找了三分鐘，最後真的在石縫裡找到它。那個瓶蓋很小，小到幾乎不值得一張照片，卻值得我們彎一次腰。</p>
+        <p class="used">本段用圖：show064.jpg</p>
+      </div>
+    </section>
+
+    <section class="scene">
+      <figure>
+        <img src="show065.jpg" alt="霧湖清晨">
+        <figcaption>使用圖片：show065.jpg｜霧湖清晨</figcaption>
+      </figure>
+      <div>
+        <span class="tag">安靜的湖</span>
+        <h2>湖面沒有責備我們，只把我們照出來</h2>
+        <p>霧湖旁的風很慢，樹影倒在水裡，像另一座更安靜的森林。阿晴站在岸邊，手插在短褲口袋裡，笑得很淡。</p>
+        <p>我在觀景台外緣停下來，沒有再往濕軟的湖岸踩。那天我們已經學乖：好照片不是離景物越近越好，而是知道自己該停在哪裡。她看著倒影說：「我們今天好像不是來拍山，是來練習不要打擾山。」</p>
+        <p class="used">本段用圖：show065.jpg</p>
+      </div>
+    </section>
+
+    <section class="scene">
+      <figure>
+        <img src="show071.jpg" alt="金色步道">
+        <figcaption>使用圖片：show071.jpg｜金色步道</figcaption>
+      </figure>
+      <div>
+        <span class="tag">下山的光</span>
+        <h2>金色步道上，她走向鏡頭，也走向結束</h2>
+        <p>傍晚的林道被斜光切成一段一段，葉子亮得像剛擦過。阿晴朝鏡頭走來，肩膀放鬆，笑容裡有一整天的疲倦，也有一點完成任務的得意。</p>
+        <p>我們把今天撿到的小東西排在一張廢紙上清點，數量不多，卻像某種安靜的收據。她問我會不會把這件事寫進故事。我說會，但不會寫得太偉大，因為我們只是做了該做的小事。</p>
+        <p class="used">本段用圖：show071.jpg</p>
+      </div>
+    </section>
+
+    <section class="scene">
+      <figure>
+        <img src="show072.jpg" alt="峰頂餘暉">
+        <figcaption>使用圖片：show072.jpg｜峰頂餘暉</figcaption>
+      </figure>
+      <div>
+        <span class="tag">最後一張</span>
+        <h2>餘暉退去前，我終於明白今天真正的主角</h2>
+        <p>最後一張在峰頂拍。天空從粉色退到藍色，山的輪廓一層一層暗下來。阿晴坐在安全的岩邊，膝蓋微彎，神情平靜。</p>
+        <p>我按下快門時，忽然覺得這不是一組關於模特有多漂亮的照片，也不只是攝影師追光的一天。這是一個人站進自然裡，學著把自己放小一點的紀錄。回程時，垃圾袋在我手上晃啊晃，阿晴走在前面，回頭對我說：「明天你的鞋會乾吧？」</p>
+        <p>我說會。可是我希望今天這一點點被山教會的事，不要那麼快乾掉。</p>
+        <p class="used">本段用圖：show072.jpg</p>
+      </div>
+    </section>
+
+    <section class="closing">
+      <p>這天我們一共用了十四張照片：show001、show002、show003、show005、show012、show019、show022、show025、show058、show060、show064、show065、show071、show072。它們串起來像一條從晨光走到餘暉的路，也像一次小小的提醒：寫真可以留下人的樣子，好的拍攝方式，應該也要盡量留下山原本的樣子。</p>
+    </section>
+  </main>
+</body>
+</html>
