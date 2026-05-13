@@ -1,15 +1,550 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="zh-Hant">
 <head>
-    <title>18+/R 限制級實驗室 輔助頁</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>提示詞畫廊首頁</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f5ef;
+      --ink: #22272f;
+      --muted: #67707b;
+      --paper: #fffdf8;
+      --line: #ded9cf;
+      --accent: #2f7d7e;
+      --accent-strong: #c1543e;
+      --deep: #142c35;
+      --gold: #b98535;
+      --shadow: 0 22px 52px rgba(36, 42, 49, 0.16);
+      --radius: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(135deg, rgba(47, 125, 126, 0.12), transparent 32rem),
+        linear-gradient(315deg, rgba(193, 84, 62, 0.1), transparent 30rem),
+        var(--bg);
+      color: var(--ink);
+      font-family: "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
+      line-height: 1.7;
+    }
+
+    a {
+      color: inherit;
+    }
+
+    img {
+      display: block;
+      max-width: 100%;
+    }
+
+    .site-header {
+      width: min(1180px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 22px 0 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .brand img {
+      width: 44px;
+      height: 44px;
+      object-fit: contain;
+    }
+
+    .top-nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .top-nav a,
+    .button {
+      min-height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(20, 44, 53, 0.14);
+      border-radius: var(--radius);
+      padding: 8px 14px;
+      background: rgba(255, 253, 248, 0.72);
+      text-decoration: none;
+      font-size: 0.94rem;
+      font-weight: 700;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    }
+
+    .top-nav a:hover,
+    .button:hover,
+    .gallery-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .hero {
+      width: min(1180px, calc(100% - 40px));
+      margin: 36px auto 0;
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) minmax(360px, 1.1fr);
+      gap: 44px;
+      align-items: center;
+      min-height: calc(100vh - 160px);
+      padding-bottom: 46px;
+    }
+
+    .eyebrow {
+      margin: 0 0 14px;
+      color: var(--accent-strong);
+      font-size: 0.92rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2.35rem, 6vw, 5.7rem);
+      line-height: 1.02;
+      letter-spacing: 0;
+    }
+
+    .hero-copy {
+      margin: 22px 0 0;
+      max-width: 610px;
+      color: var(--muted);
+      font-size: clamp(1.02rem, 2vw, 1.2rem);
+    }
+
+    .hero-actions {
+      margin-top: 30px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .button.primary {
+      background: var(--deep);
+      border-color: var(--deep);
+      color: #fffdf8;
+      box-shadow: 0 14px 32px rgba(20, 44, 53, 0.24);
+    }
+
+    .hero-board {
+      display: grid;
+      grid-template-columns: 1fr 0.72fr;
+      grid-template-rows: 210px 190px 150px;
+      gap: 14px;
+    }
+
+    .hero-tile {
+      position: relative;
+      overflow: hidden;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      background: #d8d2c5;
+    }
+
+    .hero-tile:first-child {
+      grid-row: span 2;
+    }
+
+    .hero-tile:nth-child(3) {
+      grid-column: span 2;
+    }
+
+    .hero-tile img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .hero-tile::after {
+      content: attr(data-label);
+      position: absolute;
+      left: 14px;
+      bottom: 14px;
+      max-width: calc(100% - 28px);
+      border-radius: var(--radius);
+      padding: 7px 10px;
+      background: rgba(255, 253, 248, 0.88);
+      color: var(--deep);
+      font-size: 0.86rem;
+      font-weight: 800;
+      box-shadow: 0 8px 18px rgba(20, 44, 53, 0.16);
+    }
+
+    main {
+      padding: 20px 0 72px;
+    }
+
+    .section {
+      width: min(1180px, calc(100% - 40px));
+      margin: 0 auto;
+    }
+
+    .section-head {
+      display: grid;
+      grid-template-columns: minmax(0, 0.78fr) minmax(260px, 0.22fr);
+      gap: 24px;
+      align-items: end;
+      margin-bottom: 24px;
+      padding-top: 42px;
+      border-top: 1px solid var(--line);
+    }
+
+    h2 {
+      margin: 0;
+      font-size: clamp(1.7rem, 3vw, 2.7rem);
+      line-height: 1.18;
+      letter-spacing: 0;
+    }
+
+    .section-head p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .gallery-card {
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border: 1px solid rgba(20, 44, 53, 0.12);
+      border-radius: var(--radius);
+      background: var(--paper);
+      text-decoration: none;
+      box-shadow: 0 14px 34px rgba(36, 42, 49, 0.08);
+      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    }
+
+    .gallery-card:hover {
+      border-color: rgba(47, 125, 126, 0.38);
+      box-shadow: var(--shadow);
+    }
+
+    .card-media {
+      position: relative;
+      aspect-ratio: 4 / 5;
+      overflow: hidden;
+      background: #e4dfd3;
+    }
+
+    .card-media img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.28s ease;
+    }
+
+    .gallery-card:hover .card-media img {
+      transform: scale(1.04);
+    }
+
+    .tag {
+      position: absolute;
+      left: 12px;
+      top: 12px;
+      border-radius: var(--radius);
+      padding: 5px 9px;
+      background: rgba(20, 44, 53, 0.82);
+      color: #fffdf8;
+      font-size: 0.78rem;
+      font-weight: 800;
+    }
+
+    .card-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 18px;
+    }
+
+    .card-body h3 {
+      margin: 0;
+      font-size: 1.16rem;
+      line-height: 1.35;
+      letter-spacing: 0;
+    }
+
+    .card-body p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.96rem;
+    }
+
+    .meta {
+      margin-top: auto;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--accent);
+      font-size: 0.88rem;
+      font-weight: 800;
+    }
+
+    .feature-band {
+      margin-top: 44px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--line);
+    }
+
+    .feature {
+      background: rgba(255, 253, 248, 0.74);
+      padding: 22px;
+    }
+
+    .feature strong {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--deep);
+      font-size: 1.02rem;
+    }
+
+    .feature span {
+      color: var(--muted);
+      font-size: 0.94rem;
+    }
+
+    .footer {
+      width: min(1180px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 26px 0 36px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    @media (max-width: 920px) {
+      .site-header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .top-nav {
+        justify-content: flex-start;
+      }
+
+      .hero {
+        grid-template-columns: 1fr;
+        min-height: auto;
+        gap: 30px;
+      }
+
+      .hero-board {
+        grid-template-rows: 190px 170px 140px;
+      }
+
+      .section-head {
+        grid-template-columns: 1fr;
+      }
+
+      .gallery-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .feature-band {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .site-header,
+      .hero,
+      .section,
+      .footer {
+        width: min(100% - 28px, 1180px);
+      }
+
+      .brand span {
+        font-size: 0.96rem;
+      }
+
+      .top-nav a,
+      .button {
+        flex: 1 1 auto;
+        padding-inline: 10px;
+        font-size: 0.88rem;
+      }
+
+      .hero {
+        margin-top: 28px;
+        padding-bottom: 34px;
+      }
+
+      .hero-board {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 170px 130px;
+        gap: 10px;
+      }
+
+      .hero-tile:first-child {
+        grid-row: span 1;
+      }
+
+      .hero-tile:nth-child(3) {
+        grid-column: span 2;
+      }
+
+      .hero-tile::after {
+        left: 10px;
+        bottom: 10px;
+        font-size: 0.78rem;
+      }
+
+      .gallery-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .card-media {
+        aspect-ratio: 16 / 11;
+      }
+    }
+  </style>
 </head>
 <body>
-    <center>
-        <a href="https://vocus.cc/salon/aicg18" target="_blank"><img src="logo.png" border="0"></a>
-    </center>
-    <p>1.提示詞畫廊 - <a href="show_face.html">臉部情緒表達篇</a>。</p>
-    <p>2.提示詞畫廊 - <a href="show_car.html">車內副駕動作姿勢篇</a>。</p>
-    <p>2.提示詞畫廊 - <a href="show_show.html">山林寫真姿勢篇</a>。</p>
-    
+  <header class="site-header" aria-label="網站導覽">
+    <a class="brand" href="https://vocus.cc/salon/aicg18" target="_blank" rel="noopener">
+      <img src="logo.png" alt="AI CG 18 logo">
+      <span>提示詞畫廊</span>
+    </a>
+    <nav class="top-nav" aria-label="主要連結">
+      <a href="show_face.html">臉部情緒</a>
+      <a href="show_car.html">車內副駕</a>
+      <a href="show_show.html">山林寫真</a>
+      <a href="show/photo_story1.html">照片故事</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <div>
+      <p class="eyebrow">AI image prompt gallery</p>
+      <h1>從姿勢、情緒到場景，把生圖提示整理成好逛的靈感入口。</h1>
+      <p class="hero-copy">這裡收集不同主題的提示詞範例與對應圖片，適合快速比較構圖、表情、光線與敘事感，也能直接進入各主題頁查看完整清單。</p>
+      <div class="hero-actions">
+        <a class="button primary" href="#galleries">瀏覽主題</a>
+        <a class="button" href="https://vocus.cc/salon/aicg18" target="_blank" rel="noopener">前往 Vocus</a>
+      </div>
+    </div>
+    <div class="hero-board" aria-label="精選圖片預覽">
+      <figure class="hero-tile" data-label="山林寫真">
+        <img src="show/show001.jpg" alt="晨曦山林寫真預覽">
+      </figure>
+      <figure class="hero-tile" data-label="臉部情緒">
+        <img src="face/face001.png" alt="喜悅表情預覽">
+      </figure>
+      <figure class="hero-tile" data-label="車內副駕">
+        <img src="car/car002.jpg" alt="車內副駕姿勢預覽">
+      </figure>
+    </div>
+  </section>
+
+  <main id="galleries">
+    <section class="section">
+      <div class="section-head">
+        <h2>四個入口，依照你想找的靈感切換。</h2>
+        <p>卡片內容都集中在首頁同一區，之後要新增主題、換封面或修改說明，直接複製一張卡片再調整文字即可。</p>
+      </div>
+
+      <div class="gallery-grid">
+        <a class="gallery-card" href="show_face.html">
+          <div class="card-media">
+            <img src="face/face006.png" alt="臉部情緒表達篇封面">
+            <span class="tag">Expression</span>
+          </div>
+          <div class="card-body">
+            <h3>臉部情緒表達篇</h3>
+            <p>用喜悅、憂鬱、驚訝、羞怯等表情切入，觀察臉部細節、肢體反應與光線情緒。</p>
+            <div class="meta"><span>72 張範例</span><span>查看畫廊</span></div>
+          </div>
+        </a>
+
+        <a class="gallery-card" href="show_car.html">
+          <div class="card-media">
+            <img src="car/car006.jpg" alt="車內副駕動作姿勢篇封面">
+            <span class="tag">Pose</span>
+          </div>
+          <div class="card-body">
+            <h3>車內副駕動作姿勢篇</h3>
+            <p>整理乘坐、互動、看窗外、遞物、整理頭髮等動作，適合研究車內視角與生活感構圖。</p>
+            <div class="meta"><span>72 張範例</span><span>查看畫廊</span></div>
+          </div>
+        </a>
+
+        <a class="gallery-card" href="show_show.html">
+          <div class="card-media">
+            <img src="show/show007.jpg" alt="山林寫真姿勢篇封面">
+            <span class="tag">Outdoor</span>
+          </div>
+          <div class="card-body">
+            <h3>山林寫真姿勢篇</h3>
+            <p>從稜線、蕨徑、瀑布、竹林到溪石，聚焦戶外寫真的姿勢、環境層次與自然光。</p>
+            <div class="meta"><span>72 張範例</span><span>查看畫廊</span></div>
+          </div>
+        </a>
+
+        <a class="gallery-card" href="show/photo_story1.html">
+          <div class="card-media">
+            <img src="show/show064.jpg" alt="把光帶下山照片故事封面">
+            <span class="tag">Story</span>
+          </div>
+          <div class="card-body">
+            <h3>照片故事：把光帶下山</h3>
+            <p>把山林寫真串成一段可閱讀的照片故事，用連續畫面呈現旅程、節奏與敘事感。</p>
+            <div class="meta"><span>14 段故事</span><span>開始閱讀</span></div>
+          </div>
+        </a>
+      </div>
+
+      <div class="feature-band" aria-label="首頁特色">
+        <div class="feature">
+          <strong>快速掃描</strong>
+          <span>封面圖、標籤與摘要讓訪客不用先點進去，也能知道每個主題的差異。</span>
+        </div>
+        <div class="feature">
+          <strong>手機友善</strong>
+          <span>桌機四欄、平板兩欄、手機單欄，導覽與按鈕會自動換行，不擠在一起。</span>
+        </div>
+        <div class="feature">
+          <strong>維護簡單</strong>
+          <span>樣式集中在本頁，主題卡片結構一致，新增或調整內容時比較不容易改壞版面。</span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>提示詞畫廊首頁</span>
+  </footer>
 </body>
 </html>
