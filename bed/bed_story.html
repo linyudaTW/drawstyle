@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>床邊的光，和沒說出口的那句話</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #23201d;
+      --muted: #766d64;
+      --paper: #fffaf3;
+      --line: #ded0c0;
+      --accent: #9b5d47;
+      --panel: #ffffff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Noto Serif TC", "PMingLiU", "Microsoft JhengHei", serif;
+      background: var(--paper);
+      color: var(--ink);
+      line-height: 1.85;
+    }
+
+    header {
+      min-height: 78vh;
+      display: grid;
+      align-items: end;
+      background:
+        linear-gradient(180deg, rgba(20, 17, 14, 0.06), rgba(20, 17, 14, 0.62)),
+        url("bed001.jpg") center / cover no-repeat;
+      color: #fffaf3;
+      padding: 9vw 7vw;
+    }
+
+    .hero-inner {
+      max-width: 860px;
+    }
+
+    .eyebrow {
+      margin: 0 0 18px;
+      font: 600 13px/1.4 "Microsoft JhengHei", sans-serif;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      opacity: 0.82;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(38px, 7vw, 86px);
+      line-height: 1.05;
+      letter-spacing: 0;
+      text-shadow: 0 2px 28px rgba(0, 0, 0, 0.38);
+    }
+
+    .subtitle {
+      max-width: 700px;
+      margin: 28px 0 0;
+      font-size: clamp(18px, 2.1vw, 24px);
+      text-shadow: 0 2px 18px rgba(0, 0, 0, 0.42);
+    }
+
+    main {
+      width: min(1120px, calc(100% - 36px));
+      margin: 0 auto;
+      padding: 70px 0 90px;
+    }
+
+    .intro {
+      max-width: 760px;
+      margin: 0 auto 56px;
+      font-size: 20px;
+    }
+
+    .chapter {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(280px, 0.95fr);
+      gap: 34px;
+      align-items: center;
+      padding: 44px 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .chapter:nth-of-type(even) {
+      grid-template-columns: minmax(280px, 0.95fr) minmax(0, 1.05fr);
+    }
+
+    .chapter:nth-of-type(even) figure {
+      order: -1;
+    }
+
+    figure {
+      margin: 0;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 48px rgba(65, 42, 22, 0.12);
+    }
+
+    img {
+      display: block;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      object-fit: cover;
+    }
+
+    figcaption {
+      padding: 12px 16px 14px;
+      color: var(--muted);
+      font: 14px/1.6 "Microsoft JhengHei", sans-serif;
+      border-top: 1px solid var(--line);
+    }
+
+    h2 {
+      margin: 0 0 16px;
+      font-size: clamp(25px, 3vw, 36px);
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0 0 18px;
+    }
+
+    .note {
+      color: var(--accent);
+      font: 600 15px/1.5 "Microsoft JhengHei", sans-serif;
+      margin-bottom: 12px;
+    }
+
+    .ending {
+      max-width: 820px;
+      margin: 58px auto 0;
+      padding-top: 42px;
+      border-top: 1px solid var(--line);
+      font-size: 20px;
+    }
+
+    .used {
+      margin-top: 44px;
+      padding: 22px 24px;
+      background: #fff;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font: 15px/1.8 "Microsoft JhengHei", sans-serif;
+    }
+
+    @media (max-width: 780px) {
+      header {
+        min-height: 72vh;
+        padding: 70px 22px 42px;
+      }
+
+      main {
+        width: min(100% - 24px, 640px);
+        padding-top: 42px;
+      }
+
+      .chapter,
+      .chapter:nth-of-type(even) {
+        grid-template-columns: 1fr;
+        gap: 22px;
+        padding: 34px 0;
+      }
+
+      .chapter:nth-of-type(even) figure {
+        order: 0;
+      }
+
+      .intro,
+      .ending {
+        font-size: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="hero-inner">
+      <p class="eyebrow">A photographer's bedside notes</p>
+      <h1>床邊的光，和沒說出口的那句話</h1>
+      <p class="subtitle">我只是替她拍一組生活寫真。至少，一開始我是這樣告訴自己的。</p>
+    </div>
+  </header>
+
+  <main>
+    <section class="intro">
+      <p>她說想拍一組「不像寫真」的寫真，最好像是我剛好帶著相機闖進她的一天。她是我很熟的朋友，熟到可以在我面前賴床、翻白眼、把咖啡喝到嘴角，卻又不夠熟到我能坦白說：其實我早就知道她在光裡很好看。</p>
+      <p>那天我帶了兩顆鏡頭、一台補光燈，還有一個非常不專業的決心：不要把心跳拍進照片裡。</p>
+    </section>
+
+    <section class="chapter">
+      <div>
+        <p class="note">Photo bed001</p>
+        <h2>第一張，她還沒完全醒</h2>
+        <p>晨光從白紗窗簾滲進來時，她伸了個很長的懶腰，像是整個世界只剩下被褥的重量和她半閉的眼睛。我蹲在床邊，鏡頭幾乎與床沿同高，按下快門前提醒她：「妳笑得太滿足了，這會讓觀眾以為人生很容易。」</p>
+        <p>她沒睜眼，只是回我：「那你把它拍難一點。」</p>
+      </div>
+      <figure>
+        <img src="bed001.jpg" alt="Photo bed001: morning awakening">
+        <figcaption>使用照片：bed001.jpg。晨光、伸懶腰、拍攝開始的第一個呼吸。</figcaption>
+      </figure>
+    </section>
+
+    <section class="chapter">
+      <div>
+        <p class="note">Photo bed006</p>
+        <h2>咖啡的蒸氣替她打了柔焦</h2>
+        <p>她盤腿坐起來，雙手捧著馬克杯，閉眼聞咖啡香。我說這張要很安靜，她卻忽然問：「你每次拍人，都會離這麼近嗎？」</p>
+        <p>我假裝在調焦距，說：「只在被攝者需要有人確認她今天也很好看的時候。」她睜開眼，杯口的白霧剛好擋住她的笑，我沒拍到完整表情，卻拍到了她把視線躲開的那一秒。</p>
+      </div>
+      <figure>
+        <img src="bed006.jpg" alt="Photo bed006: coffee in bed">
+        <figcaption>使用照片：bed006.jpg。床上咖啡，暖色木質背景，像一次不小心靠近的對話。</figcaption>
+      </figure>
+    </section>
+
+    <section class="chapter">
+      <div>
+        <p class="note">Photo bed013</p>
+        <h2>梳頭時，她突然變得不像平常</h2>
+        <p>她坐在床沿梳長髮，鏡子裡的她比平常安靜。法式床架上的雕花讓畫面有點隆重，像某種老電影。她看著鏡中我的倒影，問：「你覺得我適合被拍得漂亮，還是被拍得真實？」</p>
+        <p>我說：「如果是妳，這兩件事不衝突。」她停了一下，梳子卡在髮尾，然後說我今天說話很危險。</p>
+      </div>
+      <figure>
+        <img src="bed013.jpg" alt="Photo bed013: brushing hair">
+        <figcaption>使用照片：bed013.jpg。梳髮、鏡面、她第一次認真看回鏡頭外的我。</figcaption>
+      </figure>
+    </section>
+
+    <section class="chapter">
+      <div>
+        <p class="note">Photo bed023</p>
+        <h2>她說這不是約會，只是道具需要口紅</h2>
+        <p>香水瓶和首飾盒散在床邊，她趴著對小鏡子補口紅，腳尖在空中一下一下晃。我提醒她別笑，因為口紅會歪。她說：「你不要逗我，我就不會笑。」</p>
+        <p>我很想說，問題是我什麼都還沒做。後來我才明白，有些笑不是被逗出來的，是因為房間裡多了一個知道她秘密表情的人。</p>
+      </div>
+      <figure>
+        <img src="bed023.jpg" alt="Photo bed023: applying lipstick">
+        <figcaption>使用照片：bed023.jpg。約會前的口紅、香水與首飾，情緒開始變得亮。</figcaption>
+      </figure>
+    </section>
+
+    <section class="chapter">
+      <div>
+        <p class="note">Photo bed028</p>
+        <h2>草莓是她臨時加戲</h2>
+        <p>我們本來只安排一張床上野餐，她卻拿起草莓，偏要在快門前一刻停住。我說：「這樣太刻意。」她挑眉：「攝影師先生，你剛剛明明有按快門。」</p>
+        <p>我無法反駁。那張照片裡，她的眼神像是在問我敢不敢承認：有些刻意其實很好看，有些心動也是。</p>
+      </div>
+      <figure>
+        <img src="bed028.jpg" alt="Photo bed028: bed picnic">
+        <figcaption>使用照片：bed028.jpg。水果、甜點、床單上的小型野餐，也是她最會捉弄人的一幕。</figcaption>
+      </figure>
+    </section>
+
+    <section class="chapter">
+      <div>
+        <p class="note">Photo bed031</p>
+        <h2>手機亮起時，我以為故事要岔開</h2>
+        <p>午後突然靜下來。她盯著枕邊的手機，手指無意識摳著床單。那一張我拍得很近，近到可以看見焦慮從她眼神裡慢慢浮上來。</p>
+        <p>我問是不是有事。她說沒有，只是在等一個訊息。我差點問是誰，最後只把相機放低。朋友的分寸有時候很薄，薄得像窗簾上的光，一碰就破。</p>
+      </div>
+      <figure>
+        <img src="bed031.jpg" alt="Photo bed031: waiting for a message">
+        <figcaption>使用照片：bed031.jpg。等訊息的焦慮，讓拍攝短暫失去玩笑。</figcaption>
+      </figure>
+    </section>
+
+    <section class="chapter">
+      <div>
+        <p class="note">Photo bed034</p>
+        <h2>她把膝蓋抱得很緊</h2>
+        <p>我退到房間另一頭，拍她坐在床上抱著膝蓋。畫面空得有點狠，像是她忽然被世界留在中央。快門聲在房裡變得很明顯，我每按一次，都覺得自己像在偷看她不願意說出口的部分。</p>
+        <p>拍完她問：「這張是不是不好看？」我說：「很好看，只是我不太忍心。」她沉默了兩秒，然後笑我太戲劇化。</p>
+      </div>
+      <figure>
+        <img src="bed034.jpg" alt="Photo bed034: embracing solitude">
+        <figcaption>使用照片：bed034.jpg。抱膝、冷光、空房間，故事中最安靜的一張。</figcaption>
+      </figure>
+    </section>
+
+    <section class="chapter">
+      <div>
+        <p class="note">Photo bed042</p>
+        <h2>她用床單把沉默掀起來</h2>
+        <p>大概是不想讓氣氛一直往下沉，她忽然抓起白色床單，用力往上一拋。布料在空中鼓起來，陽光從纖維中穿過，我差點忘了按快門。</p>
+        <p>她隔著飄起的床單喊：「你還在不忍心嗎？」我說：「現在比較像來不及。」她大笑，整個房間重新有了風。</p>
+      </div>
+      <figure>
+        <img src="bed042.jpg" alt="Photo bed042: making the bed">
+        <figcaption>使用照片：bed042.jpg。飛起的床單，把下午的悶悶情緒翻了過去。</figcaption>
+      </figure>
+    </section>
+
+    <section class="chapter">
+      <div>
+        <p class="note">Photo bed058</p>
+        <h2>雨來得很剛好</h2>
+        <p>傍晚下雨，她趴在窗邊看水痕往下滑。那時我們都累了，反而拍出一種不需要表演的樣子。她說小時候很喜歡下雨，因為雨聲會讓人覺得自己不是唯一安靜的人。</p>
+        <p>我沒有接話，只調暗曝光。她的側臉在冷色的窗光裡很柔，柔得讓我想起很多不該在拍攝現場想的事。</p>
+      </div>
+      <figure>
+        <img src="bed058.jpg" alt="Photo bed058: rainy day daydreaming">
+        <figcaption>使用照片：bed058.jpg。雨窗、側臉、冷色調，是故事裡最像電影的一格。</figcaption>
+      </figure>
+    </section>
+
+    <section class="chapter">
+      <div>
+        <p class="note">Photo bed060</p>
+        <h2>被窩裡的祕密基地</h2>
+        <p>晚上我們把被子撐成小帳篷，她拿手電筒假裝在讀一本不存在的偵探小說。我把相機伸進被窩裡，她壓低聲音說：「攝影師，這裡禁止心術不正的人入內。」</p>
+        <p>我說那我可能要退出。她愣了一下，手電筒光照在我臉上，像審問，也像邀請。最後她只是說：「先拍完再說。」</p>
+      </div>
+      <figure>
+        <img src="bed060.jpg" alt="Photo bed060: secrets under covers">
+        <figcaption>使用照片：bed060.jpg。被窩、手電筒、玩笑話裡藏了一點真話。</figcaption>
+      </figure>
+    </section>
+
+    <section class="chapter">
+      <div>
+        <p class="note">Photo bed063</p>
+        <h2>我們真的等到天亮</h2>
+        <p>本來說拍到十點就收工，結果她裹著毯子坐在窗邊時，窗外已經有了淡淡的藍。她看著黎明，我看著觀景窗裡的她。那一刻我突然覺得，這組照片不是在記錄她的一天，而是在記錄我怎麼慢慢承認自己喜歡她。</p>
+        <p>她沒有轉頭，只問：「你拍到了嗎？」我說：「拍到了。」但我知道她問的可能不是照片。</p>
+      </div>
+      <figure>
+        <img src="bed063.jpg" alt="Photo bed063: waiting for dawn">
+        <figcaption>使用照片：bed063.jpg。藍調黎明，拍攝結束前最像告白的一張。</figcaption>
+      </figure>
+    </section>
+
+    <section class="chapter">
+      <div>
+        <p class="note">Photo bed071</p>
+        <h2>早餐像一個不正式的答案</h2>
+        <p>她說既然都天亮了，乾脆再拍最後一張。早餐托盤放在她膝前，果汁在晨光裡亮得不像真的。她準備喝之前忽然停住，隔著鏡頭看我：「你下次還願意幫我拍嗎？」</p>
+        <p>我說：「只要妳還願意讓我看見。」這句話太直白，她低頭笑了。於是我按下最後一次快門，把那個笑留在了早餐、花園光和我終於失守的早晨裡。</p>
+      </div>
+      <figure>
+        <img src="bed071.jpg" alt="Photo bed071: breakfast in bed">
+        <figcaption>使用照片：bed071.jpg。早餐、花園晨光，以及一個沒有明說卻已經聽懂的邀請。</figcaption>
+      </figure>
+    </section>
+
+    <section class="ending">
+      <p>整理照片時，我發現自己替每張圖都留下了比檔名更長的註解。她問我這算不算職業病。我說算吧，攝影師總是很貪心，想把光、表情、空氣裡差一點說出口的話都存起來。</p>
+      <p>她回我：「那你這次存得還不錯。」</p>
+      <p>我沒有問她指的是照片，還是別的什麼。故事如果剛好停在這裡，就像一張留白足夠的好照片：你知道它還會繼續，只是下一次快門還沒響。</p>
+    </section>
+
+    <section class="used">
+      <strong>本篇選用照片：</strong>
+      bed001.jpg、bed006.jpg、bed013.jpg、bed023.jpg、bed028.jpg、bed031.jpg、bed034.jpg、bed042.jpg、bed058.jpg、bed060.jpg、bed063.jpg、bed071.jpg
+    </section>
+  </main>
+</body>
+</html>
