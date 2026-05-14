@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>提示詞畫廊 - 床鋪互動姿勢篇</title>
+  <style>
+    /* ===== 全域設定 ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --card-bg: #1e2130;
+      --card-hover: #252840;
+      --border: #2e3350;
+      --accent: #7c6ff7;
+      --accent2: #5bc8d4;
+      --text-main: #e8eaf6;
+      --text-sub: #9ba1c0;
+      --btn-tw-bg: #3d3580;
+      --btn-tw-hover: #5548b0;
+      --btn-en-bg: #1e5a63;
+      --btn-en-hover: #2a7d8a;
+      --radius: 12px;
+      --transition: 0.22s ease;
+
+      /* ===== 可調整：圖片資料夾路徑 ===== */
+      --img-folder: face;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text-main);
+      font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+      min-height: 100vh;
+    }
+
+    /* ===== 頁首 ===== */
+    header {
+      text-align: center;
+      padding: 48px 24px 24px;
+      background: linear-gradient(160deg, #12142099 0%, transparent 100%);
+      border-bottom: 1px solid var(--border);
+    }
+
+    header h1 {
+      font-size: clamp(1.4rem, 4vw, 2.4rem);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 14px;
+    }
+
+    header .subtitle {
+      font-size: clamp(0.8rem, 2vw, 0.95rem);
+      color: var(--text-sub);
+    }
+
+    header .subtitle a {
+      color: var(--accent2);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: border-color var(--transition);
+    }
+    header .subtitle a:hover { border-color: var(--accent2); }
+
+    .img-count {
+      display: inline-block;
+      margin-top: 12px;
+      font-size: 0.82rem;
+      color: var(--text-sub);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 14px;
+    }
+
+    /* ===== 圖片格線 ===== */
+    main {
+      padding: 28px 20px 60px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 20px;
+    }
+
+    /* ===== 圖片卡片 ===== */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: transform var(--transition), box-shadow var(--transition), background var(--transition);
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 28px rgba(124, 111, 247, 0.18);
+      background: var(--card-hover);
+    }
+
+    .card__img-wrap {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      overflow: hidden;
+      cursor: zoom-in;
+      background: #10111a;
+    }
+
+    .card__img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.35s ease, opacity 0.3s ease;
+      opacity: 0;
+    }
+
+    .card__img-wrap img.loaded { opacity: 1; }
+    .card__img-wrap:hover img { transform: scale(1.06); }
+
+    /* 圖片載入失敗時的佔位 */
+    .card__img-wrap .img-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: var(--text-sub);
+      font-size: 0.75rem;
+      background: #14161f;
+      position: absolute;
+      inset: 0;
+    }
+    .card__img-wrap { position: relative; }
+    .card__img-wrap .img-placeholder svg { opacity: 0.35; }
+
+    .card__info {
+      padding: 12px 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1;
+    }
+
+    .card__title {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--text-main);
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    .card__filename {
+      font-size: 0.72rem;
+      color: var(--text-sub);
+      text-align: center;
+      opacity: 0.7;
+    }
+
+    .card__btns {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 6px 4px;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 0.03em;
+      transition: background var(--transition), transform 0.12s ease;
+      font-family: inherit;
+    }
+
+    .btn:active { transform: scale(0.96); }
+
+    .btn--tw {
+      background: var(--btn-tw-bg);
+      color: #ccc8ff;
+    }
+    .btn--tw:hover { background: var(--btn-tw-hover); }
+
+    .btn--en {
+      background: var(--btn-en-bg);
+      color: #b3efef;
+    }
+    .btn--en:hover { background: var(--btn-en-hover); }
+
+    /* ===== Toast 通知 ===== */
+    #toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(30, 33, 55, 0.95);
+      color: var(--text-main);
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      padding: 10px 22px;
+      font-size: 0.88rem;
+      font-weight: 500;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.28s ease, transform 0.28s ease;
+      z-index: 9999;
+      white-space: nowrap;
+      box-shadow: 0 4px 18px rgba(124, 111, 247, 0.3);
+    }
+
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ===== Lightbox 全畫面 ===== */
+    #lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(8, 9, 16, 0.92);
+      z-index: 1000;
+      cursor: zoom-out;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+
+    #lightbox.active { display: flex; }
+
+    #lightbox img {
+      max-width: 92vw;
+      max-height: 88vh;
+      border-radius: 10px;
+      box-shadow: 0 20px 80px rgba(0, 0, 0, 0.7);
+      object-fit: contain;
+      animation: lb-in 0.22s ease;
+    }
+
+    @keyframes lb-in {
+      from { opacity: 0; transform: scale(0.9); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    #lightbox-caption {
+      position: fixed;
+      bottom: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(20, 22, 38, 0.88);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 8px 20px;
+      border-radius: 20px;
+      font-size: 0.88rem;
+      pointer-events: none;
+    }
+
+    #lightbox-close {
+      position: fixed;
+      top: 18px;
+      right: 22px;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: rgba(30, 33, 55, 0.8);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background var(--transition);
+      z-index: 1001;
+      line-height: 1;
+    }
+    #lightbox-close:hover { background: var(--card-hover); }
+
+    /* ===== 頁尾 ===== */
+    footer {
+      text-align: center;
+      padding: 18px 20px;
+      font-size: 0.8rem;
+      color: var(--text-sub);
+      border-top: 1px solid var(--border);
+      opacity: 0.7;
+    }
+
+    /* ===== RWD ===== */
+    @media (max-width: 600px) {
+      header { padding: 32px 16px 18px; }
+      main { padding: 20px 12px 40px; }
+      .gallery-grid { gap: 14px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+      .btn { font-size: 0.72rem; padding: 5px 2px; }
+      .card__title { font-size: 0.85rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== 頁首 ===== -->
+<header>
+  <a href="https://vocus.cc/salon/aicg18" target="_blank"><img src="logo.png" border="0" ?</a>
+  <h1>提示詞畫廊 - 床鋪互動姿勢篇</h1>
+  <p class="subtitle">
+    <a href="https://vocus.cc/article/69f95329fd89780001bff885" target="_blank" rel="noopener">
+      推薦您去玩玩台灣 AutoIP 生圖、動畫產生平台生成。
+    </a> (※審查程度較低)
+  </p>
+  <p>
+  </p>
+  <span class="img-count" id="imgCount"></span>
+</header>
+
+<!-- ===== 畫廊主體 ===== -->
+<main>
+  <div class="gallery-grid" id="gallery"></div>
+</main>
+
+<!-- ===== 頁尾 ===== -->
+<footer>提示詞畫廊 &copy; 2026 ｜ 床鋪互動姿勢篇</footer>
+
+<!-- ===== Lightbox ===== -->
+<div id="lightbox" role="dialog" aria-modal="true" aria-label="圖片放大檢視">
+  <button id="lightbox-close" aria-label="關閉" title="關閉 (點擊任意處也可關閉)">✕</button>
+  <img id="lightbox-img" src="" alt="" />
+  <div id="lightbox-caption"></div>
+</div>
+
+<!-- ===== Toast ===== -->
+<div id="toast" role="alert" aria-live="polite"></div>
+
+<script>
+  /* =========================================================
+   * 設定區 — 如需修改只需調整此處
+   * ========================================================= */
+  const CONFIG = {
+    imgFolder: "bed",          // 圖片資料夾路徑（相對於 HTML 檔案）
+    imgExt:    ".jpg",          // 圖片副檔名
+    pageTitle: "提示詞畫廊 - 山林寫真姿勢篇",
+    siteLink:  "https://vocus.cc/article/69f95329fd89780001bff885",
+    siteLinkText: "推薦您玩玩台灣 AutoIP 生圖、動畫產生平台生成。",
+    toastTW:   "已經複製提示詞至剪貼簿中",
+    toastEN:   "The prompt has been copied to the clipboard.",
+    toastDuration: 2000,        // 毫秒
+  };
+
+  /* =========================================================
+   * 圖片資料 — 新增圖片只需在此陣列加入物件
+   * ========================================================= */
+  const IMAGES = [
+ {"檔案名稱": "bed001", "主題": "晨曦甦醒 Morning Awakening", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 雙手向上高舉伸懶腰，眼睛微閉，嘴角帶著淺淺的滿足微笑，雙腿在被褥中交疊。， 側面平拍，與床鋪等高。， 柔和的晨光透過白紗窗簾，簡約北歐風。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Stretching arms up, eyes half-closed, a slight satisfied smile, legs crossed under the duvet., Side profile shot at bed level., Soft morning sun through sheer curtains, Nordic style."},
+ {"檔案名稱": "bed002", "主題": "賴床掙扎 Reluctant to Wake Up", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 臉部埋在柔軟的枕頭裡，只露出一隻眼睛，手緊緊抓著被子邊緣，露出無奈的表情。， 俯視角 (Top-down view)。， 凌亂的床鋪，深藍色床單。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Face buried in a pillow, one eye peeking out, hands clutching the quilt edge, reluctant expression., High-angle top-down shot., Messy bed, navy blue sheets."},
+ {"檔案名稱": "bed003", "主題": "床上閱讀 Reading in Bed", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 身體靠在床頭板上，雙腿彎曲支撐書本，眼神專注，戴著黑框眼鏡，偶爾咬唇思考。， 三分之二側面中景。， 暖黃色檯燈光，床頭櫃上有乾花。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Leaning against the headboard, legs tucked to support a book, focused gaze, wearing glasses., 2/3 side profile medium shot., Warm lamp light, dried flowers on nightstand."},
+ {"檔案名稱": "bed004", "主題": "午後小憩 Afternoon Siesta", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 側臥呈蜷縮姿勢（嬰兒抱），雙手枕在頰下，呼吸平穩，表情安詳寧靜。， 背後斜上方視角。， 陽光灑在床尾，空氣中有微塵浮動。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Fetal position on side, hands tucked under cheek, steady breathing, peaceful expression., Diagonally from behind/above., Sunlight on the foot of the bed, dust motes in air."},
+ {"檔案名稱": "bed005", "主題": "沉思憂鬱 Melancholic Musing", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 坐在床緣，雙腳垂下，雙手撐在床面，低頭垂目，神情帶著淡淡的哀傷。， 正面遠景，強調空間孤獨感。， 陰天的冷色調室內，灰白色床品。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Sitting on the edge of the bed, feet dangling, hands propping body, looking down, sad expression., Frontal long shot, emphasizing solitude., Cold tones of a cloudy day, grey-white bedding."},
+ {"檔案名稱": "bed006", "主題": "床上咖啡時光 Coffee in Bed", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 盤腿而坐，雙手捧著冒煙的馬克杯，閉眼聞著香氣，神情陶醉。， 近景特寫臉部與杯子。， 溫暖的居家感，木質裝飾背景。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Sitting cross-legged, holding a steaming mug, eyes closed inhaling aroma, blissful expression., Close-up of face and mug., Warm homey vibe, wooden decor background."},
+ {"檔案名稱": "bed007", "主題": "狂歡跳躍 Joyful Jumping", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 在床上騰空躍起，長髮飛揚，嘴巴大張大笑，手腳張開呈現大字型。， 低角度仰拍，增加高度感。， 活潑繽紛的臥室，充滿抱枕。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Jumping mid-air on bed, flying hair, laughing loudly, limbs spread wide., Low-angle shot looking up., Vibrant bedroom, filled with pillows."},
+ {"檔案名稱": "bed008", "主題": "睡前保養 Skincare Routine", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 坐在床中央，雙腿併攏，正在往腿上塗抹乳液，神情專注且放鬆。， 側面中景。， 柔和的間接照明，優雅的床頭燈。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Sitting in the middle, legs together, applying lotion, focused and relaxed expression., Side medium shot., Soft indirect lighting, elegant bedside lamp."},
+ {"檔案名稱": "bed009", "主題": "床上辦公 Working in Bed", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 趴在床上，腳踝往後勾起，面前放著筆電，眉頭微蹙，手托腮思考。， 斜前方視角。， 堆滿文件與咖啡杯的床角。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Lying on stomach, ankles crossed in air, laptop in front, slight frown, chin on hand., Diagonally from the front., Corner of bed with papers and coffee cup."},
+ {"檔案名稱": "bed010", "主題": "驚嚇醒來 Sudden Wake-up", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 突然坐起身，眼睛瞪大，一手按在胸口，大口喘氣，神情驚慌。， 快速變焦感的中景。， 昏暗的深夜，只有月光透過窗戶。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Sitting up abruptly, wide eyes, hand on chest, gasping, panicked expression., Medium shot with dynamic feel., Dim night, only moonlight through window."},
+ {"檔案名稱": "bed011", "主題": "玩手機消遣 Scrolling the Phone", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 仰躺著，手機舉在臉部上方，螢幕光映在臉上，表情顯得有些呆滯疲憊。， 正上方垂直俯拍 (Flat lay POV)。， 凌亂的被褥，床頭散落充電線。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Lying on back, holding phone above face, screen light on face, dull/tired expression., Vertical top-down POV., Messy bedding, charging cables scattered."},
+ {"檔案名稱": "bed012", "主題": "擁抱抱枕 Hugging the Pillow", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 側躺並緊緊抱著長形抱枕，臉蛋蹭在枕頭上，露出幸福且有安全感的微笑。， 近景側拍。， 溫馨舒適的臥室，充滿溫暖色調。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Lying on side, hugging a bolster tightly, cheek rubbing against it, secure smile., Close-up side shot., Cozy bedroom, filled with warm tones."},
+ {"檔案名稱": "bed013", "主題": "梳理長髮 Brushing Hair", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 坐在床邊，頭微側，優雅地梳理垂下的長髮，眼神透過鏡子（暗示）注視自己。， 鏡像視角或斜後方。， 典雅的法式床鋪，帶有浮雕。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Sitting on bed edge, head tilted, brushing long hair, gaze fixed forward., Mirror reflection or back-diagonal., Elegant French-style bed with carvings."},
+ {"檔案名稱": "bed014", "主題": "聽音樂冥想 Listening & Meditating", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 盤腿坐在床心，戴著大耳機，閉目養神，雙手放在膝蓋上，神情平和。， 正面中景。， 極簡主義臥室，採光充足。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Sitting cross-legged, wearing headphones, eyes closed, hands on knees, peaceful., Frontal medium shot., Minimalist bedroom, ample natural light."},
+ {"檔案名稱": "bed015", "主題": "甜食誘惑 Midnight Snack", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 偷偷摸摸坐在床上吃巧克力，手指沾到醬，調皮地看著鏡頭舔手指。， 親密的近距離視角。， 深夜的燈光，床上有零食包裝。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Sitting on bed eating chocolate, stained finger, mischievously licking it at camera., Intimate close-up., Late-night light, snack wrappers on bed."},
+ {"檔案名稱": "bed016", "主題": "享受陽光 Basking in Sunlight", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 仰躺在床，雙臂張開，頭部後仰，雙眼緊閉享受陽光，神情放鬆且燦爛。， 高角度斜拍。， 強烈陽光透過百葉窗，床面有條紋光影。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Lying on back, arms spread, head tilted back, eyes closed enjoying sun, radiant expression., High-angle diagonal shot., Strong sun through blinds, striped shadows on bed."},
+ {"檔案名稱": "bed017", "主題": "與寵物嬉戲 Playing with Pet", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 趴在床上，與一隻小貓對視，手指輕逗貓爪，眼神充滿愛溺，大笑露齒。， 平視中景。， 溫暖的居家臥室，床上有散落的貓玩具。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Lying on stomach, eye contact with a cat, teasing its paws, loving gaze, wide smile., Eye-level medium shot., Warm home bedroom, cat toys scattered on bed."},
+ {"檔案名稱": "bed018", "主題": "睡前微醺 Tipsy in Bed", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 半靠在枕頭上，手持紅酒杯，眼神迷離迷幻，臉頰微紅，帶著微醺的笑意。， 低角度近景。， 昏暗燈光，床頭櫃上有開啟的酒瓶。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Leaning on pillows, holding a wine glass, dreamy/blurry eyes, flushed cheeks, tipsy smile., Low-angle close-up., Dim lighting, opened bottle on nightstand."},
+ {"檔案名稱": "bed019", "主題": "生病倦怠 Sick and Weary", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 全身裹在被子裡只露頭，額頭貼著退熱貼，眼神無神，嘴唇乾燥，神情憔悴。， 俯拍俯視。， 床邊有藥瓶、水杯和抽紙。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Wrapped in duvet, cooling patch on forehead, dull eyes, dry lips, weary expression., Overhead POV., Medicine bottles, water glass, and tissues nearby."},
+ {"檔案名稱": "bed020", "主題": "挑選衣服 Choosing Outfits", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 坐在床中央，身邊堆滿衣服，手提一件裙子在身前比劃，表情苦惱。， 廣角全景。， 雜亂但時尚的臥室，衣櫃大開。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Sitting amidst heaps of clothes, holding a dress to body, distressed/indecisive look., Wide-angle full shot., Messy but stylish bedroom, open wardrobe."},
+ {"檔案名稱": "bed021", "主題": "濕髮沉思 Wet Hair Reflection", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 坐在床沿，頭髮濕漉漉地垂在肩上，用毛巾擦拭，眼神空洞地望向窗外。， 後側方 45 度角。， 浴室霧氣未散的延伸感，光線清冷。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Sitting on bed edge, wet hair on shoulders, drying with towel, staring blankly out window., Back-side 45-degree angle., Lingering bathroom steam, cool lighting."},
+ {"檔案名稱": "bed022", "主題": "床上瑜珈 Bed Yoga", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 盤腿並單手向上延伸側彎，脊椎挺直，表情平靜專注，進行深呼吸。， 正面水平視角。， 極簡日式風格，木質床架，採光良好。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Sitting cross-legged, one arm stretching up and over, straight spine, calm and focused., Frontal horizontal view., Minimalist Japanese style, wooden bed frame."},
+ {"檔案名稱": "bed023", "主題": "期待約會 Anticipating a Date", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 趴在床上踢著雙腳，正在化妝鏡前補口紅，神情興奮，眼睛閃爍著光芒。， 側面特寫。， 充滿香水瓶與飾品的床頭區域。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Lying on stomach, kicking feet, applying lipstick in a hand mirror, excited and glowing., Side profile close-up., Bedside area filled with perfume and jewelry."},
+ {"檔案名稱": "bed024", "主題": "失眠折磨 Insomnia Struggle", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 雙手抱頭坐在床頭，頭髮蓬亂，黑眼圈明顯，神情焦慮且挫敗。， 正面中景，低飽和調色。， 凌晨三點的時鐘顯像，冷色環境光。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Holding head in hands, messy hair, visible dark circles, anxious and frustrated., Frontal medium shot, desaturated., 3:00 AM clock display, cold ambient light."},
+ {"檔案名稱": "bed025", "主題": "寫日記 Writing a Diary", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 趴在床上，用鋼筆在筆記本上記錄，咬著筆頭沉思，眼神溫柔。， 從書本往臉部拍的角度。， 溫馨復古風，床頭有暖色小燈串。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Lying on stomach, writing in a notebook, biting the pen end, thoughtful and soft gaze., Low-angle from book to face., Cozy vintage style, warm fairy lights."},
+ {"檔案名稱": "bed026", "主題": "慶祝生日 Birthday Celebration", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 坐在床中心，抱著大熊玩偶，周圍有氣球，戴著派對帽，笑容燦爛。， 正面全景。， 裝飾華麗的臥室，充滿歡慶氛圍。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Sitting on bed, hugging a giant teddy bear, surrounded by balloons, party hat on., Frontal full shot., Decorated bedroom, festive atmosphere."},
+ {"檔案名稱": "bed027", "主題": "憤怒發洩 Venting Anger", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 用枕頭瘋狂擊打床面，臉部緊繃，眉頭深鎖，咬牙切齒的神情。， 動態模糊感拍攝。， 凌亂的枕頭與被子，強烈明暗對比。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Hitting the bed with a pillow, tense face, frowned brows, gnashing teeth., Action-blur shot., Messy pillows, high-contrast lighting."},
+ {"檔案名稱": "bed028", "主題": "床上野餐 Bed Picnic", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 坐在床單上，周圍擺放水果與甜點盤，正準備咬一口草莓，神情俏皮。， 俯拍 45 度角。， 充滿野餐感、亞麻材質的床鋪。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Sitting on sheets, surrounded by fruit/dessert plates, about to bite a strawberry, playful., 45-degree top-down shot., Picnic-vibe bedding, linen materials."},
+ {"檔案名稱": "bed029", "主題": "聽雷聲驚嚇 Scared by Thunder", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 躲在被子裡只露出一雙驚恐的眼睛，雙手緊抓被緣，身體縮成一團。， 眼睛特寫。， 閃電瞬間照亮的暗室，雨水打在窗戶上。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Hiding under duvet, only scared eyes visible, hands clutching edge, curled up., Close-up of eyes., Dark room lit by lightning, rain on glass."},
+ {"檔案名稱": "bed030", "主題": "晨間伸展 Morning Lengthening", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 側躺，單腳向後勾起伸展大腿，一邊打呵欠，手輕揉眼睛。， 側面全景。， 充滿植物的陽光臥室。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Lying on side, one leg bent back to stretch, yawning, rubbing eye with one hand., Side profile full shot., Sunny bedroom filled with plants."},
+ {"檔案名稱": "bed031", "主題": "等待訊息 Waiting for a Message", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 盯著放在枕頭邊的手機，眼神專注而焦急，手指不自覺扣著床單。， 極近景俯拍。， 簡約現代風，手機螢幕發出微光。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Staring at phone on pillow, focused and anxious gaze, fingers picking at sheets., Extreme close-up POV., Minimalist modern style, phone screen glow."},
+ {"檔案名稱": "bed032", "主題": "享受零食 Snacking Bliss", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 靠在床頭看電視（未入鏡），嘴裡塞滿爆米花，表情放鬆且呆萌。， 稍微仰拍的視角。， 堆滿零食袋的床鋪，幽暗的電視光輻射。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Leaning on headboard, mouth full of popcorn, relaxed and dorky expression., Slightly low-angle shot., Bed with snack bags, dim TV light glow."},
+ {"檔案名稱": "bed033", "主題": "練習樂器 Practicing Instrument", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 坐在床邊彈奏烏克麗麗，手指撥弦，低頭看著指法，神情認真。， 中景斜拍。， 充滿波希米亞風格的臥室，有掛毯背景。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Sitting on bed edge, playing ukulele, fingers on strings, looking down, serious look., Medium diagonal shot., Bohemian style bedroom, tapestry background."},
+ {"檔案名稱": "bed034", "主題": "寂寞環抱 Embracing Solitude", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 坐在床中央，雙手環抱膝蓋，下巴抵在膝蓋上，眼神憂鬱地望著遠方。， 遠景側拍。， 空曠的大房間，冷色調陽光。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Sitting on bed, hugging knees, chin on knees, melancholic gaze into distance., Side long shot., Spacious empty room, cool sunlight."},
+ {"檔案名稱": "bed035", "主題": "試戴首飾 Trying on Jewelry", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 趴在床上，對著小鏡子試戴耳環，眼神帶著自我欣賞的自信感。， 鏡中反映視角。， 充滿珠寶盒與絲絨飾品墊的床。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Lying on stomach, trying earrings in a small mirror, self-admiring confident gaze., Perspective from mirror reflection., Bed filled with jewelry boxes and velvet pads."},
+ {"檔案名稱": "bed036", "主題": "剛洗完澡的放鬆 Post-Shower Relaxation", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 橫躺在床上，頭髮包著毛巾，敷著片狀面膜，雙手垂放，神情安穩。， 正上方平拍。， 乾淨整潔的酒店風臥室，純白床單。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Lying across bed, hair in towel, wearing a sheet mask, arms relaxed, peaceful., Direct top-down shot., Clean hotel-style bedroom, pure white sheets."},
+ {"檔案名稱": "bed037", "主題": "玩電子遊戲 Gaming in Bed", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 趴在床上玩掌上遊戲機，雙腳在空中晃動，咬著下唇，眼神緊張激動。， 正前方視角。， 充滿動漫周邊的臥室，霓虹燈光。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Lying on stomach, playing handheld console, feet kicking in air, biting lip, intense eyes., Frontal POV., Bedroom with anime merch, neon lighting."},
+ {"檔案名稱": "bed038", "主題": "睡前祈禱 Bedtime Prayer", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 跪在床邊，雙手合十抵在額頭，閉目專注，神情虔誠且平靜。， 側面低視角。， 簡樸復古室內，有一扇透出月光的窗。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Kneeling by the bed, hands clasped to forehead, eyes closed, devout and calm., Side low-angle shot., Simple vintage interior, window with moonlight."},
+ {"檔案名稱": "bed039", "主題": "夢遊狀態 Sleepwalking State", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 雙手平舉前伸，雙眼微張但無神，緩慢地在床邊走動，表情空洞。， 模糊動態跟拍。， 迷幻、霧氣繚繞的深夜臥室。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Arms extended forward, eyes slightly open but blank, walking slowly by bed., Blurred dynamic tracking shot., Psychedelic, misty late-night bedroom."},
+ {"檔案名稱": "bed040", "主題": "剪指甲 Clipping Nails", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 坐在床邊專注地修剪腳趾甲，身體前傾，神情認真，嘴唇微張。， 近距離側拍。， 生活感強的臥室，地板上有拖鞋。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Sitting on bed edge, clipping toenails, leaning forward, serious and focused., Close-up side shot., Life-like bedroom, slippers on floor."},
+ {"檔案名稱": "bed041", "主題": "躲避電話 Ignoring a Call", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 趴在枕頭下，雙手摀住耳朵，眼睛緊閉，露出不想面對世界的煩躁表情。， 俯拍視角。， 震動中的手機在床單上發光。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Lying under a pillow, hands covering ears, eyes closed, annoyed expression., Overhead POV shot., A vibrating phone glowing on the sheets."},
+ {"檔案名稱": "bed042", "主題": "整理床鋪 Making the Bed", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 雙手拉開大被單使其在空中飄揚，抬頭看著被單，神情輕盈自在。， 廣角側拍。， 陽光充足的清新臥室，亞麻質感。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Holding up a large sheet, watching it billow in the air, light and airy expression., Wide-angle side shot., Sunny fresh bedroom, linen textures."},
+ {"檔案名稱": "bed043", "主題": "冬日暖陽 Winter Sun Warmth", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 蜷縮在陽光照到的床位，抱著暖水袋，臉頰貼著被褥，眼神慵懶陶醉。， 低角度近景。， 窗外有雪景，室內是溫暖橘光。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Curled in the sun, holding a hot water bottle, cheek against duvet, lazy eyes., Low-angle close-up., Snowy view outside, warm orange light inside."},
+ {"檔案名稱": "bed044", "主題": "興奮分享 Excited Sharing", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 趴在床上，雙腳在空中交替踢動，正拿著平板電腦視訊通話，笑容燦爛。， 側面水平中景。， 背景有豐富的書架與個人裝飾。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Lying on stomach, kicking feet, video calling on a tablet, radiant smile., Side horizontal medium shot., Background with bookshelves and decor."},
+ {"檔案名稱": "bed045", "主題": "凌晨宿醉 Early Morning Hangover", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 橫躺在床沿，一隻手垂到地板，頭髮遮住半張臉，表情痛苦且疲憊。， 傾斜視角 (Dutch Angle)。， 凌亂的房間，倒下的高跟鞋。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Lying across the bed edge, one hand dangling, hair covering face, pained and exhausted., Dutch angle shot., Messy room, overturned high heels."},
+ {"檔案名稱": "bed046", "主題": "冥想放鬆 Meditation Zen", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 盤腿坐於床中央，雙手呈蓮花指放在膝上，脊椎挺直，神情莊嚴寧靜。， 正面中心對稱視角。， 香氛蠟燭冒著細煙，極簡留白背景。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Sitting cross-legged, Zen hand mudra, straight spine, solemn and peaceful expression., Symmetrical frontal shot., Scented candle smoke, minimalist background."},
+ {"檔案名稱": "bed047", "主題": "床上畫畫 Sketching in Bed", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 趴在床上，身邊散落色鉛筆，專注地在畫冊上塗鴉，舌尖微露顯示出專注。， 斜上方鳥瞰視角。， 充滿藝術氣息，地板上有顏料罐。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Lying on stomach, colored pencils scattered, sketching, tip of tongue out in focus., Diagonal bird's-eye view., Artistic vibe, paint cans on the floor."},
+ {"檔案名稱": "bed048", "主題": "試穿新鞋 Trying New Shoes", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 坐在床邊，翹著二郎腿觀察腳上的高跟鞋，眼神充滿審美與喜悅。， 聚焦於腳部與腿部。， 優雅歐式風格，大面穿衣鏡背景。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Sitting on bed edge, legs crossed, admiring new heels on feet, aesthetic joy., Focus on feet and legs., Elegant European style, large mirror."},
+ {"檔案名稱": "bed049", "主題": "深夜驚悚片 Late-night Horror Movie", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 縮在被子裡只露半張臉，手抓緊被緣，眼睛瞪大看著前方的螢幕光。， 螢幕逆光視角。， 黑暗的房間，只有螢幕藍光。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Hiding behind duvet, eyes wide staring at screen light, clutching the edge., Screen-backlit POV., Dark room, only blue screen light."},
+ {"檔案名稱": "bed050", "主題": "整理心情 Composing Herself", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 坐在床頭，雙手用力揉搓臉部，試圖讓自己清醒，神情帶著決心。， 正面特寫。， 凌亂的枕頭，清晨微光。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Sitting at headboard, rubbing face with hands, trying to wake up, determined look., Frontal close-up., Messy pillows, early dawn light."},
+ {"檔案名稱": "bed051", "主題": "期待遠行 Anticipating Travel", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 坐在床上整理行李箱，身邊放著地圖與護照，眼神憧憬地望著前方。， 廣角全景。， 開放式的行李箱，衣服色彩繽紛。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Packing a suitcase on bed, map and passport nearby, visionary gaze., Wide-angle full shot., Open suitcase, colorful clothes."},
+ {"檔案名稱": "bed052", "主題": "夏日納涼 Summer Cooling", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 橫趴在涼蓆或薄被上，電風扇對著吹，長髮飄動，神情愜意涼爽。， 側面低角度。， 復古電風扇，窗外是夏日綠意。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Lying flat on a thin mat, electric fan blowing, hair moving, blissful and cool., Side low-angle shot., Vintage fan, green summer trees outside."},
+ {"檔案名稱": "bed053", "主題": "床上自拍 Bedside Selfie", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 側躺在枕頭上，一手舉著手機找角度，嘟嘴賣萌，眼神靈動。， 手機自拍視角仿拍。， 夢幻的紗帳床簾。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Lying on side, holding phone for an angle, pouting, playful and lively eyes., Simulated selfie POV., Dreamy gauze bed curtains."},
+ {"檔案名稱": "bed054", "主題": "溫習功課 Cramming for Exams", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 被子堆在背後，身邊堆滿課本與螢光筆，咬著指甲思考，神情焦慮。， 高視角俯瞰。， 凌亂的書堆，半空的能量飲料。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Quilt piled behind, surrounded by textbooks, biting nails, anxious look., High-angle overview., Messy piles of books, half-empty energy drink."},
+ {"檔案名稱": "bed055", "主題": "渴望擁抱 Longing for a Hug", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 雙手環抱自己的肩膀，縮在床角，眼神流露出寂寞與對溫暖的渴望。， 遠景，強調角落空間。， 昏暗、只有一束光照在身上。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Hugging own shoulders, curled in a corner, eyes showing loneliness/longing., Long shot, emphasizing the corner., Dim, only one beam of light on her."},
+ {"檔案名稱": "bed056", "主題": "接聽驚喜電話 Surprising Call", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 坐在床上，一手摀住嘴巴，眼睛瞪大放光，顯現出難以置信的驚喜。， 中景正面。， 溫馨整潔，床頭有花。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Sitting on bed, hand over mouth, eyes sparkling with disbelief and joy., Medium frontal shot., Cozy and neat, flowers on nightstand."},
+ {"檔案名稱": "bed057", "主題": "慵懶午茶 Lazy Tea Time", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 靠在床頭，腿上放著托盤，正端起茶杯輕吹，眼神溫柔且放鬆。， 側面 45 度中景。， 精緻的瓷器，午後陽光斑駁。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Leaning back, tray on lap, blowing on a teacup, soft and relaxed gaze., Side 45-degree medium shot., Exquisite porcelain, dappled afternoon sun."},
+ {"檔案名稱": "bed058", "主題": "雨天發呆 Rainy Day Daydreaming", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 趴在靠窗的床邊，下巴抵在手上看著窗外雨滴，神情空靈且帶著詩意。， 側方透視視角。， 窗戶上有雨珠，冷色調氛圍。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Lying by window, chin on hand watching rain, ethereal and poetic expression., Side perspective shot., Raindrops on window, cool-toned mood."},
+ {"檔案名稱": "bed059", "主題": "睡前拉伸 Bedtime Stretching", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 坐在床上做貓背式拉伸，曲線優美，閉目感受身體的延展，神情舒暢。， 側面全景。， 昏暗暖色調，環境簡約。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Doing a cat-stretch on bed, graceful curves, eyes closed, feeling the stretch., Side profile full shot., Dim warm lighting, minimalist setting."},
+ {"檔案名稱": "bed060", "主題": "被窩裡的秘密 Secrets under Covers", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 全身躲在被子裡形成一個小帳篷，手拿手電筒看信件，神情專注神秘。， 從被窩內部往外拍（模擬視角）。， 外部漆黑，被窩內充滿暖黃光。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Hiding under covers like a tent, using a flashlight to read, mysterious look., POV from inside the duvet., Pitch black outside, warm light inside."},
+ {"檔案名稱": "bed061", "主題": "剛運動完 Post-Workout Breath", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 呈大字型躺在床上，大口喘氣，汗水打濕鬢角，神情疲憊但有成就感。， 垂直俯拍。， 床邊放著水壺與運動墊。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Lying spread-eagle, gasping for air, sweaty hair, tired but satisfied., Vertical top-down shot., Water bottle and yoga mat nearby."},
+ {"檔案名稱": "bed062", "主題": "享受香氛 Enjoying Scent", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 跪坐在床上，閉眼湊近擴香瓶，深深吸氣，露出沉醉舒壓的表情。， 近景側拍。， 充滿綠植，床頭有晶體香氛。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Kneeling on bed, eyes closed near diffuser, inhaling deeply, blissful expression., Close-up side shot., Filled with plants, crystal diffuser on bed."},
+ {"檔案名稱": "bed063", "主題": "等待黎明 Waiting for Dawn", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 坐在窗邊床緣，裹著毯子，看著天色微亮，眼神深邃帶著期待。， 背影斜側面。， 藍調時光的室內，窗外微光。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Sitting on bed edge by window, wrapped in a blanket, watching dawn break., Back-diagonal profile., Blue-hour interior, faint dawn light."},
+ {"檔案名稱": "bed064", "主題": "床上美甲 Doing Nails in Bed", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 趴在床上，小心翼翼地為手指塗指甲油，眉頭微蹙防止塗歪。， 聚焦手部的近景。， 床單上有各種顏色的甲油瓶。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Lying on stomach, carefully painting nails, slight frown in concentration., Close-up focus on hands., Various nail polish bottles on sheets."},
+ {"檔案名稱": "bed065", "主題": "思念遠方 Longing for Someone", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 抱著一件男版大衣躺在床上，臉埋在衣服裡，神情落寞寂寥。， 高角度側拍。， 冷清的臥室，只有月光照進。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Lying on bed hugging a man's coat, face buried in fabric, lonely expression., High-angle side shot., Desolate bedroom, only moonlight."},
+ {"檔案名稱": "bed066", "主題": "床上翻滾 Rolling in Bed", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 在床上側身翻滾，長髮散開成圓形，笑容活潑，展現純真的快樂。， 正上方動態拍攝。， 柔軟蓬鬆的羽絨被。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Rolling on side, hair splaying out, lively smile, innocent joy., Direct top-down action shot., Soft and fluffy down duvet."},
+ {"檔案名稱": "bed067", "主題": "整理舊物 Sorting Old Memories", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 坐在床上看著舊相簿，指尖撫摸照片，眼神溫柔且充滿回憶感。， 側面近景。， 周圍散落舊信件與盒子。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Sitting on bed with old photo albums, touching a photo, nostalgic gaze., Side close-up., Scattered old letters and boxes."},
+ {"檔案名稱": "bed068", "主題": "克服寒冷 Overcoming the Cold", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 蜷縮在被窩裡，只露出鼻子以上，眼神中帶著「不想起床」的抗議。， 視平線平拍。， 充滿厚重毛毯的冬季臥室。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Curled deep in covers, only nose/eyes visible, 'don't want to get up' look., Eye-level shot., Winter bedroom with heavy blankets."},
+ {"檔案名稱": "bed069", "主題": "床上狂歡派對 Bed Party Solo", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 戴著耳機跟著音樂律動，坐在床上揮舞雙手，表情極度興奮。， 動態追蹤視角。， 閃爍的彩燈，床上有螢光棒。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Wearing headphones, moving to beat, waving hands, extremely excited., Dynamic tracking POV., Flickering fairy lights, glow sticks on bed."},
+ {"檔案名稱": "bed070", "主題": "享受孤獨 Embracing Loneliness", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 坐在床中央，周圍空無一物，閉目感受安靜，神情平靜如水。， 遠景全景。， 極簡純白空間，強烈的高光感。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Sitting in center of bed, nothing around, eyes closed, peaceful and calm., Long full shot., Minimalist white space, high-key lighting."},
+ {"檔案名稱": "bed071", "主題": "床上吃早餐 Breakfast in Bed", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 靠在枕頭上，面前有精緻早餐托盤，正準備喝柳橙汁，眼神充滿朝氣。， 中景斜拍。， 明亮的晨光，窗外有花園景色。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Leaning on pillows, breakfast tray in front, about to drink juice, vibrant gaze., Medium diagonal shot., Bright morning sun, garden view outside."},
+ {"檔案名稱": "bed072", "主題": "陷入深眠 Deep Sleep", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，穿著淡藍色短版運動上衣與白色運動短褲。在女性臥室， 身體舒展，睡姿放鬆，臉部肌肉完全放鬆，神情安詳如嬰兒。， 溫柔的頂視角。， 靜謐的深夜，只有微弱的地燈。", "English Prompt": "A 25-year-old Taiwanese woman, with long black hair and an oval face, was wearing a light blue cropped sports top and white athletic shorts. In the women's bedroom...Body stretched, relaxed posture, facial muscles loose, peaceful like a baby., Gentle top-view shot., Quiet late night, faint floor lamp light."}
+ ];
+
+  /* =========================================================
+   * 工具函式
+   * ========================================================= */
+  let toastTimer = null;
+
+  function showToast(msg) {
+    const el = document.getElementById("toast");
+    el.textContent = msg;
+    el.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove("show"), CONFIG.toastDuration);
+  }
+
+  async function copyToClipboard(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      // 降級方案
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.cssText = "position:fixed;top:-999px;left:-999px;opacity:0";
+      document.body.appendChild(ta);
+      ta.focus(); ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return ok;
+    }
+  }
+
+  /* =========================================================
+   * Lightbox
+   * ========================================================= */
+  const lightbox     = document.getElementById("lightbox");
+  const lightboxImg  = document.getElementById("lightbox-img");
+  const lightboxCap  = document.getElementById("lightbox-caption");
+  const lightboxClose= document.getElementById("lightbox-close");
+
+  function openLightbox(src, title) {
+    lightboxImg.src = src;
+    lightboxImg.alt = title;
+    lightboxCap.textContent = title;
+    lightbox.classList.add("active");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeLightbox() {
+    lightbox.classList.remove("active");
+    document.body.style.overflow = "";
+    // 延遲清空避免閃爍
+    setTimeout(() => { lightboxImg.src = ""; }, 300);
+  }
+
+  lightbox.addEventListener("click", e => { if (e.target === lightbox || e.target === lightboxImg) closeLightbox(); });
+  lightboxClose.addEventListener("click", closeLightbox);
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closeLightbox(); });
+
+  /* =========================================================
+   * 建立圖片卡片
+   * ========================================================= */
+  function buildCard(item) {
+    const filename = item["檔案名稱"];
+    const title    = item["主題"];
+    const twPrompt = item["中文生圖用提示詞"];
+    const enPrompt = item["English Prompt"];
+    const imgSrc   = `${CONFIG.imgFolder}/${filename}${CONFIG.imgExt}`;
+
+    const card = document.createElement("div");
+    card.className = "card";
+
+    // 圖片區域
+    const imgWrap = document.createElement("div");
+    imgWrap.className = "card__img-wrap";
+    imgWrap.title = "點擊放大";
+
+    // 佔位（當圖片尚未載入或不存在時顯示）
+    const placeholder = document.createElement("div");
+    placeholder.className = "img-placeholder";
+    placeholder.innerHTML = `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><span>${filename}</span>`;
+    imgWrap.appendChild(placeholder);
+
+    const img = document.createElement("img");
+    img.alt   = title;
+    img.loading = "lazy";
+    img.src   = imgSrc;
+
+    img.addEventListener("load",  () => { img.classList.add("loaded"); placeholder.style.display = "none"; });
+    img.addEventListener("error", () => { img.style.display = "none"; });
+
+    imgWrap.appendChild(img);
+    imgWrap.addEventListener("click", () => openLightbox(imgSrc, title));
+
+    // 資訊區域
+    const info = document.createElement("div");
+    info.className = "card__info";
+
+    const titleEl = document.createElement("div");
+    titleEl.className = "card__title";
+    titleEl.textContent = title;
+
+    const filenameEl = document.createElement("div");
+    filenameEl.className = "card__filename";
+    filenameEl.textContent = filename;
+
+    const btns = document.createElement("div");
+    btns.className = "card__btns";
+
+    const btnTW = document.createElement("button");
+    btnTW.className = "btn btn--tw";
+    btnTW.textContent = "tw Prompt";
+    btnTW.title = twPrompt;
+    btnTW.addEventListener("click", async () => {
+      await copyToClipboard(twPrompt);
+      showToast(CONFIG.toastTW);
+    });
+
+    const btnEN = document.createElement("button");
+    btnEN.className = "btn btn--en";
+    btnEN.textContent = "en Prompt";
+    btnEN.title = enPrompt;
+    btnEN.addEventListener("click", async () => {
+      await copyToClipboard(enPrompt);
+      showToast(CONFIG.toastEN);
+    });
+
+    btns.appendChild(btnTW);
+    btns.appendChild(btnEN);
+
+    info.appendChild(titleEl);
+    info.appendChild(filenameEl);
+    info.appendChild(btns);
+
+    card.appendChild(imgWrap);
+    card.appendChild(info);
+
+    return card;
+  }
+
+  /* =========================================================
+   * 初始化
+   * ========================================================= */
+  const gallery = document.getElementById("gallery");
+  IMAGES.forEach(item => gallery.appendChild(buildCard(item)));
+
+  document.getElementById("imgCount").textContent = `共 ${IMAGES.length} 張圖片`;
+</script>
+</body>
+</html>
