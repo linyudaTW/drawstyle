@@ -126,6 +126,7 @@
       width: 100%;
       aspect-ratio: 16 / 9;
       object-fit: cover;
+      cursor: zoom-in;
     }
 
     figcaption {
@@ -170,6 +171,35 @@
       border: 1px solid var(--line);
       color: var(--soft-ink);
       font: 15px/1.8 "Microsoft JhengHei", sans-serif;
+    }
+
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 28px;
+      background: rgba(18, 20, 18, 0.88);
+    }
+
+    .lightbox.is-open {
+      display: flex;
+    }
+
+    .lightbox img {
+      width: auto;
+      max-width: min(96vw, 1680px);
+      max-height: 90vh;
+      aspect-ratio: auto;
+      object-fit: contain;
+      cursor: zoom-out;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+    }
+
+    body.lightbox-open {
+      overflow: hidden;
     }
 
     @media (max-width: 800px) {
@@ -433,5 +463,35 @@
       date001.png、date002.png、date003.png、date004.png、date005.png、date006.png、date007.png、date008.png、date009.png、date010.png、date011.png、date012.png
     </section>
   </main>
+  <div class="lightbox" id="lightbox" aria-hidden="true">
+    <img id="lightbox-image" src="" alt="">
+  </div>
+  <script>
+    const lightbox = document.getElementById("lightbox");
+    const lightboxImage = document.getElementById("lightbox-image");
+
+    document.querySelectorAll("figure img").forEach((image) => {
+      image.addEventListener("click", () => {
+        lightboxImage.src = image.src;
+        lightboxImage.alt = image.alt || "";
+        lightbox.classList.add("is-open");
+        lightbox.setAttribute("aria-hidden", "false");
+        document.body.classList.add("lightbox-open");
+      });
+    });
+
+    lightbox.addEventListener("click", () => {
+      lightbox.classList.remove("is-open");
+      lightbox.setAttribute("aria-hidden", "true");
+      document.body.classList.remove("lightbox-open");
+      lightboxImage.src = "";
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && lightbox.classList.contains("is-open")) {
+        lightbox.click();
+      }
+    });
+  </script>
 </body>
 </html>
