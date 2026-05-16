@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>提示詞畫廊 - 辦公姿勢篇</title>
+  <style>
+    /* ===== 全域設定 ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --card-bg: #1e2130;
+      --card-hover: #252840;
+      --border: #2e3350;
+      --accent: #7c6ff7;
+      --accent2: #5bc8d4;
+      --text-main: #e8eaf6;
+      --text-sub: #9ba1c0;
+      --btn-tw-bg: #3d3580;
+      --btn-tw-hover: #5548b0;
+      --btn-en-bg: #1e5a63;
+      --btn-en-hover: #2a7d8a;
+      --radius: 12px;
+      --transition: 0.22s ease;
+
+      /* ===== 可調整：圖片資料夾路徑 ===== */
+      --img-folder: face;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text-main);
+      font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+      min-height: 100vh;
+    }
+
+    /* ===== 頁首 ===== */
+    header {
+      text-align: center;
+      padding: 48px 24px 24px;
+      background: linear-gradient(160deg, #12142099 0%, transparent 100%);
+      border-bottom: 1px solid var(--border);
+    }
+
+    header h1 {
+      font-size: clamp(1.4rem, 4vw, 2.4rem);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 14px;
+    }
+
+    header .subtitle {
+      font-size: clamp(0.8rem, 2vw, 0.95rem);
+      color: var(--text-sub);
+    }
+
+    header .subtitle a {
+      color: var(--accent2);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: border-color var(--transition);
+    }
+    header .subtitle a:hover { border-color: var(--accent2); }
+
+    .img-count {
+      display: inline-block;
+      margin-top: 12px;
+      font-size: 0.82rem;
+      color: var(--text-sub);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 14px;
+    }
+
+    /* ===== 圖片格線 ===== */
+    main {
+      padding: 28px 20px 60px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 20px;
+    }
+
+    /* ===== 圖片卡片 ===== */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: transform var(--transition), box-shadow var(--transition), background var(--transition);
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 28px rgba(124, 111, 247, 0.18);
+      background: var(--card-hover);
+    }
+
+    .card__img-wrap {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      overflow: hidden;
+      cursor: zoom-in;
+      background: #10111a;
+    }
+
+    .card__img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.35s ease, opacity 0.3s ease;
+      opacity: 0;
+    }
+
+    .card__img-wrap img.loaded { opacity: 1; }
+    .card__img-wrap:hover img { transform: scale(1.06); }
+
+    /* 圖片載入失敗時的佔位 */
+    .card__img-wrap .img-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: var(--text-sub);
+      font-size: 0.75rem;
+      background: #14161f;
+      position: absolute;
+      inset: 0;
+    }
+    .card__img-wrap { position: relative; }
+    .card__img-wrap .img-placeholder svg { opacity: 0.35; }
+
+    .card__info {
+      padding: 12px 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1;
+    }
+
+    .card__title {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--text-main);
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    .card__filename {
+      font-size: 0.72rem;
+      color: var(--text-sub);
+      text-align: center;
+      opacity: 0.7;
+    }
+
+    .card__btns {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 6px 4px;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 0.03em;
+      transition: background var(--transition), transform 0.12s ease;
+      font-family: inherit;
+    }
+
+    .btn:active { transform: scale(0.96); }
+
+    .btn--tw {
+      background: var(--btn-tw-bg);
+      color: #ccc8ff;
+    }
+    .btn--tw:hover { background: var(--btn-tw-hover); }
+
+    .btn--en {
+      background: var(--btn-en-bg);
+      color: #b3efef;
+    }
+    .btn--en:hover { background: var(--btn-en-hover); }
+
+    /* ===== Toast 通知 ===== */
+    #toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(30, 33, 55, 0.95);
+      color: var(--text-main);
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      padding: 10px 22px;
+      font-size: 0.88rem;
+      font-weight: 500;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.28s ease, transform 0.28s ease;
+      z-index: 9999;
+      white-space: nowrap;
+      box-shadow: 0 4px 18px rgba(124, 111, 247, 0.3);
+    }
+
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ===== Lightbox 全畫面 ===== */
+    #lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(8, 9, 16, 0.92);
+      z-index: 1000;
+      cursor: zoom-out;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+
+    #lightbox.active { display: flex; }
+
+    #lightbox img {
+      max-width: 92vw;
+      max-height: 88vh;
+      border-radius: 10px;
+      box-shadow: 0 20px 80px rgba(0, 0, 0, 0.7);
+      object-fit: contain;
+      animation: lb-in 0.22s ease;
+    }
+
+    @keyframes lb-in {
+      from { opacity: 0; transform: scale(0.9); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    #lightbox-caption {
+      position: fixed;
+      bottom: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(20, 22, 38, 0.88);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 8px 20px;
+      border-radius: 20px;
+      font-size: 0.88rem;
+      pointer-events: none;
+    }
+
+    #lightbox-close {
+      position: fixed;
+      top: 18px;
+      right: 22px;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: rgba(30, 33, 55, 0.8);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background var(--transition);
+      z-index: 1001;
+      line-height: 1;
+    }
+    #lightbox-close:hover { background: var(--card-hover); }
+
+    /* ===== 頁尾 ===== */
+    footer {
+      text-align: center;
+      padding: 18px 20px;
+      font-size: 0.8rem;
+      color: var(--text-sub);
+      border-top: 1px solid var(--border);
+      opacity: 0.7;
+    }
+
+    /* ===== RWD ===== */
+    @media (max-width: 600px) {
+      header { padding: 32px 16px 18px; }
+      main { padding: 20px 12px 40px; }
+      .gallery-grid { gap: 14px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+      .btn { font-size: 0.72rem; padding: 5px 2px; }
+      .card__title { font-size: 0.85rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== 頁首 ===== -->
+<header>
+  <a href="https://vocus.cc/salon/aicg18" target="_blank"><img src="logo.png" border="0" ?</a>
+  <h1>提示詞畫廊 - 辦公姿勢篇</h1>
+  <p class="subtitle">
+    <a href="https://vocus.cc/article/69f95329fd89780001bff885" target="_blank" rel="noopener">
+      推薦您去玩玩台灣 AutoIP 生圖、動畫產生平台生成。
+    </a> (※審查程度較低)
+  </p>
+  <p>
+  </p>
+  <span class="img-count" id="imgCount"></span>
+</header>
+
+<!-- ===== 畫廊主體 ===== -->
+<main>
+  <div class="gallery-grid" id="gallery"></div>
+</main>
+
+<!-- ===== 頁尾 ===== -->
+<footer>提示詞畫廊 &copy; 2026 ｜ 床鋪互動姿勢篇</footer>
+
+<!-- ===== Lightbox ===== -->
+<div id="lightbox" role="dialog" aria-modal="true" aria-label="圖片放大檢視">
+  <button id="lightbox-close" aria-label="關閉" title="關閉 (點擊任意處也可關閉)">✕</button>
+  <img id="lightbox-img" src="" alt="" />
+  <div id="lightbox-caption"></div>
+</div>
+
+<!-- ===== Toast ===== -->
+<div id="toast" role="alert" aria-live="polite"></div>
+
+<script>
+  /* =========================================================
+   * 設定區 — 如需修改只需調整此處
+   * ========================================================= */
+  const CONFIG = {
+    imgFolder: "office",          // 圖片資料夾路徑（相對於 HTML 檔案）
+    imgExt:    ".jpg",          // 圖片副檔名
+    pageTitle: "提示詞畫廊 - 辦公勢篇",
+    siteLink:  "https://vocus.cc/article/69f95329fd89780001bff885",
+    siteLinkText: "推薦您玩玩台灣 AutoIP 生圖、動畫產生平台生成。",
+    toastTW:   "已經複製提示詞至剪貼簿中",
+    toastEN:   "The prompt has been copied to the clipboard.",
+    toastDuration: 2000,        // 毫秒
+  };
+
+  /* =========================================================
+   * 圖片資料 — 新增圖片只需在此陣列加入物件
+   * ========================================================= */
+  const IMAGES = [
+  {"檔案名稱": "office001", "主題": "晨間開工 Morning Startup", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她獨自坐在整潔辦公桌前，雙手放在鍵盤上剛要開始輸入，眼神清亮專注，嘴角帶著很淡的微笑；肩膀放鬆、背部挺直，像是在把腦中待辦事項慢慢排好，呈現一天剛啟動的沉穩工作感。，  淺藍襯衫搭配深灰鉛筆裙，細皮帶、銀色細錶、低調耳釘，頭髮以低馬尾整理，妝容自然乾淨。，  正面略高於桌面的中景，讓鍵盤、咖啡杯與她專注的表情同時入鏡。，  清晨柔和日光從百葉窗斜射進現代辦公室，桌面有筆記本、筆電、便利貼與溫熱咖啡，空間安靜明亮且沒有其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She sits alone at a tidy office desk, both hands resting on the keyboard as she is about to type, with bright focused eyes and a faint smile. Her shoulders are relaxed and her back is upright, as if quietly organizing the day's tasks in her mind, conveying a calm start-of-work mood.，  Light blue blouse with a dark gray pencil skirt, slim belt, silver watch, subtle stud earrings, hair in a low ponytail, natural clean makeup.，  A frontal medium shot slightly above desk level, capturing the keyboard, coffee cup, and her focused expression together.，  Soft morning daylight slants through blinds into a modern office; the desk holds a notebook, laptop, sticky notes, and warm coffee, quiet and bright with no other people."},
+ {"檔案名稱": "office002", "主題": "專注輸入 Focused Typing", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她身體微微前傾，指尖快速敲擊筆電鍵盤，眉心輕收、眼睛緊盯螢幕，唇線微抿，呈現進入深度工作時不被打擾的節奏感。，  白色絲質襯衫、黑色西裝長褲、細框眼鏡、簡約項鍊，袖口微微捲起方便打字。，  從螢幕側後方的三分之二側拍，讓手部動作與臉部專注同時清楚。，  極簡開放式辦公桌區，背景虛化為書架與白板，冷暖平衡的工作燈照亮桌面，無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She leans slightly forward, fingertips moving quickly across the laptop keyboard, brows gently drawn, eyes locked on the screen, lips lightly pressed, showing the rhythm of uninterrupted deep work.，  White silk blouse, black tailored trousers, thin-frame glasses, minimalist necklace, sleeves slightly rolled for typing.，  A three-quarter side shot from behind the screen, clearly showing both hand movement and facial focus.，  Minimal open-desk office area, background softly blurred with shelves and a whiteboard, balanced task lighting on the desk, no other people."},
+ {"檔案名稱": "office003", "主題": "報表檢核 Report Review", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她一手拿著紅筆，一手壓住列印報表，目光在數字欄位間來回掃視；表情嚴謹、下巴微低，像是在找出細微錯誤，展現細心校對與責任感。，  米白針織上衣外搭卡其西裝外套，珍珠耳環、棕色皮革錶帶，桌邊放著細框眼鏡盒。，  桌面俯角近中景，強調報表、紅筆、手指停留的數字與她審慎的臉。，  木質辦公桌、紙本報表、計算機、桌燈與淡色牆面，午後光線安靜沉著，畫面中僅有她一人。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She holds a red pen in one hand and presses down a printed report with the other, eyes moving across numeric columns. Her expression is meticulous, chin slightly lowered, as if hunting for tiny errors, showing careful review and responsibility.，  Ivory knit top with a khaki blazer, pearl earrings, brown leather watch strap, thin-frame glasses case on the desk.，  Near-medium overhead desk angle emphasizing the report, red pen, the number under her finger, and her careful face.，  Wooden office desk, printed reports, calculator, desk lamp, and pale wall, with calm afternoon light, only her in frame."},
+ {"檔案名稱": "office004", "主題": "靈感速記 Idea Capture", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她忽然停下敲鍵盤，左手托腮、右手快速在筆記本寫下關鍵字，眼睛微微發亮，嘴角上揚，像是抓住了一個剛冒出的好點子。，  柔粉襯衫、深藍寬褲、細金戒指、髮絲自然落在臉側，整體柔和而專業。，  從右前方近景拍攝，焦點落在發亮的眼神與筆尖移動。，  靠窗個人工作位，桌上有筆電、草圖本、彩色便利貼，窗外城市輪廓淡淡虛化，無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She suddenly stops typing, rests her cheek on her left hand, and quickly writes keywords in a notebook with her right hand. Her eyes brighten and her mouth lifts slightly, as if catching a fresh idea.，  Soft pink blouse, navy wide-leg trousers, slim gold ring, loose strands of hair falling naturally beside her face, gentle yet professional.，  Close shot from the front right, focusing on her bright eyes and moving pen tip.，  Personal workstation by a window, with laptop, sketch notebook, colorful sticky notes, and a softly blurred city outline outside, no other people."},
+ {"檔案名稱": "office005", "主題": "會議前準備 Pre-Meeting Preparation", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她站在桌旁整理文件夾，低頭確認便條順序，另一手輕扶筆電邊緣；表情鎮定但帶一點緊繃，像是在上場前最後一次檢查。，  深綠襯衫裙、黑色細跟鞋、簡潔皮革手環、髮型俐落盤起，外套掛在椅背上。，  半身直幅視角，從桌角斜拍她整理資料的站姿與手部細節。，  小型會議室外的準備區，玻璃牆、投影遙控器、整齊文件與柔白燈光，空間中沒有其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She stands beside the desk arranging folders, looking down to check the order of sticky notes while one hand steadies the laptop. Her expression is composed with a slight tension, like a final check before stepping into a presentation.，  Deep green shirt dress, black low heels, simple leather bracelet, neatly pinned-up hair, blazer hanging on the chair back.，  Vertical half-body angle from the desk corner, capturing her standing posture and hand details while organizing materials.，  Preparation area outside a small meeting room, glass wall, projector remote, neat documents, and soft white lighting, with no other people."},
+ {"檔案名稱": "office006", "主題": "簡報演練 Presentation Rehearsal", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她獨自站在投影幕前，一手握著簡報筆、一手自然向畫面方向伸出，眼神堅定、嘴唇微張像在練習開場句，姿態自信而克制。，  藏青西裝套裝、象牙色內搭、細高跟鞋、極簡胸針，長髮收成低髻。，  從觀眾席位置的低角度中景，讓她與投影幕形成正式簡報氛圍。，  空無一人的會議室，投影幕顯示簡潔圖表，長桌與椅子整齊排列，天花板燈光明亮均勻。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She stands alone before a projection screen, holding a presenter remote in one hand while the other gestures naturally toward the slide. Her eyes are steady and her lips slightly parted as if rehearsing the opening line, confident yet restrained.，  Navy suit set, ivory inner top, slim heels, minimalist brooch, long hair gathered into a low bun.，  Medium low-angle shot from the audience position, framing her and the projection screen in a formal presentation mood.，  Empty meeting room with a projection screen showing simple charts, long table and chairs neatly arranged, bright even ceiling lights."},
+ {"檔案名稱": "office007", "主題": "電話協調 Phone Coordination", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她坐在桌前一手拿手機貼近耳邊，另一手在筆記本上寫下時間，眉頭略皺但語氣似乎溫和，展現耐心處理細節與溝通壓力。，  淺灰西裝外套、白色背心、黑色窄裙、簡約戒指與細鍊，耳邊戴單邊小耳環。，  側面近中景，讓手機、筆記本與她克制的表情形成故事。，  行政辦公室角落，桌上有月曆、名片夾、筆筒與螢幕待機畫面，背景乾淨無人。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She sits at her desk holding a phone to her ear with one hand while writing a time in her notebook with the other. Her brows are slightly furrowed but her tone seems gentle, showing patience under coordination pressure.，  Light gray blazer, white camisole, black narrow skirt, minimalist ring and thin chain, single small earring visible.，  Side medium-close shot, letting the phone, notebook, and her controlled expression tell the story.，  Administrative office corner with desk calendar, business card holder, pen cup, and idle monitor, clean background with no people."},
+ {"檔案名稱": "office008", "主題": "午後疲憊 Afternoon Fatigue", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她坐在椅上微微後仰，手指輕按太陽穴，眼睛半閉，另一手仍扶著滑鼠；表情疲倦卻努力維持工作節奏，帶出午後低潮的真實生活感。，  霧紫色襯衫、灰色西裝褲、薄型手錶、低跟鞋，領口微鬆但仍整齊。，  從桌面左側平視拍攝，保留滑鼠、螢幕光與她按揉太陽穴的姿態。，  午後辦公室光線偏暖，桌上有半杯咖啡、未完成清單與螢幕藍光，背景安靜且無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She leans slightly back in her chair, fingertips pressing her temple, eyes half closed, while her other hand still rests on the mouse. Her expression is tired yet trying to maintain pace, capturing a real afternoon slump.，  Muted lavender blouse, gray tailored pants, slim watch, low heels, collar slightly loosened but still neat.，  Eye-level shot from the left side of the desk, keeping the mouse, screen glow, and her temple-pressing pose in frame.，  Warm afternoon office light, half cup of coffee, unfinished checklist, and blue monitor glow on the desk, quiet background with no other people."},
+ {"檔案名稱": "office009", "主題": "截止日前衝刺 Deadline Sprint", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她身體靠近螢幕，雙手飛快操作鍵盤與觸控板，眼神銳利、嘴角緊繃，桌面文件略微散開，呈現時間壓力下的高速工作狀態。，  黑色高領上衣、深灰西裝褲、金屬髮夾固定半扎髮、無多餘飾品，俐落實用。，  斜前方動態中景，使用輕微動態模糊呈現手部快速操作。，  夜晚辦公桌只開工作燈，螢幕上有多個視窗，文件、便利貼與水杯散落但仍可辨識，畫面中只有她。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She moves close to the screen, both hands rapidly switching between keyboard and trackpad. Her eyes are sharp and her mouth tense, papers slightly scattered across the desk, showing high-speed work under deadline pressure.，  Black turtleneck, dark gray tailored pants, metallic hair clip holding half-up hair, minimal accessories, sharp and practical.，  Dynamic medium shot from the front diagonal, using slight motion blur to show fast hand movement.，  Night office desk lit by a task lamp, multiple windows on the screen, papers, sticky notes, and water glass scattered but readable, only her in frame."},
+ {"檔案名稱": "office010", "主題": "冷靜決策 Calm Decision-Making", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她坐在桌前雙手交握放在下巴下方，目光停在螢幕圖表上，表情平靜而深思，像是在權衡一個重要選項。，  奶油白西裝外套、深酒紅上衣、細框眼鏡、簡約耳扣，整體成熟穩重。，  正面中近景，螢幕邊緣在前景虛化，重點放在沉思表情與交握雙手。，  主管型個人辦公室，背景有文件櫃、抽象畫與柔和檯燈，環境安定無人。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She sits at the desk with hands clasped beneath her chin, eyes resting on charts on the monitor, calm and contemplative as if weighing an important option.，  Cream blazer, deep burgundy top, thin-frame glasses, minimalist ear cuffs, mature and steady overall.，  Frontal medium-close shot with the monitor edge blurred in foreground, emphasizing her thoughtful face and clasped hands.，  Executive-style private office with filing cabinets, abstract art, and a soft desk lamp, stable environment with no people."},
+ {"檔案名稱": "office011", "主題": "合約閱讀 Contract Reading", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她低頭細讀合約，一手用指尖壓著條款段落，一手握著筆準備註記，眼神慎重，唇角收緊，展現面對正式文件的謹慎。，  淺駝西裝背心、白襯衫、黑色長褲、細緻鎖骨鍊、皮革文件夾旁放著鋼筆。，  桌面斜上方近景，聚焦手指、合約文字區塊與她低垂的專注視線。，  律師風格小辦公間，深木桌面、暖色壁燈、整齊紙本與乾淨背景，無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She looks down carefully reading a contract, one fingertip pressing a clause while the other hand holds a pen ready to annotate. Her eyes are serious and her lips tightened, showing caution with formal documents.，  Light camel suit vest, white shirt, black trousers, delicate collarbone necklace, fountain pen beside a leather folder.，  Close overhead diagonal desk shot focusing on her finger, the contract text area, and her lowered focused gaze.，  Legal-style small office with dark wood desk, warm wall lamp, neat papers, and clean background, no other people."},
+ {"檔案名稱": "office012", "主題": "資料整理 Data Organizing", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她坐在寬桌前把紙本依顏色標籤分堆，身體微側，一手拿資料夾、一手推齊文件邊緣，神情安靜有條理。，  薄荷綠針織衫、白色長裙、細皮帶、淡金色手鍊，頭髮自然披肩。，  從桌面高角度俯拍，呈現文件分類的秩序與她側身整理的動作。，  明亮共享辦公桌但畫面只保留她的座位，彩色資料夾、標籤紙、桌墊與自然光形成清爽背景。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She sits at a wide desk sorting documents by color labels, body slightly turned, holding a folder in one hand and aligning paper edges with the other, quiet and organized.，  Mint green knit top, white long skirt, slim belt, pale gold bracelet, hair naturally down over the shoulders.，  High overhead desk angle showing the order of document sorting and her side-facing organizing movement.，  Bright shared worktable but only her station is shown, with color folders, label paper, desk mat, and natural light creating a fresh background."},
+ {"檔案名稱": "office013", "主題": "咖啡短暫休息 Coffee Pause", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她靠在辦公椅背上，雙手捧著馬克杯，眼睛望向窗外，表情放鬆帶一點疲憊，像是在短短幾分鐘裡把心情重新整理好。，  深藍針織開襟衫、白襯衫、灰色長褲、細框眼鏡推到頭頂，造型舒適專業。，  窗邊側面中景，讓杯子的蒸氣、她的側臉與窗光形成安靜情緒。，  高樓辦公室窗邊座位，城市景色模糊在外，桌上有合起的筆電與休息中的記事本，無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She leans back in her office chair, both hands around a mug, eyes looking out the window, relaxed with a hint of fatigue, as if quietly resetting herself in a few minutes.，  Deep blue knit cardigan, white shirt, gray trousers, thin-frame glasses pushed onto her head, comfortable and professional.，  Side medium shot by the window, letting the mug steam, her profile, and window light create a quiet mood.，  High-rise office window seat with blurred city view outside, closed laptop and resting notebook on the desk, no other people."},
+ {"檔案名稱": "office014", "主題": "夜間加班 Late-Night Overtime", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她獨自坐在昏暗辦公室裡，螢幕光映在臉上，眼下略有倦意但眼神仍專注，手指停在鍵盤上像剛完成一段重要文字。，  黑色西裝外套披在肩上、灰白襯衫、深色直筒裙、簡單耳針，頭髮微亂但整體仍端正。，  低光近中景，從螢幕旁拍她被藍光照亮的臉與停住的手。，  夜晚辦公室大多熄燈，只有桌燈與螢幕亮著，窗外城市燈點模糊，空間完全無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She sits alone in a dim office, monitor glow reflected on her face, slight tiredness under her eyes but still focused, fingers paused on the keyboard as if just finishing an important paragraph.，  Black blazer draped over shoulders, gray-white shirt, dark straight skirt, simple stud earrings, hair slightly messy yet still composed.，  Low-light medium-close shot from beside the monitor, capturing her blue-lit face and paused hands.，  Night office mostly dark, only desk lamp and monitor lit, blurred city lights outside the window, completely no other people."},
+ {"檔案名稱": "office015", "主題": "清單勾選 Checklist Completion", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她拿著筆在待辦清單上打勾，肩膀微鬆，眼神帶著小小成就感，嘴角自然上揚，像完成了一件讓心裡踏實的任務。，  淺黃色襯衫、淺灰西裝褲、帆布托特包放在桌旁，腕上戴細銀錶。，  桌面近拍搭配臉部上半部入鏡，強調筆尖勾選與愉快眼神。，  清爽日間辦公桌，有桌曆、綠植、已排序文件與柔和自然光，畫面中只有她。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She marks a check on a to-do list with a pen, shoulders relaxing, eyes showing a small sense of achievement and a natural smile, as if finishing a task that brings relief.，  Light yellow blouse, light gray tailored pants, canvas tote beside the desk, slim silver watch on her wrist.，  Close desk shot including the upper half of her face, emphasizing the pen checking an item and her pleased eyes.，  Fresh daytime office desk with desk calendar, small plant, sorted files, and soft natural light, only her in frame."},
+ {"檔案名稱": "office016", "主題": "預算計算 Budget Calculation", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她一手操作計算機，一手在試算表旁寫下金額，眉頭微蹙、眼神細密，呈現精算成本時的慎重與壓力。，  深咖啡襯衫、黑色西裝褲、方形手錶、低調金色耳環，髮尾整齊內彎。，  從左前方桌面高度拍攝，讓計算機、試算表與她的專注表情連成一條視線。，  財務辦公桌環境，桌面有數字報表、螢幕上的表格、筆筒與暖白燈光，無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She operates a calculator with one hand and writes an amount beside a spreadsheet with the other, brows slightly furrowed and eyes precise, showing the caution and pressure of calculating costs.，  Dark coffee blouse, black tailored pants, square watch, subtle gold earrings, hair ends neatly curved inward.，  Desk-height shot from the front left, connecting calculator, spreadsheet, and her focused expression in one sightline.，  Finance desk environment with numeric reports, spreadsheet on screen, pen holder, and warm white lighting, no other people."},
+ {"檔案名稱": "office017", "主題": "客訴回覆撰寫 Customer Issue Reply", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她看著螢幕上的訊息草稿，手指停在鍵盤上，表情溫和但認真，微微點頭像在斟酌措辭，呈現用文字安撫問題的工作狀態。，  淡藍針織上衣、白色西裝外套、細鍊手環、簡潔髮夾，風格親切乾淨。，  螢幕後方反打近景，讓她的視線、鍵盤上的手與螢幕光構成互動。，  客服或營運座位，背景有耳機、流程便條、柔和檯燈與淺色隔板，畫面沒有其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She looks at a message draft on the screen, fingers paused on the keyboard, expression gentle but serious, nodding slightly as if weighing her wording, showing the work of calming an issue through text.，  Pale blue knit top, white blazer, thin chain bracelet, simple hair clip, approachable and clean style.，  Reverse close shot from behind the screen, connecting her gaze, hands on the keyboard, and monitor glow.，  Customer support or operations workstation with headset, process notes, soft desk lamp, and pale partitions, no other people."},
+ {"檔案名稱": "office018", "主題": "日程排程 Schedule Planning", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她用手指在平板月曆上滑動，另一手拿筆準備記下時間，眼神來回比較日期，表情冷靜有條理。，  白色襯衫裙、細腰帶、裸色低跟鞋、玫瑰金手錶，整體明亮俐落。，  從平板上方斜拍，將她低頭的臉、手指滑動與月曆畫面同時呈現。，  現代行政工作區，桌上有平板、紙本月曆、便利貼與簡潔白色桌面，自然光充足且無人。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She slides a finger across a tablet calendar while holding a pen in the other hand, eyes comparing dates back and forth, calm and organized.，  White shirt dress, slim waist belt, nude low heels, rose-gold watch, bright and crisp overall.，  Overhead diagonal shot above the tablet, showing her lowered face, sliding finger, and calendar screen together.，  Modern administrative workspace with tablet, paper calendar, sticky notes, and clean white desktop, plenty of natural light and no people."},
+ {"檔案名稱": "office019", "主題": "沉浸式分析 Immersive Analysis", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她戴著眼鏡凝視雙螢幕，一手托住下巴，一手在滑鼠上慢慢移動，表情專注到近乎忘我，像正在拆解複雜資料。，  深灰西裝背心、黑色內搭、直筒長褲、細銀項鍊，髮型簡單束起。，  從背後偏側方拍攝，前景可見雙螢幕輪廓，焦點落在她沉浸的側臉。，  資料分析工作站，螢幕顯示圖表與表格，桌面有便條和水杯，周圍燈光偏暗凸顯螢幕，無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She wears glasses and stares at dual monitors, one hand supporting her chin while the other slowly moves the mouse, deeply absorbed as if dissecting complex data.，  Dark gray suit vest, black inner top, straight-leg trousers, slim silver necklace, hair simply tied back.，  Rear three-quarter angle with dual monitor silhouettes in the foreground, focusing on her absorbed profile.，  Data analysis workstation with charts and tables on screen, notes and water glass on desk, dim surrounding light emphasizing monitors, no other people."},
+ {"檔案名稱": "office020", "主題": "晨會筆記整理 Morning Meeting Notes", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她把筆記本攤開，低頭用螢光筆畫重點，眉眼柔和卻專注，偶爾抬眼看向空白處思考下一步，像在把早會資訊重新消化。，  米色襯衫、深藍背心裙、細皮革手錶、小巧耳環，整體溫柔知性。，  桌側近中景，讓螢光筆、筆記重點與她低頭思考的表情入鏡。，  安靜個人座位，背景是乾淨白牆、軟木板與待辦卡片，早晨光線清新，無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She opens her notebook and highlights key points, her eyes soft but focused, occasionally looking up into empty space to think through the next step, as if digesting morning meeting information.，  Beige blouse, navy pinafore-style dress, slim leather watch, small earrings, gentle and intelligent overall.，  Medium-close desk-side shot including the highlighter, notebook highlights, and her thinking expression.，  Quiet personal seat with clean white wall, corkboard, and task cards in the background, fresh morning light, no other people."},
+ {"檔案名稱": "office021", "主題": "檔案歸檔 File Archiving", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她蹲在文件櫃前，一手拉開抽屜，一手把資料夾放進標籤位置，目光仔細核對分類，姿勢穩定而利落。，  淺灰襯衫、黑色九分褲、平底樂福鞋、細圓框眼鏡，袖口整齊扣好。，  低角度側拍，強調文件櫃抽屜、資料夾與她蹲姿的工作動作。，  檔案室或辦公室收納區，金屬文件櫃排列整齊，標籤清楚，日光燈乾淨明亮，無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She squats in front of a filing cabinet, one hand pulling the drawer open and the other placing a folder into its labeled slot, eyes carefully checking the category, steady and efficient.，  Light gray shirt, black ankle trousers, flat loafers, thin round glasses, cuffs neatly buttoned.，  Low side angle emphasizing the filing cabinet drawer, folder, and her squatting work posture.，  Archive room or office storage area with neat metal filing cabinets, clear labels, and bright clean fluorescent light, no other people."},
+ {"檔案名稱": "office022", "主題": "企劃發想 Planning Brainstorm", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她站在白板前，右手拿白板筆寫下關鍵字，左手抱著筆記本，眼睛微亮、眉梢上揚，像在把混亂想法整理成方向。，  橄欖綠襯衫、黑色寬褲、白色休閒鞋、簡潔耳圈，風格創意但不失專業。，  白板側前方中景，捕捉她書寫的手臂線條與投入表情。，  創意工作室風格辦公角落，白板上只有抽象流程與關鍵字，旁邊有便條與小桌，無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She stands before a whiteboard, writing keywords with a marker in her right hand while holding a notebook in her left. Her eyes brighten and brows lift, as if turning scattered ideas into direction.，  Olive green shirt, black wide-leg pants, white sneakers, simple hoop earrings, creative yet professional.，  Medium shot from the front side of the whiteboard, capturing her writing arm line and engaged expression.，  Creative studio-style office corner, whiteboard containing only abstract flows and keywords, sticky notes and a small table nearby, no other people."},
+ {"檔案名稱": "office023", "主題": "檢查電子郵件 Email Checking", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她坐在筆電前滑動觸控板，眼睛快速掃過信件列表，表情在警覺與平靜之間，像準備篩選優先順序。，  白襯衫外搭灰藍薄針織背心、黑色長裙、細髮箍、銀色耳釘。，  筆電螢幕旁的斜前近景，聚焦她掃視訊息的眼神與觸控板上的手。，  早晨辦公桌，信箱畫面在螢幕上微微虛化，桌面乾淨有咖啡與小盆栽，無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She sits at a laptop moving the trackpad, eyes quickly scanning an email list, expression between alert and calm, ready to filter priorities.，  White shirt with gray-blue thin knit vest, black long skirt, slim headband, silver stud earrings.，  Close front-diagonal shot beside the laptop screen, focusing on her scanning eyes and hand on the trackpad.，  Morning office desk with the inbox screen softly blurred, clean desktop with coffee and a small plant, no other people."},
+ {"檔案名稱": "office024", "主題": "處理突發狀況 Handling an Urgent Issue", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她一手扶著額頭，一手快速翻找資料夾，眼睛睜大、呼吸像是變急，但姿勢仍努力保持穩定，展現突發問題中的控制力。，  黑白條紋襯衫、深色西裝褲、短版黑外套、簡單手錶，髮絲有些鬆散。，  近景動態斜拍，讓翻動資料的手與她緊張但克制的表情成為焦點。，  桌面略顯忙亂，有打開的資料夾、紅色便條、螢幕警示視窗與強一點的桌燈，背景無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She holds her forehead with one hand while quickly searching a folder with the other, eyes widened and breathing seemingly quick, yet her posture tries to stay steady, showing control during a sudden issue.，  Black-and-white striped shirt, dark tailored pants, cropped black jacket, simple watch, hair slightly loosened.，  Dynamic close diagonal shot focusing on her hand flipping through documents and her tense but controlled expression.，  Desk slightly messy with open folders, red sticky notes, alert window on screen, and stronger desk lamp, no other people in background."},
+ {"檔案名稱": "office025", "主題": "安靜校稿 Quiet Proofreading", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她用指尖沿著文件行距慢慢移動，眼睛專注閱讀，嘴唇微動像在默念句子，呈現細膩校稿時的安靜節奏。，  淡粉針織衫、米色長褲、珍珠小耳環、細金手鍊，造型柔和乾淨。，  桌面近景偏俯角，讓文件文字行、手指與她的下半臉形成閱讀感。，  圖書館感的安靜辦公角落，木桌、暖色桌燈、整理好的文稿與淡色窗簾，無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She slowly moves her fingertip along the lines of a document, eyes focused, lips moving slightly as if silently reading each sentence, showing the quiet rhythm of careful proofreading.，  Pale pink knit top, beige trousers, small pearl earrings, slim gold bracelet, soft and clean styling.，  Close overhead desk angle showing document lines, her finger, and lower face to convey reading.，  Library-like quiet office corner with wooden desk, warm desk lamp, organized drafts, and pale curtains, no other people."},
+ {"檔案名稱": "office026", "主題": "設計版面調整 Layout Adjustment", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她握著滑鼠微微歪頭看螢幕，另一手比出小小距離，表情挑剔又投入，像在調整版面間距與視覺平衡。，  白色寬袖襯衫、黑色高腰褲、幾何耳環、短髮俐落，帶有設計感。，  從螢幕側前方中近景拍攝，呈現她歪頭觀察與手勢測量的姿態。，  設計工作桌，有大螢幕、色票、排版草稿、筆電與柔和側光，畫面中僅有她。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She holds the mouse and tilts her head slightly toward the monitor, the other hand measuring a small distance in the air. Her expression is critical and engaged, as if adjusting spacing and visual balance.，  White wide-sleeve blouse, black high-waist pants, geometric earrings, neat short hair, with a design-oriented feel.，  Medium-close shot from the front side of the monitor, showing her tilted observation and measuring gesture.，  Design workstation with large monitor, color swatches, layout drafts, laptop, and soft side light, only her in frame."},
+ {"檔案名稱": "office027", "主題": "行銷文案撰寫 Marketing Copywriting", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她一手支著臉頰，一手在鍵盤上慢慢輸入，眼神帶著思索與一點俏皮，像在尋找一句精準又有溫度的標語。，  珊瑚色襯衫、淺灰西裝裙、細緻耳墜、指甲乾淨自然，整體活潑但專業。，  正面近景，讓她思考中的眼神、托腮動作與鍵盤形成親密工作感。，  行銷座位背景有品牌色卡、便條牆與筆電螢幕，室內光柔和明亮，無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She supports her cheek with one hand while slowly typing with the other, eyes thoughtful with a hint of playfulness, as if searching for a precise and warm tagline.，  Coral blouse, light gray suit skirt, delicate drop earrings, clean natural nails, lively but professional.，  Frontal close shot creating an intimate work feeling through her thinking eyes, cheek-resting pose, and keyboard.，  Marketing desk with brand color cards, sticky note wall, and laptop screen, soft bright indoor light, no other people."},
+ {"檔案名稱": "office028", "主題": "專案進度追蹤 Project Progress Tracking", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她拿著筆在甘特圖上圈出日期，另一手扶著紙張邊緣，表情嚴肅但不慌張，像在確認進度是否還能準時完成。，  深藍襯衫、米色西裝褲、黑色細皮帶、簡約方錶，髮型為低馬尾。，  桌面俯拍加些微側臉，強調甘特圖、圈選日期與她判斷中的表情。，  專案管理辦公桌，有月曆、流程便條、筆電與乾淨白板背景，光線清楚且無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She circles a date on a Gantt chart with a pen while holding the paper edge with the other hand, serious but not panicked, checking whether the schedule can still finish on time.，  Navy shirt, beige tailored pants, black slim belt, simple square watch, hair in a low ponytail.，  Overhead desk shot with a slight profile, emphasizing the Gantt chart, circled date, and her judging expression.，  Project management desk with calendar, process notes, laptop, and clean whiteboard background, clear lighting and no other people."},
+ {"檔案名稱": "office029", "主題": "安靜等待回覆 Waiting for a Reply", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她坐在螢幕前雙手交疊，視線停在信件送出後的畫面，表情平靜中帶著微微期待，肩膀略微收住。，  淺紫襯衫、深灰窄裙、細項鍊、透明框眼鏡，造型內斂知性。，  從螢幕背後近景反拍，讓她等待的眼神與交疊雙手成為核心。，  安靜辦公桌，螢幕光柔和，旁邊有資料夾與小桌燈，背景乾淨留白且沒有其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She sits before the screen with hands folded, gaze resting on the sent email screen, expression calm with slight anticipation, shoulders subtly drawn in.，  Light purple blouse, dark gray narrow skirt, thin necklace, clear-frame glasses, understated and intelligent.，  Reverse close shot from behind the monitor, centering her waiting gaze and folded hands.，  Quiet office desk with soft monitor glow, folders and small desk lamp beside it, clean empty background with no other people."},
+ {"檔案名稱": "office030", "主題": "晨間整理桌面 Morning Desk Reset", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她站在桌前把筆筒移正、文件疊齊，身體微微前彎，臉上有清爽的專注感，像在用整理空間開啟工作模式。，  白色短袖襯衫、灰色背心、西裝長褲、簡單髮圈與小耳針，乾淨俐落。，  廣角中景從桌前斜拍，讓她整理物品的雙手與整體桌面秩序同時呈現。，  早晨自然光照進辦公室，桌上有筆記本、鍵盤、盆栽、文件盤，背景開闊但無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She stands at the desk straightening the pen holder and aligning papers, body slightly bent forward, face freshly focused, as if using tidying to enter work mode.，  White short-sleeve shirt, gray vest, tailored trousers, simple hair tie and small studs, clean and sharp.，  Wide medium shot from the front diagonal, showing both her hands arranging items and the overall desk order.，  Morning natural light enters the office; desk has notebook, keyboard, plant, and document tray, open background with no people."},
+ {"檔案名稱": "office031", "主題": "下班前收尾 End-of-Day Wrap-Up", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她把筆電闔上，一手收起筆記本，臉上有放鬆的微笑與一點疲憊，身體從前傾慢慢回正，呈現一天工作完成的釋然。，  深綠針織上衣、黑色長褲、米色風衣掛在椅背、細戒指與簡約耳環。，  側前方中景，捕捉闔上筆電的瞬間、她放鬆的笑意與收拾動作。，  傍晚辦公室有暖色夕光，桌面逐漸收乾淨，窗外城市天色轉暗，畫面只有她一人。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She closes her laptop, puts away her notebook with one hand, wearing a relaxed smile with a little fatigue, body slowly straightening from a forward lean, conveying relief at the end of a workday.，  Deep green knit top, black trousers, beige trench coat hanging on the chair back, slim rings and simple earrings.，  Medium shot from the front side capturing the moment of closing the laptop, her relaxed smile, and packing movement.，  Evening office with warm sunset light, desk gradually cleared, city sky darkening outside, only her in frame."},
+ {"檔案名稱": "office032", "主題": "整理簡報頁 Slide Deck Refinement", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她用觸控筆在平板上圈出投影片細節，眉頭輕皺、眼神精準，另一手扶住平板邊緣，像在修正最後一個關鍵版位。，  黑色無袖針織背心外搭白襯衫、灰色百褶裙、細金耳圈，造型俐落帶創意。，  平板上方近俯拍，讓觸控筆、投影片縮圖與她專注的臉部輪廓入鏡。，  簡報製作工作桌，桌上有平板、筆電、色票與草稿紙，柔和自然光，無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She circles slide details on a tablet with a stylus, brows lightly furrowed and eyes precise, while the other hand steadies the tablet edge, as if correcting one final key layout.，  Black sleeveless knit vest over a white shirt, gray pleated skirt, slim gold hoops, sharp with a creative touch.，  Close overhead shot above the tablet, including the stylus, slide thumbnails, and her focused facial outline.，  Presentation production desk with tablet, laptop, color swatches, and draft paper, soft natural light, no other people."},
+ {"檔案名稱": "office033", "主題": "深夜靈感爆發 Late-Night Inspiration", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她突然坐直身體，眼睛發亮，迅速在便條紙上寫下好幾行字，唇邊有驚喜的笑，像疲憊之後靈感忽然湧出。，  寬鬆白襯衫、黑色西裝褲、袖口捲起、細鍊項鍊，頭髮半扎略有鬆散感。，  近景斜拍，重點放在發亮眼神、快速書寫的手與桌上散開的便條。，  夜間創意辦公角落，桌燈形成暖色光圈，窗外漆黑，螢幕待機，空間安靜無人。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She suddenly sits upright, eyes bright, quickly writing several lines on sticky notes, a surprised smile at her lips, as if inspiration bursts through after fatigue.，  Loose white shirt, black tailored pants, sleeves rolled up, thin chain necklace, half-tied hair slightly loosened.，  Close diagonal shot focusing on bright eyes, fast writing hand, and scattered sticky notes on the desk.，  Late-night creative office corner, desk lamp forming a warm pool of light, dark window outside, idle monitor, quiet space with no people."},
+ {"檔案名稱": "office034", "主題": "專注視訊準備 Video Call Preparation", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她獨自坐在筆電前調整耳機麥克風，眼睛看向鏡頭預覽，表情專業帶一點自我確認，手指輕碰耳罩邊緣。，  淺粉西裝外套、白色上衣、黑色長褲、細項鍊與自然妝，髮型整理得服貼。，  筆電鏡頭高度的正面中近景，營造即將進入線上會議的真實感。，  居家辦公或安靜小辦公室，背景有書架、檯燈與簡潔牆面，鏡頭中沒有其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She sits alone at a laptop adjusting a headset microphone, eyes looking at the camera preview, professional with a hint of self-checking, fingers touching the headset edge.，  Light pink blazer, white top, black trousers, thin necklace and natural makeup, hair neatly smoothed.，  Frontal medium-close shot at laptop camera height, creating the realism of entering an online meeting.，  Home office or quiet small office with bookshelf, desk lamp, and simple wall, no other people in frame."},
+ {"檔案名稱": "office035", "主題": "統整會議紀錄 Meeting Minutes Consolidation", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她一邊看著錄音逐字稿，一邊把重點輸入文件，眼神來回切換，表情沉穩耐心，像在把雜亂資訊整理成清楚結論。，  淺灰針織上衣、藏青長褲、黑色髮夾、細框眼鏡，穿著舒適而端正。，  從桌面右側中景拍攝，保留螢幕文件、筆記與她雙手輸入的節奏。，  安靜行政工作區，桌上有耳機、筆記本、時間戳便條與柔和檯燈，無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She reads a transcript while typing key points into a document, eyes switching back and forth, expression steady and patient, as if turning messy information into clear conclusions.，  Light gray knit top, navy trousers, black hair clip, thin-frame glasses, comfortable yet proper.，  Medium shot from the right side of the desk, keeping the on-screen document, notes, and rhythm of her typing hands.，  Quiet administrative workspace with headphones, notebook, timestamp notes, and soft desk lamp, no other people."},
+ {"檔案名稱": "office036", "主題": "細節比對 Detail Comparison", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她把兩份文件並排攤開，手指在左右頁面之間移動，眼睛仔細比對差異，表情專注到幾乎屏息。，  白襯衫、深藍西裝外套、黑色窄褲、簡約銀色戒指，指甲修整乾淨。，  垂直俯拍桌面，讓兩份文件、移動的手指與她低頭的姿態形成清楚對照。，  品質檢查風格的桌面，文件、標籤貼、放大鏡與鉛筆排列有序，冷白光清楚，無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She lays two documents side by side, finger moving between the left and right pages, eyes carefully comparing differences, expression so focused she almost seems to hold her breath.，  White shirt, navy blazer, black slim trousers, minimalist silver ring, neatly trimmed nails.，  Vertical overhead desk shot showing the two documents, moving finger, and her lowered posture in clear comparison.，  Quality-check style desk with documents, labels, magnifier, and pencil arranged neatly, clear cool white light, no other people."},
+ {"檔案名稱": "office037", "主題": "自信送出成果 Confident Submission", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她的手指剛按下送出鍵，身體微微後靠，臉上露出安心而自信的微笑，眼神像在確認完成了一項重要交付。，  象牙白襯衫、墨綠西裝褲、細緻手鍊、低馬尾，整體乾淨有力量。，  鍵盤近景帶到臉部表情，讓按下送出的手與放鬆微笑形成前後層次。，  現代辦公桌，螢幕顯示送出完成提示，桌面文件整齊，午後光線溫暖，畫面無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.Her finger has just pressed the submit key, body leaning slightly back, face showing a relieved and confident smile, eyes confirming that an important deliverable is complete.，  Ivory blouse, forest green tailored pants, delicate bracelet, low ponytail, clean and quietly powerful.，  Keyboard close shot including facial expression, layering the submitting hand in front with the relaxed smile behind.，  Modern office desk with a submitted confirmation on screen, neat documents, warm afternoon light, no other people."},
+ {"檔案名稱": "office038", "主題": "困難問題思考 Difficult Problem Solving", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她把椅子稍微轉向白板，雙臂輕抱胸前，眉心集中、嘴角微抿，眼睛盯著未完成的流程圖，像在尋找問題核心。，  黑色高領毛衣、灰色長版西裝外套、深色長褲、細框眼鏡，氣質冷靜理性。，  從白板後方斜拍，前景有模糊流程線條，焦點在她思考的臉與抱臂姿態。，  獨立小會議室，白板上有流程箭頭與問題標記，桌上放著筆電和水杯，空間空無他人。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She turns her chair slightly toward a whiteboard, arms lightly folded, brows centered and lips pressed, eyes fixed on an unfinished flowchart as if searching for the core problem.，  Black turtleneck, long gray blazer, dark trousers, thin-frame glasses, calm and rational.，  Diagonal shot from behind the whiteboard, blurred flow lines in foreground, focus on her thinking face and folded arms.，  Private small meeting room with flow arrows and problem marks on the whiteboard, laptop and water glass on the table, no one else in the space."},
+ {"檔案名稱": "office039", "主題": "輕鬆完成小任務 Small Task Completed", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她用筆在便條上畫掉一項小任務，肩膀放鬆，忍不住露出輕快微笑，整個人散發簡單踏實的工作滿足感。，  淺綠襯衫、米色九分褲、白色平底鞋、小巧手鍊，造型清新日常。，  桌面低角度近拍，讓便條、畫線的筆與她輕快的微笑同時可見。，  日間辦公桌角落，有小盆栽、筆記本、玻璃水杯與溫柔窗光，無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She crosses out a small task on a sticky note, shoulders relaxed, unable to hide a light smile, radiating simple grounded work satisfaction.，  Light green shirt, beige ankle trousers, white flats, small bracelet, fresh everyday styling.，  Low close desk angle showing the sticky note, crossing pen, and her light smile together.，  Daytime office desk corner with small plant, notebook, glass of water, and gentle window light, no other people."},
+ {"檔案名稱": "office040", "主題": "資料視覺化 Data Visualization", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她用手指輕點螢幕上的圖表，另一手拿筆在筆記本畫下簡單圖形，眼神專注又帶著判斷力，像在把數據轉成故事。，  白色西裝外套、墨藍上衣、黑色長褲、細金耳環，整體專業明亮。，  螢幕側面中景，前景是圖表光影，後景是她指向螢幕的手和思考表情。，  分析工作桌，有大螢幕、圖表、筆記本與灰白色辦公背景，光線清晰，無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She lightly points at a chart on the screen while sketching a simple shape in her notebook with the other hand, focused and discerning, as if turning data into a story.，  White blazer, ink-blue top, black trousers, slim gold earrings, professional and bright.，  Medium side shot with chart glow in foreground, her pointing hand and thinking expression behind.，  Analysis desk with large monitor, charts, notebook, and gray-white office background, clear lighting, no other people."},
+ {"檔案名稱": "office041", "主題": "採購清單確認 Procurement List Check", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她拿著夾板站在收納架旁，低頭核對清單與樣品盒，表情仔細務實，手指按在勾選欄位上。，  卡其襯衫、黑色直筒褲、舒適低跟鞋、簡單手錶，袖子捲到手肘。，  從收納架側面中景拍攝，讓夾板、貨架樣品與她核對的姿態清楚可見。，  辦公室物資間，收納盒與標籤整齊排列，白色日光燈明亮，畫面沒有其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She stands beside storage shelves holding a clipboard, looking down to compare the list with sample boxes, practical and careful, finger pressed on a checkbox.，  Khaki shirt, black straight trousers, comfortable low heels, simple watch, sleeves rolled to the elbows.，  Medium shot from the side of the shelves, clearly showing the clipboard, shelf samples, and her checking posture.，  Office supply room with storage boxes and labels neatly arranged, bright white fluorescent light, no other people in frame."},
+ {"檔案名稱": "office042", "主題": "人資資料審閱 HR Document Review", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她坐在桌前翻閱履歷或人事表單，眼神溫和但謹慎，手指停在經歷欄位旁，像在評估資料完整性。，  淺米西裝外套、淡藍襯衫、深色長裙、珍珠耳針，氣質親和穩重。，  桌前正面中近景，讓文件、她的手指與溫和審視的表情建立連結。，  人資辦公室角落，背景有文件櫃、柔和植物與乾淨牆面，桌面整潔且無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She sits at a desk reviewing a resume or HR form, eyes gentle but cautious, finger resting beside an experience section as if evaluating completeness.，  Light beige blazer, pale blue shirt, dark long skirt, pearl studs, approachable and steady.，  Frontal medium-close desk shot linking the document, her finger, and her gentle reviewing expression.，  HR office corner with filing cabinet, soft greenery, and clean wall, tidy desk with no other people."},
+ {"檔案名稱": "office043", "主題": "產品規格核對 Product Spec Verification", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她用平板查看規格表，另一手拿著樣品零件仔細端詳，眉頭輕皺，眼神在實物與數據間切換。，  灰色襯衫外搭黑色工作背心、西裝褲、簡約腕錶，造型理性務實。，  近中景側拍，讓平板畫面、手中樣品與她細看表情同時可辨。，  產品測試桌，背景有小型樣品盒、標籤紙與中性灰牆，燈光乾淨均勻，無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She checks a specification sheet on a tablet while examining a sample part in her other hand, brows lightly furrowed, eyes switching between the object and the data.，  Gray shirt with black work vest, tailored pants, simple wristwatch, practical and rational styling.，  Medium-close side shot making the tablet screen, sample in hand, and her inspecting expression all visible.，  Product testing desk with small sample boxes, label paper, and neutral gray wall, clean even lighting, no other people."},
+ {"檔案名稱": "office044", "主題": "閱讀市場資訊 Market Reading", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她坐在窗邊用平板閱讀市場摘要，膝上放著筆記本，眼神沉著，手指停在螢幕段落上像在消化趨勢。，  深藍針織上衣、米色西裝褲、細長耳環、皮革樂福鞋，風格知性從容。，  窗邊斜側中景，讓自然光、平板與她安靜閱讀的姿勢形成平衡。，  高樓窗邊辦公休息座，外景城市模糊，旁邊有小圓桌與咖啡，畫面僅她一人。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She sits by the window reading a market summary on a tablet, notebook on her lap, composed gaze, finger resting on a paragraph as if digesting a trend.，  Deep navy knit top, beige tailored pants, slim long earrings, leather loafers, intelligent and composed style.，  Medium diagonal side shot by the window, balancing natural light, tablet, and her quiet reading posture.，  High-rise office window lounge seat with blurred city outside, small round table and coffee beside her, only her in frame."},
+ {"檔案名稱": "office045", "主題": "流程圖修正 Workflow Revision", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她站在白板前擦掉一段流程線，另一手拿著不同顏色的筆，表情堅定像剛找到更好的安排。，  深灰襯衫裙、黑色腰帶、短靴、簡約耳扣，衣著俐落有行動感。，  白板側面中景，拍到橡皮擦、半擦掉的線條與她堅定的側臉。，  流程改善小會議室，白板上有彩色箭頭與方塊，桌上放筆電與便條，空間無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She stands at a whiteboard erasing part of a workflow line, holding a different colored marker in the other hand, expression decisive as if she has found a better arrangement.，  Dark gray shirt dress, black belt, ankle boots, minimalist ear cuffs, sharp and action-oriented.，  Medium side shot at the whiteboard, capturing the eraser, half-erased lines, and her decisive profile.，  Process improvement meeting room with colored arrows and boxes on the whiteboard, laptop and notes on the table, no other people."},
+ {"檔案名稱": "office046", "主題": "獨自腦力激盪 Solo Brainstorming", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她坐在地毯旁的低桌前，周圍鋪著便條卡，雙手拿著兩張卡片比較，眼睛明亮，表情像在拼湊一個新架構。，  白色棉質襯衫、寬鬆深藍長褲、細髮圈、無鞋或穿柔軟室內鞋，氛圍放鬆。，  從上方俯拍，讓便條卡圍繞她形成創意思考的布局，人物仍為核心。，  創意辦公角落，低桌、地毯、便條卡與落地燈形成溫暖生活感，畫面沒有其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She sits at a low table by a rug, sticky cards spread around, holding two cards and comparing them, eyes bright, expression as if assembling a new structure.，  White cotton shirt, loose navy trousers, slim hair tie, barefoot or soft indoor shoes, relaxed atmosphere.，  Overhead shot with sticky cards surrounding her in a creative thinking layout while keeping her as the core.，  Creative office corner with low table, rug, sticky cards, and floor lamp creating warm lived-in feeling, no other people."},
+ {"檔案名稱": "office047", "主題": "條款談判前思考 Pre-Negotiation Thinking", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她坐在會議桌一端，雙手交握放在文件上，眼神沉穩直視前方空位，表情冷靜像在預演談判重點。，  黑色西裝套裝、白色襯衫、細銀胸針、低跟鞋，整體正式而有力量。，  長桌正前方對稱中景，讓空椅、文件與她穩定的姿態形成張力。，  空無一人的正式會議室，玻璃牆、長桌、瓶裝水與均勻冷白光，背景簡潔無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She sits at one end of a conference table, hands clasped on top of documents, steady eyes facing the empty seat ahead, calm as if rehearsing negotiation points.，  Black suit set, white shirt, slim silver brooch, low heels, formal and powerful overall.，  Symmetrical medium shot from the front of the long table, creating tension between the empty chair, documents, and her steady posture.，  Formal empty meeting room with glass wall, long table, bottled water, and even cool white light, clean background with no other people."},
+ {"檔案名稱": "office048", "主題": "審核設計稿 Design Draft Review", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她把列印設計稿攤在桌上，用鉛筆圈出需要調整的區域，眼神挑剔但帶期待，身體前傾投入審核。，  米白針織背心、淺藍襯衫、黑色寬褲、銀色手環，造型帶文藝感。，  桌面斜俯角中近景，讓設計稿、鉛筆圈選與她前傾姿勢同時清楚。，  設計審稿桌，有色票、列印稿、剪裁尺與柔和工作燈，背景沒有其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She spreads printed design drafts on the desk and circles areas needing adjustment with a pencil, eyes critical yet expectant, body leaning forward into the review.，  Ivory knit vest, light blue shirt, black wide-leg pants, silver bracelet, slightly artistic styling.，  Medium-close overhead diagonal desk shot showing the design drafts, pencil circles, and her forward-leaning posture clearly.，  Design review desk with color swatches, printouts, cutting ruler, and soft task light, no other people in background."},
+ {"檔案名稱": "office049", "主題": "維護工作秩序 Maintaining Order", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她把桌上的線材捲好放入收納盒，表情平靜專注，手勢細緻，像在用小動作維持工作環境的清爽。，  淺灰棉質襯衫、白色直筒褲、細布手環、自然低馬尾，造型舒適整潔。，  桌面近景，焦點落在整理線材的手與她安靜專注的側臉。，  極簡辦公桌，收納盒、鍵盤、筆電支架與小植物排列整齊，明亮自然光，無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She coils desk cables and places them into a storage box, calm and focused, gestures precise, as if maintaining a fresh work environment through small actions.，  Light gray cotton shirt, white straight trousers, thin fabric bracelet, natural low ponytail, comfortable and tidy.，  Close desk shot focusing on her hands organizing cables and her quiet focused profile.，  Minimal office desk with storage box, keyboard, laptop stand, and small plant neatly arranged, bright natural light, no other people."},
+ {"檔案名稱": "office050", "主題": "學習新工具 Learning a New Tool", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她看著教學畫面，一手拿滑鼠、一手在筆記本畫步驟，眉頭微皺但眼神好奇，呈現學習新軟體時的探索感。，  藍白條紋襯衫、灰色針織背心、黑色長褲、透明框眼鏡，氛圍年輕專業。，  從螢幕側後方中景拍攝，讓教學畫面光影、筆記與她好奇表情同框。，  培訓或自學工作位，桌上有筆電、筆記、快捷鍵便條與水杯，乾淨安靜且無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She watches a tutorial screen, one hand on the mouse and the other sketching steps in a notebook, brows slightly furrowed but eyes curious, showing the exploration of learning new software.，  Blue-white striped shirt, gray knit vest, black trousers, clear-frame glasses, young professional mood.，  Medium shot from behind the side of the screen, framing the tutorial glow, notes, and her curious expression together.，  Training or self-learning workstation with laptop, notes, shortcut sticky notes, and water glass, clean and quiet with no people."},
+ {"檔案名稱": "office051", "主題": "專注裁切文件 Document Trimming", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她站在桌邊用裁紙刀沿尺切齊文件邊緣，眼神小心，嘴唇輕抿，身體保持穩定，呈現精準手作整理的工作感。，  白襯衫、黑色圍裙式工作背心、灰色長褲、短髮或束髮，配戴簡單手錶。，  手部特寫帶到臉部下半部，強調裁切線、尺與她小心穩定的姿態。，  文書製作桌，有紙張堆、裁切墊、尺、夾子與明亮桌燈，背景無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She stands by the desk using a paper cutter along a ruler to trim document edges, careful eyes, lips lightly pressed, body steady, showing precise hands-on document preparation.，  White shirt, black apron-style work vest, gray trousers, short or tied hair, simple watch.，  Hand close-up including lower face, emphasizing the cutting line, ruler, and her careful steady posture.，  Document preparation desk with paper stacks, cutting mat, ruler, clips, and bright desk lamp, no other people in background."},
+ {"檔案名稱": "office052", "主題": "檢視月度績效 Monthly Performance Review", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她坐在大螢幕前看著趨勢圖，雙手放在桌面，表情既嚴肅又帶一點欣慰，像在評估一整月的成果。，  深紫襯衫、黑色西裝褲、細金項鍊、珍珠耳釘，整體沉穩有質感。，  從背後偏高角度拍攝，螢幕圖表佔前景，她的側臉與手部在畫面中清楚。，  績效分析辦公桌，背景有柔和燈光、文件盒與整潔牆面，畫面中沒有其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She sits before a large monitor viewing trend charts, both hands on the desk, expression serious with a hint of satisfaction, as if evaluating a month's results.，  Deep purple blouse, black tailored pants, slim gold necklace, pearl studs, steady and refined.，  Slightly high rear angle with monitor charts in the foreground and her profile and hands clearly visible.，  Performance analysis desk with soft lighting, document boxes, and tidy wall, no other people in frame."},
+ {"檔案名稱": "office053", "主題": "低聲自我確認 Quiet Self-Check", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她靠近筆電螢幕，嘴唇微動像在低聲念出要點，食指停在觸控板上，眼神專注又帶一點緊張。，  淡灰藍襯衫、白色西裝外套、黑色西裝裙、細框眼鏡，髮型整齊貼服。，  筆電旁近景，拍到她低聲確認的嘴唇、眼神與停在觸控板上的手指。，  準備發表前的空會議室角落，桌上有筆電、簡報稿、遙控器與柔白光，無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She leans close to the laptop screen, lips moving as if quietly reading key points aloud, index finger resting on the trackpad, focused with a little nervousness.，  Pale gray-blue shirt, white blazer, black suit skirt, thin-frame glasses, neatly smoothed hair.，  Close shot beside the laptop, capturing her quietly checking lips, eyes, and finger on the trackpad.，  Empty meeting-room corner before a presentation, with laptop, script, remote, and soft white light, no other people."},
+ {"檔案名稱": "office054", "主題": "整理收件匣 Inbox Cleanup", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她一手握著滑鼠快速點選信件，另一手拿咖啡杯停在半空，表情專注卻帶一點無奈，像在清理積累的訊息。，  白色針織上衣、黑色西裝背心、灰色長褲、小巧耳環，造型簡潔。，  側前方中近景，讓滑鼠操作、停住的咖啡杯與她微妙表情入鏡。，  早上辦公桌，螢幕顯示大量信件列表但文字不需清楚，桌面有咖啡與文件盤，無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She rapidly clicks emails with one hand on the mouse while holding a coffee cup suspended in the other, focused with a hint of resignation, as if clearing accumulated messages.，  White knit top, black suit vest, gray trousers, small earrings, simple styling.，  Medium-close front-side shot including mouse action, paused coffee cup, and her subtle expression.，  Morning office desk with a long email list on screen, text not necessarily readable, coffee and document tray on desk, no other people."},
+ {"檔案名稱": "office055", "主題": "撰寫工作日誌 Writing a Work Log", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她坐在桌前慢慢書寫工作日誌，眼神柔和回顧，嘴角有很淡的疲憊笑意，像在把一天的進度妥善收束。，  暖棕針織衫、黑色長裙、細金戒指、低馬尾，穿著溫柔有生活感。，  桌燈下的近景俯拍，讓日誌本、筆跡、她的手與柔和表情同時可見。，  傍晚個人辦公桌，暖色桌燈、窗外暗下的天空、收好的文件與安靜氛圍，無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She sits at the desk slowly writing a work log, eyes soft and reflective, with a faint tired smile, as if properly closing the day's progress.，  Warm brown knit top, black long skirt, slim gold ring, low ponytail, gentle lived-in styling.，  Close overhead shot under a desk lamp, showing the logbook, handwriting, her hand, and soft expression together.，  Evening personal desk with warm lamp, darkening sky outside, closed files, and quiet mood, no other people."},
+ {"檔案名稱": "office056", "主題": "檢查發票憑證 Invoice Check", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她把發票一張張攤開，手指按著日期與金額欄位，眼神仔細，嘴角收緊，像在確認每個憑證都能對上。，  淺藍襯衫、黑色窄裙、銀色細錶、眼鏡掛在鼻樑下方，風格精準幹練。，  桌面垂直俯拍搭配一點臉部角度，強調發票排列、指尖與核對視線。，  財務或行政桌面，有發票、收據、計算機、資料夾與冷白工作燈，畫面無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She spreads invoices one by one, finger pressing date and amount fields, eyes careful and mouth tightened, confirming that every receipt matches.，  Light blue shirt, black narrow skirt, slim silver watch, glasses low on the bridge of her nose, precise and capable.，  Vertical overhead desk shot with a little face angle, emphasizing invoice layout, fingertip, and checking gaze.，  Finance or admin desk with invoices, receipts, calculator, folders, and cool white task light, no other people in frame."},
+ {"檔案名稱": "office057", "主題": "整理專案資料夾 Project Folder Organization", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她在電腦前拖曳資料夾，另一手拿著紙本清單核對命名規則，眼神穩定，表情像在建立可依循的秩序。，  淡綠襯衫、深灰背心、黑色直筒褲、細髮夾與簡約戒指。，  從螢幕側後方中景，讓資料夾畫面、紙本清單與她核對的姿態清楚連結。，  文件管理工作區，桌上有外接硬碟、標籤紙、資料夾與柔和燈光，無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She drags folders on the computer while checking naming rules on a paper list with the other hand, steady eyes, expression as if building a dependable order.，  Pale green shirt, dark gray vest, black straight trousers, slim hair clip and simple ring.，  Medium shot from behind the side of the monitor, clearly linking the folder screen, paper checklist, and her checking posture.，  File management workspace with external hard drive, label paper, folders, and soft lighting, no other people."},
+ {"檔案名稱": "office058", "主題": "午餐後重啟 Post-Lunch Restart", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她坐回辦公椅，雙手輕拍臉頰讓自己清醒，眼神逐漸聚焦到螢幕，表情從慵懶轉為準備投入。，  淺橘襯衫、米白西裝褲、細金手錶、小耳圈，色調溫暖有精神。，  正面中近景，捕捉雙手拍臉、眼神重新聚焦與桌面午餐後的細節。，  午後辦公桌，桌邊有收好的餐盒袋、水杯、筆電與明亮窗光，背景乾淨無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She sits back in her office chair, lightly pats her cheeks to wake herself up, eyes gradually focusing on the screen, expression shifting from languid to ready.，  Light orange blouse, ivory tailored pants, slim gold watch, small hoops, warm and energetic colors.，  Frontal medium-close shot capturing both hands patting cheeks, refocusing eyes, and post-lunch desk details.，  Afternoon office desk with packed lunch bag, water cup, laptop, and bright window light, clean background with no people."},
+ {"檔案名稱": "office059", "主題": "準備重要寄件 Preparing an Important Package", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她站在桌前把文件放入信封，雙手仔細對齊封口，表情慎重，像在處理一份不能出錯的重要寄件。，  白色襯衫、深棕西裝褲、細皮帶、簡潔手錶，外套整齊掛在旁邊。，  桌前斜上方中景，讓信封、文件、雙手與她慎重的臉一起呈現。，  行政寄件區，有標籤機、信封、文件袋、收納盒與明亮白色燈光，無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She stands at the desk placing documents into an envelope, both hands carefully aligning the seal, expression serious, handling an important package that must not go wrong.，  White shirt, dark brown tailored pants, slim belt, simple watch, blazer neatly hanging nearby.，  Medium overhead diagonal shot from the desk front, showing the envelope, documents, hands, and her careful face together.，  Administrative mailing area with label maker, envelopes, document bags, storage boxes, and bright white light, no other people."},
+ {"檔案名稱": "office060", "主題": "安靜修改錯字 Quiet Typo Fixing", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她盯著螢幕上的文字，食指懸在退格鍵上，眉毛微挑像發現了小錯，嘴角帶一點自嘲的笑。，  淡青襯衫、黑色高腰裙、銀色耳釘、細框眼鏡，造型清爽。，  鍵盤前方近景，讓懸停的手指、螢幕文字光與她微妙表情同框。，  安靜文案工作桌，背景有筆記、字典、杯墊與柔白檯燈，畫面中沒有其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She stares at text on the screen, index finger hovering over the backspace key, one brow slightly raised as if finding a small mistake, with a self-amused smile.，  Pale cyan shirt, black high-waist skirt, silver stud earrings, thin-frame glasses, fresh styling.，  Close shot from the keyboard front, framing the hovering finger, screen text glow, and her subtle expression.，  Quiet writing desk with notes, dictionary, coaster, and soft white desk lamp in background, no other people in frame."},
+ {"檔案名稱": "office061", "主題": "重新安排優先順序 Reprioritizing Tasks", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她把便利貼從看板一欄移到另一欄，眼神堅定，嘴唇微抿，肩膀挺直，像剛做出取捨。，  黑色襯衫、卡其西裝褲、皮革手環、簡約髮夾，造型俐落成熟。，  看板側面中景，捕捉移動便利貼的手與她做決策的表情。，  個人專案看板牆，只有工作欄位與彩色便利貼，旁邊有小桌與筆電，無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She moves a sticky note from one board column to another, eyes decisive, lips pressed, shoulders upright, as if she has just made a tradeoff.，  Black shirt, khaki tailored pants, leather bracelet, simple hair clip, sharp and mature styling.，  Medium side shot of the board, capturing the hand moving the sticky note and her decision-making expression.，  Personal project board wall with only workflow columns and colored sticky notes, small desk and laptop nearby, no other people."},
+ {"檔案名稱": "office062", "主題": "資料備份 Data Backup", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她把外接硬碟接上筆電，眼睛看著進度條，手指輕敲桌面，表情耐心但有一點戒慎。，  深藍襯衫、灰色西裝裙、細銀手鍊、低馬尾，整體簡潔可靠。，  桌面低角度近景，讓連接線、外接硬碟、她等待的手指與表情形成畫面。，  資訊管理風格工作桌，桌上有硬碟、筆電、備份清單與冷白燈，背景乾淨無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She connects an external drive to the laptop, eyes watching the progress bar, fingers tapping lightly on the desk, patient but slightly cautious.，  Deep blue shirt, gray suit skirt, slim silver bracelet, low ponytail, simple and reliable.，  Low close desk angle showing the cable, external drive, her waiting fingers, and expression.，  IT management-style desk with external drive, laptop, backup checklist, and cool white light, clean background with no people."},
+ {"檔案名稱": "office063", "主題": "接收好消息 Receiving Good News", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她看著螢幕上的通知，眼睛微微睜大，嘴角控制不住上揚，一手輕按胸口，像收到令人安心的工作進展。，  奶油色襯衫、深灰長褲、細金耳環、自然捲髮披肩，整體柔和愉悅。，  從螢幕旁正面近景拍攝，捕捉她驚喜又克制的表情與按胸口的手。，  明亮辦公桌，螢幕光柔和，桌上有筆記本、咖啡與小花瓶，背景留白且無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She looks at a notification on the screen, eyes widening slightly, smile rising despite herself, one hand lightly touching her chest as if receiving reassuring work progress.，  Cream blouse, dark gray trousers, slim gold earrings, naturally wavy hair down, soft and pleased overall.，  Frontal close shot beside the monitor, capturing her surprised yet restrained expression and hand on chest.，  Bright office desk with soft monitor glow, notebook, coffee, and small vase on the desk, empty background with no other people."},
+ {"檔案名稱": "office064", "主題": "面對修改意見 Facing Revision Notes", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她把一疊標滿註記的文件攤開，深吸一口氣，眼神從壓力慢慢轉為接受，手拿筆準備開始修改。，  淺灰藍針織衫、黑色直筒裙、細長項鍊、簡潔腕錶，造型沉靜。，  桌面正前方中近景，讓滿版註記、深呼吸姿態與準備動筆的手清楚呈現。，  安靜辦公桌，文件上有紅色註記、旁邊放著筆電與水杯，柔和午後光，無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She spreads out a stack of heavily annotated documents, takes a deep breath, her gaze shifting from pressure to acceptance, pen in hand ready to revise.，  Pale gray-blue knit top, black straight skirt, slim long necklace, simple watch, calm styling.，  Medium-close shot from the desk front, clearly showing the annotated pages, deep-breath posture, and hand ready to write.，  Quiet office desk with red annotations on documents, laptop and water glass beside them, soft afternoon light, no other people."},
+ {"檔案名稱": "office065", "主題": "閱讀技術文件 Reading Technical Documentation", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她戴著眼鏡靠近螢幕，一手捲著筆、一手托著下巴，眼神仔細，眉頭微微皺起，像在理解陌生規格。，  黑色針織衫、灰色西裝外套、深色長褲、細框眼鏡，風格理性內斂。，  側面近景，讓螢幕光、眼鏡反光、筆與她思考的臉部細節突出。，  技術或產品辦公桌，螢幕上有文件結構、桌上有筆記與快捷鍵紙條，背景無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She wears glasses and leans toward the screen, twirling a pen with one hand and supporting her chin with the other, eyes careful and brows slightly furrowed, trying to understand unfamiliar specifications.，  Black knit top, gray blazer, dark trousers, thin-frame glasses, rational and understated style.，  Side close shot highlighting screen glow, glasses reflection, pen, and thoughtful facial details.，  Technical or product desk with documentation structure on screen, notes and shortcut slips on desk, no other people in background."},
+ {"檔案名稱": "office066", "主題": "溫柔回覆訊息 Gentle Message Reply", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她低頭看手機上的工作訊息，拇指慢慢輸入回覆，表情溫柔但有界線，像在用禮貌文字處理工作關係。，  米白針織上衣、淡咖啡西裝褲、珍珠耳環、細手鍊，氣質柔和成熟。，  窗邊近景，焦點在手機、拇指輸入與她柔和但專注的臉。，  辦公室窗邊小桌，桌上有筆電、咖啡與半開筆記本，自然光明亮，無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She looks down at a work message on her phone, thumb slowly typing a reply, expression gentle but bounded, handling work relationships through polite wording.，  Ivory knit top, light coffee tailored pants, pearl earrings, thin bracelet, gentle mature aura.，  Close shot by the window, focusing on the phone, typing thumb, and her soft but focused face.，  Small office table by the window with laptop, coffee, and half-open notebook, bright natural light, no other people."},
+ {"檔案名稱": "office067", "主題": "跨時區等待 Cross-Time-Zone Waiting", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她看著桌上的世界時鐘與筆電訊息，手拿筆停在記事本上方，表情疲倦卻耐心，像在等待另一個時區的回覆。，  深灰襯衫、黑色西裝褲、披肩式薄外套、簡約耳針，造型低調。，  夜間側前中景，讓世界時鐘、筆電與她等待的姿勢形成時間感。，  夜晚辦公室，桌燈暖光照亮時鐘、記事本與筆電，窗外城市燈光模糊，無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She looks at a world clock on the desk and a laptop message, pen paused above her notebook, tired but patient, waiting for a reply from another time zone.，  Dark gray shirt, black tailored pants, thin shawl-like cardigan, simple stud earrings, understated style.，  Night medium front-side shot, linking the world clock, laptop, and her waiting posture to a sense of time.，  Night office with warm desk lamp lighting the clock, notebook, and laptop, blurred city lights outside, no other people."},
+ {"檔案名稱": "office068", "主題": "整理會議室 Resetting the Meeting Room", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她獨自把椅子推回桌邊，另一手抱著資料與遙控器，表情放鬆但仍有責任感，像在會議後把空間恢復整齊。，  白色襯衫、深藍長褲、黑色平底鞋、細髮圈，袖子微微捲起。，  會議桌尾端廣角中景，拍到她推椅子的動作與空曠會議室的整潔感。，  空會議室，長桌、投影幕、整齊椅子與柔白燈光，桌上只剩少量文件，無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She pushes a chair back to the table alone while holding documents and a remote in the other arm, relaxed yet responsible, restoring the room after a meeting.，  White shirt, navy trousers, black flats, slim hair tie, sleeves slightly rolled.，  Wide medium shot from the end of the conference table, capturing her pushing the chair and the tidy emptiness of the room.，  Empty meeting room with long table, projection screen, neat chairs, and soft white light, only a few documents on the table, no other people."},
+ {"檔案名稱": "office069", "主題": "安全檢查 Security Check", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她盯著螢幕上的登入紀錄，一手拿筆標記可疑時間，表情嚴肅，身體微微前傾，呈現警覺而專業的狀態。，  黑色襯衫、深灰西裝外套、黑色長褲、簡單銀戒，整體低調銳利。，  從螢幕斜後方中近景，讓紀錄列表光影、標記動作與她警覺的眼神結合。，  資訊安全工作桌，背景偏暗，桌面有筆記本、雙螢幕與冷色工作燈，無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She studies login records on the screen, marking a suspicious time with a pen, expression serious, body slightly leaning forward, alert and professional.，  Black shirt, dark gray blazer, black trousers, simple silver ring, understated and sharp.，  Medium-close shot from behind the side of the monitor, combining log-list glow, marking action, and her alert gaze.，  Information security desk with darker background, notebook, dual monitors, and cool task light, no other people."},
+ {"檔案名稱": "office070", "主題": "商品資料上架 Product Listing Upload", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她一手拖曳圖片到上架頁面，一手在鍵盤輸入標題，眼神快速掃描欄位，表情專注而有效率。，  淺藍牛津襯衫、黑色西裝褲、簡約耳圈、細皮帶，造型乾淨實用。，  桌前斜側中景，讓螢幕表單、鍵盤手勢與她快速掃視的表情同時呈現。，  電商營運工作位，桌上有產品小樣、標籤紙、筆電與柔和自然光，背景無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She drags an image into a listing page with one hand and types a title with the other, eyes quickly scanning fields, focused and efficient.，  Light blue Oxford shirt, black tailored pants, simple hoops, slim belt, clean and practical styling.，  Medium diagonal side shot from the desk front, showing the screen form, keyboard gesture, and her quick scanning expression together.，  E-commerce operations workstation with product samples, label paper, laptop, and soft natural light, no other people."},
+ {"檔案名稱": "office071", "主題": "檢查庫存數字 Inventory Number Check", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她拿著平板站在貨架前，手指點選庫存欄位，眼神在貨架標籤與螢幕間切換，表情務實專注。，  灰色工作襯衫、黑色長褲、舒適樂福鞋、細手錶，袖口捲起。，  貨架通道側面中景，讓平板、標籤與她核對的站姿清楚呈現。，  辦公庫存或樣品間，貨架整齊、收納箱有標籤、光線均勻明亮，無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She stands before shelves holding a tablet, finger tapping an inventory field, eyes switching between shelf labels and the screen, practical and focused.，  Gray work shirt, black trousers, comfortable loafers, slim watch, sleeves rolled up.，  Medium side shot in a shelf aisle, clearly showing the tablet, labels, and her checking stance.，  Office inventory or sample room with neat shelves, labeled storage boxes, even bright lighting, no other people."},
+ {"檔案名稱": "office072", "主題": "改善流程筆記 Process Improvement Notes", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她坐在桌前把流程缺口寫成清單，眼神冷靜，手腕穩定，另一手按住便條堆，像在把問題轉成可執行步驟。，  白襯衫外搭灰色針織開襟衫、深藍長褲、細框眼鏡，氣質務實溫和。，  桌面近中景俯角，重點放在清單、便條堆與她穩定書寫的手。，  流程管理桌面，有白板小卡、便條、筆記本與自然光，背景乾淨無其他人物。", "English Prompt": "A 25-year-old Taiwanese woman with long black hair and an oval face.She sits at the desk turning process gaps into a checklist, calm eyes, steady wrist, other hand holding a stack of sticky notes, converting problems into executable steps.，  White shirt with gray knit cardigan, navy trousers, thin-frame glasses, practical and gentle.，  Medium-close overhead desk angle focusing on the checklist, sticky note stack, and her steady writing hand.，  Process management desk with small whiteboard cards, sticky notes, notebook, and natural light, clean background with no other people."}
+ 
+ ];
+
+  /* =========================================================
+   * 工具函式
+   * ========================================================= */
+  let toastTimer = null;
+
+  function showToast(msg) {
+    const el = document.getElementById("toast");
+    el.textContent = msg;
+    el.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove("show"), CONFIG.toastDuration);
+  }
+
+  async function copyToClipboard(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      // 降級方案
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.cssText = "position:fixed;top:-999px;left:-999px;opacity:0";
+      document.body.appendChild(ta);
+      ta.focus(); ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return ok;
+    }
+  }
+
+  /* =========================================================
+   * Lightbox
+   * ========================================================= */
+  const lightbox     = document.getElementById("lightbox");
+  const lightboxImg  = document.getElementById("lightbox-img");
+  const lightboxCap  = document.getElementById("lightbox-caption");
+  const lightboxClose= document.getElementById("lightbox-close");
+
+  function openLightbox(src, title) {
+    lightboxImg.src = src;
+    lightboxImg.alt = title;
+    lightboxCap.textContent = title;
+    lightbox.classList.add("active");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeLightbox() {
+    lightbox.classList.remove("active");
+    document.body.style.overflow = "";
+    // 延遲清空避免閃爍
+    setTimeout(() => { lightboxImg.src = ""; }, 300);
+  }
+
+  lightbox.addEventListener("click", e => { if (e.target === lightbox || e.target === lightboxImg) closeLightbox(); });
+  lightboxClose.addEventListener("click", closeLightbox);
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closeLightbox(); });
+
+  /* =========================================================
+   * 建立圖片卡片
+   * ========================================================= */
+  function buildCard(item) {
+    const filename = item["檔案名稱"];
+    const title    = item["主題"];
+    const twPrompt = item["中文生圖用提示詞"];
+    const enPrompt = item["English Prompt"];
+    const imgSrc   = `${CONFIG.imgFolder}/${filename}${CONFIG.imgExt}`;
+
+    const card = document.createElement("div");
+    card.className = "card";
+
+    // 圖片區域
+    const imgWrap = document.createElement("div");
+    imgWrap.className = "card__img-wrap";
+    imgWrap.title = "點擊放大";
+
+    // 佔位（當圖片尚未載入或不存在時顯示）
+    const placeholder = document.createElement("div");
+    placeholder.className = "img-placeholder";
+    placeholder.innerHTML = `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><span>${filename}</span>`;
+    imgWrap.appendChild(placeholder);
+
+    const img = document.createElement("img");
+    img.alt   = title;
+    img.loading = "lazy";
+    img.src   = imgSrc;
+
+    img.addEventListener("load",  () => { img.classList.add("loaded"); placeholder.style.display = "none"; });
+    img.addEventListener("error", () => { img.style.display = "none"; });
+
+    imgWrap.appendChild(img);
+    imgWrap.addEventListener("click", () => openLightbox(imgSrc, title));
+
+    // 資訊區域
+    const info = document.createElement("div");
+    info.className = "card__info";
+
+    const titleEl = document.createElement("div");
+    titleEl.className = "card__title";
+    titleEl.textContent = title;
+
+    const filenameEl = document.createElement("div");
+    filenameEl.className = "card__filename";
+    filenameEl.textContent = filename;
+
+    const btns = document.createElement("div");
+    btns.className = "card__btns";
+
+    const btnTW = document.createElement("button");
+    btnTW.className = "btn btn--tw";
+    btnTW.textContent = "tw Prompt";
+    btnTW.title = twPrompt;
+    btnTW.addEventListener("click", async () => {
+      await copyToClipboard(twPrompt);
+      showToast(CONFIG.toastTW);
+    });
+
+    const btnEN = document.createElement("button");
+    btnEN.className = "btn btn--en";
+    btnEN.textContent = "en Prompt";
+    btnEN.title = enPrompt;
+    btnEN.addEventListener("click", async () => {
+      await copyToClipboard(enPrompt);
+      showToast(CONFIG.toastEN);
+    });
+
+    btns.appendChild(btnTW);
+    btns.appendChild(btnEN);
+
+    info.appendChild(titleEl);
+    info.appendChild(filenameEl);
+    info.appendChild(btns);
+
+    card.appendChild(imgWrap);
+    card.appendChild(info);
+
+    return card;
+  }
+
+  /* =========================================================
+   * 初始化
+   * ========================================================= */
+  const gallery = document.getElementById("gallery");
+  IMAGES.forEach(item => gallery.appendChild(buildCard(item)));
+
+  document.getElementById("imgCount").textContent = `共 ${IMAGES.length} 張圖片`;
+</script>
+</body>
+</html>
