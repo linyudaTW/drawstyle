@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>提示詞畫廊 - 不熄的公路劇場</title>
+  <style>
+    /* ===== 全域設定 ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --card-bg: #1e2130;
+      --card-hover: #252840;
+      --border: #2e3350;
+      --accent: #7c6ff7;
+      --accent2: #5bc8d4;
+      --text-main: #e8eaf6;
+      --text-sub: #9ba1c0;
+      --btn-tw-bg: #3d3580;
+      --btn-tw-hover: #5548b0;
+      --btn-en-bg: #1e5a63;
+      --btn-en-hover: #2a7d8a;
+      --radius: 12px;
+      --transition: 0.22s ease;
+
+      /* ===== 可調整：圖片資料夾路徑 ===== */
+      --img-folder: clsa;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text-main);
+      font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+      min-height: 100vh;
+    }
+
+    /* ===== 頁首 ===== */
+    header {
+      text-align: center;
+      padding: 48px 24px 24px;
+      background: linear-gradient(160deg, #12142099 0%, transparent 100%);
+      border-bottom: 1px solid var(--border);
+    }
+
+    header h1 {
+      font-size: clamp(1.4rem, 4vw, 2.4rem);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 14px;
+    }
+
+    header .subtitle {
+      font-size: clamp(0.8rem, 2vw, 0.95rem);
+      color: var(--text-sub);
+    }
+
+    header .subtitle a {
+      color: var(--accent2);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: border-color var(--transition);
+    }
+    header .subtitle a:hover { border-color: var(--accent2); }
+
+    .img-count {
+      display: inline-block;
+      margin-top: 12px;
+      font-size: 0.82rem;
+      color: var(--text-sub);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 14px;
+    }
+
+    /* ===== 圖片格線 ===== */
+    main {
+      padding: 28px 20px 60px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 20px;
+    }
+
+    /* ===== 圖片卡片 ===== */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: transform var(--transition), box-shadow var(--transition), background var(--transition);
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 28px rgba(124, 111, 247, 0.18);
+      background: var(--card-hover);
+    }
+
+    .card__img-wrap {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      overflow: hidden;
+      cursor: zoom-in;
+      background: #10111a;
+    }
+
+    .card__img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.35s ease, opacity 0.3s ease;
+      opacity: 0;
+    }
+
+    .card__img-wrap img.loaded { opacity: 1; }
+    .card__img-wrap:hover img { transform: scale(1.06); }
+
+    /* 圖片載入失敗時的佔位 */
+    .card__img-wrap .img-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: var(--text-sub);
+      font-size: 0.75rem;
+      background: #14161f;
+      position: absolute;
+      inset: 0;
+    }
+    .card__img-wrap { position: relative; }
+    .card__img-wrap .img-placeholder svg { opacity: 0.35; }
+
+    .card__info {
+      padding: 12px 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1;
+    }
+
+    .card__title {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--text-main);
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    .card__filename {
+      font-size: 0.72rem;
+      color: var(--text-sub);
+      text-align: center;
+      opacity: 0.7;
+    }
+
+    .card__btns {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 6px 4px;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 0.03em;
+      transition: background var(--transition), transform 0.12s ease;
+      font-family: inherit;
+    }
+
+    .btn:active { transform: scale(0.96); }
+
+    .btn--tw {
+      background: var(--btn-tw-bg);
+      color: #ccc8ff;
+    }
+    .btn--tw:hover { background: var(--btn-tw-hover); }
+
+    .btn--en {
+      background: var(--btn-en-bg);
+      color: #b3efef;
+    }
+    .btn--en:hover { background: var(--btn-en-hover); }
+
+    /* ===== Toast 通知 ===== */
+    #toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(30, 33, 55, 0.95);
+      color: var(--text-main);
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      padding: 10px 22px;
+      font-size: 0.88rem;
+      font-weight: 500;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.28s ease, transform 0.28s ease;
+      z-index: 9999;
+      white-space: nowrap;
+      box-shadow: 0 4px 18px rgba(124, 111, 247, 0.3);
+    }
+
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ===== Lightbox 全畫面 ===== */
+    #lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(8, 9, 16, 0.92);
+      z-index: 1000;
+      cursor: zoom-out;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+
+    #lightbox.active { display: flex; }
+
+    #lightbox img {
+      max-width: 92vw;
+      max-height: 88vh;
+      border-radius: 10px;
+      box-shadow: 0 20px 80px rgba(0, 0, 0, 0.7);
+      object-fit: contain;
+      animation: lb-in 0.22s ease;
+    }
+
+    @keyframes lb-in {
+      from { opacity: 0; transform: scale(0.9); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    #lightbox-caption {
+      position: fixed;
+      bottom: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(20, 22, 38, 0.88);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 8px 20px;
+      border-radius: 20px;
+      font-size: 0.88rem;
+      pointer-events: none;
+    }
+
+    #lightbox-close {
+      position: fixed;
+      top: 18px;
+      right: 22px;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: rgba(30, 33, 55, 0.8);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background var(--transition);
+      z-index: 1001;
+      line-height: 1;
+    }
+    #lightbox-close:hover { background: var(--card-hover); }
+
+    /* ===== 頁尾 ===== */
+    footer {
+      text-align: center;
+      padding: 18px 20px;
+      font-size: 0.8rem;
+      color: var(--text-sub);
+      border-top: 1px solid var(--border);
+      opacity: 0.7;
+    }
+
+    /* ===== RWD ===== */
+    @media (max-width: 600px) {
+      header { padding: 32px 16px 18px; }
+      main { padding: 20px 12px 40px; }
+      .gallery-grid { gap: 14px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+      .btn { font-size: 0.72rem; padding: 5px 2px; }
+      .card__title { font-size: 0.85rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== 頁首 ===== -->
+<header>
+  <a href="https://vocus.cc/salon/aicg18" target="_blank"><img src="logo.png" border="0" ?</a>
+  <h1>提示詞畫廊 - 不熄的公路劇場</h1>
+  <p class="subtitle">
+    <a href="https://vocus.cc/article/69f95329fd89780001bff885" target="_blank" rel="noopener">
+      本頁圖片使用台灣 AutoIP 生圖、動畫產生平台生成。
+    </a> (※審查程度較低)
+  </p>
+  <span class="img-count" id="imgCount"></span>
+</header>
+
+<!-- ===== 畫廊主體 ===== -->
+<main>
+  <div class="gallery-grid" id="gallery"></div>
+</main>
+
+<!-- ===== 頁尾 ===== -->
+<footer>提示詞畫廊 &copy; 2026 ｜ 不熄的公路劇場</footer>
+
+<!-- ===== Lightbox ===== -->
+<div id="lightbox" role="dialog" aria-modal="true" aria-label="圖片放大檢視">
+  <button id="lightbox-close" aria-label="關閉" title="關閉 (點擊任意處也可關閉)">✕</button>
+  <img id="lightbox-img" src="" alt="" />
+  <div id="lightbox-caption"></div>
+</div>
+
+<!-- ===== Toast ===== -->
+<div id="toast" role="alert" aria-live="polite"></div>
+
+<script>
+  /* =========================================================
+   * 設定區 — 如需修改只需調整此處
+   * ========================================================= */
+  const CONFIG = {
+    imgFolder: "clsa",          // 圖片資料夾路徑（相對於 HTML 檔案）
+    imgExt:    ".jpg",          // 圖片副檔名
+    pageTitle: "提示詞畫廊 - 臉部情緒表達篇",
+    siteLink:  "https://vocus.cc/article/69f95329fd89780001bff885",
+    siteLinkText: "本頁圖片使用台灣 AutoIP 生圖、動畫產生平台生成。",
+    toastTW:   "已經複製提示詞至剪貼簿中",
+    toastEN:   "The prompt has been copied to the clipboard.",
+    toastDuration: 2000,        // 毫秒
+  };
+
+  /* =========================================================
+   * 圖片資料 — 新增圖片只需在此陣列加入物件
+   * ========================================================= */
+  const IMAGES = [
+ {"檔案名稱": "clsa001", "主題": "改良護士風 Modified Nurse Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她昂首挺胸走在伸展台中央，一隻手輕扶著腰際，眼神高傲而自信。她站立在伸展台前端，微微側過身去，向前方展現優美的身軀曲線，雙腳站姿挺拔。畫面中僅有她一人，無其他人物。，  穿著淡粉色半透明蕾絲改良護士服，內搭螢光粉紅色比基尼，戴著多層亮銀色水鑽手鍊，完全無文字。，  水平中景鏡頭，聚焦於她的整體站姿與服裝輪廓。，  充滿前衛設計感的時尚伸展台，背景是閃爍著紅色與綠色冷色霓虹燈光的抽象幾何光斑（無任何文字與字母）。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She walks confidently down the center of the runway, resting one hand lightly on her waist with a proud, confident gaze. Standing at the front of the runway, she turns slightly sideways, presenting her elegant curves with a strong, poised stance. Single female model, no other people.，  Wearing a light pink semi-transparent lace modified nurse outfit over a neon pink bikini, adorned with layered shiny silver rhinestone bracelets, textless.，  Eye-level medium shot, focusing on her full-body stance and outfit silhouette.，  A sleek avant-garde fashion runway, backed by abstract geometric lights in flashing red and green cool neon colors (strictly no text or letters)."},
+ {"檔案名稱": "clsa002", "主題": "改良水手風 Modified Sailor Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她在伸展台前端站定，微微歪著頭，雙手抓著裙擺兩側輕巧向外拉開，臉上露出俏皮而自信的甜美微笑。她單腳微張，體態輕盈舒展。畫面中僅有一人，無其他人物。，  穿著藍白相間的漆皮短版水手服，領口繫著大紅色閃亮蝴蝶結，下擺搭超短百褶裙與白色網襪，無文字。，  斜前方近景鏡頭，捕捉她俏皮的表情與雙手拉裙擺的動態。，  現代極簡風格的伸展台，背景是無文字的放射狀藍白幾何霓虹燈帶，散發著冷艷的夜色氛圍。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She pauses at the front of the runway, tilting her head slightly, her hands gently spreading the sides of her skirt, with a playful and confident sweet smile. Her posture is light and expressive. Single person, no others.，  Wearing a blue-and-white patent-leather cropped sailor top with a shiny red bow at the collar, paired with an ultra-short pleated skirt and white fishnets, textless.，  Three-quarter close-up shot, capturing her playful facial expression and the dynamic movement of her hands holding her skirt.，  A modern minimalist runway, backed by textless radial blue-and-white geometric neon light strips, radiating a cool, glamorous night atmosphere."},
+ {"檔案名稱": "clsa003", "主題": "改良女僕風 Modified Maid Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她輕巧地走到伸展台中央，雙手將精緻的蕾絲無字小托盤捧在身前，身體微微前傾。她眼神溫柔，嘴角帶著敬業且誠懇的微笑，完美展現職業尊嚴。無其他人物。，  身穿黑色漆皮與白色荷葉邊拼接的女僕裝，領口為極低胸設計，雙臂戴著白色蕾絲荷葉邊手圈，配珍珠耳環。，  稍微低角度仰拍的近景鏡頭，聚焦於托盤與她前傾的優雅身姿。，  鏡面黑色的時尚舞台，背後閃爍著淡粉色與白色的抽象不規則圓形霓虹燈暈（無任何文字與商標）。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She walks gracefully to the center of the runway, holding an exquisite lace-trimmed textless mini-tray in front of her, leaning slightly forward. Her eyes are gentle, carrying a sincere and professional smile. Single person, no others.，  Wearing a black patent leather and white ruffled paneled maid outfit, with a low-cut neckline, adorned with white lace ruffled armbands and pearl earrings.，  Slightly low-angle close-up shot, focusing on the tray and her elegant leaning posture.，  A mirrored black fashion stage, backed by flashing abstract irregular circular neon halos in light pink and white (completely textless and logo-free)."},
+ {"檔案名稱": "clsa004", "主題": "改良空姐風 Modified Flight Attendant Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她走在伸展台上，單手優雅地拉著一個純色、無字、半透明的壓克力行李箱。她站立在舞台前端，一手叉腰，頭部微側，露出大方、得體的自信微笑。無其他人物。，  穿著螢光黃色緊身低胸短版西裝外套，下身搭同款超短包臀裙與銀色絲襪，佩戴著精緻的水鑽項鍊。，  側面中景鏡頭，水平視角，完整展現她拉行李箱時側身的完美流暢線條。，  充滿金屬質感的工業風舞台，夜間冷光日光燈管從上方直射，營造出高冷且前衛的空間質感。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She walks down the runway, elegantly pulling a solid-color, textless, semi-transparent acrylic suitcase. Pausing at the front of the stage, she rests one hand on her hip, tilting her head with an open, confident smile. Single person, no others.，  Wearing a neon yellow tight low-cut cropped blazer, paired with a matching micro pencil skirt and silver stockings, accessorized with an exquisite rhinestone necklace.，  Side-view medium shot, eye-level, fully showcasing the perfect flowing lines of her profile as she pulls the suitcase.，  An industrial-style stage with metallic textures, illuminated directly from above by cool-toned fluorescent tubes, creating a high-fashion, avant-garde feel."},
+ {"檔案名稱": "clsa005", "主題": "性感賽車風 Sporty Race Queen Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她雙手高高舉起一個純黑色、無字無圖案的方格旗，身體微微後仰，腹部健康的馬甲線在光線下格外分明。她眼神銳利而自信，展現出強烈的能動性。無其他人物。，  穿著紅黑拼接的亮面乳膠材質貼身連身褲，大膽的鏤空設計露出腰線，戴著黑色亮面皮質手套，無字。，  斜前方中景鏡頭，低角度仰拍，強調她高舉雙臂時的動態力量感與流暢的身體線條。，  昏暗的、倒映著亮藍色霓虹光暈的鏡面伸展台，背景是抽象的、不斷閃爍的閃電狀藍色霓虹燈（無文字）。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She raises a solid black, patternless and textless checkered flag high above her head with both hands, leaning slightly back to highlight her healthy abs. Her gaze is sharp and confident, exhibiting strong agency. Single person, no others.，  Wearing a red-and-black paneled glossy latex bodysuit with daring cutouts revealing her waistline, paired with black glossy leather gloves, textless.，  Three-quarter medium shot, low-angle, emphasizing the dynamic power and flowing body lines as she raises her arms.，  A dark, mirrored runway reflecting brilliant blue neon glows, backed by abstract, constantly flashing lightning-shaped blue neons with no text."},
+ {"檔案名稱": "clsa006", "主題": "活力啦啦隊風 Energetic Cheerleader Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她在伸展台上輕巧跳躍，落地時一隻手舉著銀色閃亮流蘇花球，另一隻手自然伸展。她單腳微曲，面帶無比燦爛、朝氣蓬勃的甜美微笑，整個人散發活力。無其他人物。，  穿著鮮黃色與粉綠色交織的露腰短版背心，搭配超短百褶裙與白色中筒襪，戴著粉色大塑料圓環耳環。，  稍微高角度俯拍的近景鏡頭，捕捉她躍動落地瞬間的生動表情與舒展的身體動態。，  陽光充足、空氣感極強的透明舞台，四周是反射著溫暖金色陽光的玻璃帷幕，呈現清新、明亮的生活感。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She leaps gracefully on the runway, landing with one hand raising a shiny silver tinsel pom-pom while her other arm extends naturally. She tilts her head with an extremely brilliant, energetic smile. Single person, no others.，  Wearing a bright yellow and pinkish-green midriff-baring cropped tank top, paired with an ultra-short pleated skirt, white mid-calf socks, and bold pink plastic hoop earrings.，  Slightly high-angle close-up shot, capturing the vivid expression and expressive body dynamics at the moment of her landing.，  A well-lit, airy transparent stage surrounded by glass walls reflecting warm golden sunlight, presenting a fresh, bright everyday feel."},
+ {"檔案名稱": "clsa007", "主題": "改良女警風 Modified Police Cosplay", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她站立在伸展台中央，雙手大膽地搭在腰間亮銀色的無字皮帶扣上。她眼神冷酷而堅定，微微仰起下巴，展現出掌控舞台的霸氣與不屈的自我意識。無其他人物。，  身穿深藍色亮面乳膠材質短版緊身上衣，下搭黑色漆皮超短裙與黑色網襪，配有一條黑色亮皮細項圈。，  正面中景鏡頭，低角度仰拍，彰顯出她挺拔的站姿與無與倫比的主體霸氣。，  裝飾著強烈藍紅色幾何冷光霓虹燈的舞台，冷調的霓虹在地面上折射出變幻莫測的迷幻色彩，完全無文字。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She stands in the center of the runway, boldly resting both hands on her shiny silver textless belt buckle. Her gaze is cool and resolute, chin raised slightly, displaying a commanding stage presence and defiant self-awareness. Single person, no others.，  Wearing a dark blue glossy latex cropped tight shirt, paired with a black patent leather miniskirt and black fishnets, accessorized with a thin black patent leather collar.，  Front-facing medium shot, low-angle, highlighting her upright, imposing stance and unparalleled presence.，  A stage decorated with intense blue-and-red geometric cool-toned neon lights, casting shifting, psychedelic patterns on the floor, strictly textless."},
+ {"檔案名稱": "clsa008", "主題": "俏皮兔女郎風 Playful Bunny Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她雙手輕巧地抵在臉頰兩側，手掌微張做兔子耳朵形狀，頭部微斜。她雙眼明亮而俏皮地注視著鏡頭，嘴角含著一抹甜美、靈動的微笑。無其他人物。，  穿著一件亮紅色亮片抹胸連身超短褲，頭上戴著一對黑色蕾絲兔耳朵頭飾，腰間繫著亮銀色細金屬腰鍊。，  斜前方近景鏡頭，水平視角，聚焦於她俏皮可愛的雙手動作與生動、富有感染力的面部表情。，  溫暖黃光照亮的時尚展台，背景是抽象的、閃爍著溫馨淡粉色圓點光暈的霓虹屏風（無任何文字與圖案）。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She gently rests both hands near her cheeks, fingers splayed like bunny ears, tilting her head slightly. Her eyes are bright and playful as she gazes into the camera with a sweet, lively smile. Single person, no others.，  Wearing a bright red sequined strapless romper, with black lace bunny ears on her head, and a thin shiny silver metallic chain around her waist.，  Three-quarter close-up shot, eye-level, focusing on her playful hand gestures and her vivid, infectious facial expression.，  A fashion stage illuminated by warm yellow light, backed by an abstract neon screen with warm light pink circular halos flashing (no text or graphics)."},
+ {"檔案名稱": "clsa009", "主題": "帥氣牛仔風 Glamorous Cowgirl Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她單腳跨在一個不鏽鋼金屬高腳凳上，身體微微側傾，一手拉著頭上寬邊牛仔帽的邊緣，另一手扶在膝蓋上。她眼神深邃而專注，帶著自信的冷酷。無其他人物。，  身穿豹紋比基尼上衣，搭配藍色牛仔超短裙，戴著亮銀色大皮帶扣與漆皮長馬靴，脖子上繫著細黑頸鍊。，  側面中景鏡頭，稍微低角度拍攝，完整呈現她帥氣挺拔的跨姿、長靴線條與自信冷靜的側臉。，  入夜後的公路風格舞台，背景是朦朧的黃色車燈流光與公路兩旁抽象的紫色孔雀霓虹燈管（無文字與字母）。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She rests one foot on a stainless steel high stool, her body leaning slightly sideways, with one hand pulling the brim of her wide-brimmed cowgirl hat and her other hand on her knee. Her gaze is deep and focused. Single person, no others.，  Wearing a leopard-print bikini top with a blue denim miniskirt, a large silver belt buckle, and patent-leather tall boots, accessorized with a thin black choker.，  Side-view medium shot, from a slightly low angle, fully presenting her handsome, poised stance, her boots, and her confident, cool profile.，  An after-dark highway-style stage, backed by hazy yellow headlight streams and abstract purple peacock-shaped neon tubes (strictly no text or letters)."},
+ {"檔案名稱": "clsa010", "主題": "學院百褶風 Schoolgirl Cosplay Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她輕盈地在伸展台上旋轉半圈，裙擺隨之優雅飛揚。她一隻手按在裙擺邊緣，另一隻手指向前方，眼神明亮，臉上掛著無比青春活潑的甜美微笑。無其他人物。，  穿著白色運動風緊身短版背心，搭配螢光綠色超短百褶裙，手腕上戴著多層次彩色塑料手環，無字。，  稍微高角度的近景鏡頭，定格她裙擺飛揚瞬間的完美動態美感與極具活力的生動面部表情。，  明亮、清透的鋼骨玻璃舞台，金黃色的自然陽光穿透大片窗戶傾灑，照亮了飛動的微小金色塵埃，充滿生命力。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She spins gracefully halfway on the runway, making her skirt flutter elegantly. She rests one hand on the edge of her skirt while pointing her other arm forward, her eyes bright with a highly youthful, lively smile. Single person, no others.，  Wearing a white sporty tight cropped tank top paired with a neon green pleated micro-skirt, and layered colorful plastic bracelets on her wrist, textless.，  Slightly high-angle close-up shot, freezing the perfect dynamic beauty of her fluttering skirt and her highly energetic, vivid facial expression.，  A bright, transparent steel-and-glass stage, with golden natural sunlight pouring through large windows, illuminating dancing fine golden dust motes, full of vitality."},
+ {"檔案名稱": "clsa011", "主題": "幻彩漆皮風 Holographic Vinyl Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她站立在伸展台最前端，雙手大膽地向兩側展開，身體微微後仰，完美呈現出她充滿自信的優雅身段。她抬起頭，雙眼在五彩折射光芒中閃爍，無其他人物。，  穿著一襲由全息幻彩材質製成的緊身連身超短裙，在光線下折射出如極光般多變的藍綠粉光澤，戴水鑽耳環。，  正面中景鏡頭，水平視角，捕捉她大膽展開雙臂的自信姿態與服裝上絢麗無比的幻彩折射光斑。，  時尚感極強的暗色舞台，無數道五彩的抽象雷射光束射向她，與她身上的幻彩材質交相輝映，顯得魔幻而耀眼。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She stands at the very front of the runway, boldly spreading her arms to both sides and leaning slightly back, perfectly showcasing her confident, elegant physique. Her eyes sparkle under the multicolored light refractions. Single person, no others.，  Wearing a tight micro-minidress made of holographic material, reflecting aurora-like shifting blue, green, and pink glows, accessorized with rhinestone earrings.，  Front-facing medium shot, eye-level, capturing her bold, confident arm-spreading pose and the gorgeous holographic reflections on her outfit.，  A highly fashionable dark stage, with countless abstract multicolored laser beams focusing on her, interweaving with her holographic outfit, appearing magical and dazzling."},
+ {"檔案名稱": "clsa012", "主題": "亮銀金屬風 Metallic Silver Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她側身站立在舞台上，右手扶在不鏽鋼展示架的邊緣，身體微曲，眼神銳利地看向鏡頭。她的面部在金屬光澤的折射下，線條顯得極具雕塑感。無其他人物。，  身穿亮銀色金屬感亮皮胸衣，下身搭配同材質亮皮熱褲，戴著一對長長的亮銀色金屬流蘇耳環，乾淨無字。，  側前方近景鏡頭，低角度仰拍，強調她金屬感服飾與不鏽鋼架產生的冷冽、前衛視覺對比。，  工業風極簡舞台，四周點亮了高飽和度的冷色藍光日光燈，在地面與不鏽鋼架上反射出耀眼的鏡面反光。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She stands sideways on the stage, resting her right hand on the edge of a stainless steel display rack, her body curving slightly with a sharp gaze at the camera. Her facial lines appear sculptural under the metallic glare. Single person, no others.，  Wearing a shiny silver metallic patent-leather bustier, paired with matching hot pants, and long shiny silver metallic tassel earrings, clean and textless.，  Three-quarter close-up shot, low-angle, emphasizing the cold, avant-garde visual contrast between her metallic outfit and the stainless steel rack.，  An industrial minimalist stage, surrounded by highly saturated cool blue fluorescent lamps, reflecting brilliant mirror-like reflections on the floor and the stainless steel rack."},
+ {"檔案名稱": "clsa013", "主題": "黃金亮片風 Gold Sequin Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她緩步走在伸展台上，雙手自然在身前交疊，身體擺動幅度優雅。當她停下腳步時，她微微低頭，嘴角掛著自信而矜持的恬靜微笑，眼神溫柔。無其他人物。，  穿著一襲金黃色亮片吊帶超短裙，全身覆滿細密的亮片，在燈光下隨著她的步伐折射出密集的金色光芒。，  水平中景鏡頭，從斜前方拍攝，捕捉她走步時流暢的身體曲線與金黃亮片反射出的層次光暈。，  暗黑色的時尚舞台，上方打落一束強烈的暖色金色聚光燈，將她整個人籠罩在溫暖、璀璨的金黃光圈中，奢華動人。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She walks slowly down the runway, her hands naturally folded in front of her, moving with elegant body sway. As she pauses, she lowers her head slightly with a confident, reserved, and quiet smile, her gaze gentle. Single person, no others.，  Wearing a gold-colored sequined slip micro-minidress, covered in dense, fine sequins that refract intense golden light with her movements.，  Eye-level medium shot, from three-quarter front, capturing her flowing body curves as she walks and the layered halos reflected by the golden sequins.，  A dark fashion stage, illuminated by a single intense warm golden spotlight from above, enveloping her in a warm, dazzling golden halo, luxurious and touching."},
+ {"檔案名稱": "clsa014", "主題": "螢光橙網紗 Neon Orange Mesh Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她雙手叉腰站立在伸展台中央，雙腳微分，身體挺得筆直。她眼神堅定而驕傲，臉上帶著一絲不馴而自信的野性微笑，體態勻稱、富有力量感。無其他人物。，  穿著螢光橙色鏤空網紗短版背心，內搭黑色皮質抹胸，下身搭同款螢光橙色漆皮短裙，戴著大圓環耳環。，  正面中景鏡頭，低角度仰拍，完美呈現她充滿力量的挺拔站姿與螢光橙色帶來的強烈視覺張力。，  裝飾著密集的、閃爍著螢光橙色幾何線條霓虹燈管的舞台（無任何文字），冷調的光線在黑鏡面地板上反射出斑斕光影。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She stands in the center of the runway with hands on her hips, feet slightly apart, her body perfectly upright. Her gaze is firm and proud, with a wild, confident smile, displaying a well-proportioned, powerful physique. Single person, no others.，  Wearing a neon orange open-mesh cropped tank top over a black leather bandeau, paired with a matching neon orange patent-leather skirt and bold hoop earrings.，  Front-facing medium shot, low-angle, perfectly presenting her powerful, upright stance and the intense visual tension of the neon orange color.，  A stage decorated with dense, flashing geometric neon light tubes in neon orange (strictly textless), with cool lights reflecting colorful patterns on the black mirrored floor."},
+ {"檔案名稱": "clsa015", "主題": "幻彩乳膠風 Iridescent Latex Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她側過身去，一隻手輕輕搭在半透明的亞克力屏風邊緣，身體微曲成完美的S形。她歪著頭看著鏡頭，眼神充滿了令人心醉的自信魅力。無其他人物。，  身穿一襲乳膠材質的幻彩反光緊身超短連身洋裝，表面折射出藍綠粉多重偏光，戴著細長的水鑽手鍊。，  斜前方近景鏡頭，水平視角，聚焦於她優美的側身曲線、乳膠服飾的偏光質感以及亞克力屏風的反射。，  昏暗的、籠罩在深藍色與冷紫色霓虹光暈下的舞台（無文字與字母），營造出一種神祕、迷幻且極富質感的時尚空間。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.Turning sideways, she gently rests one hand on the edge of a semi-transparent acrylic screen, her body curving into a perfect S-line. She tilts her head, looking into the camera with an enchanting, confident charm. Single person, no others.，  Wearing an iridescent reflective tight latex micro-minidress, its surface refracting blue, green, and pink polarized light, accessorized with a long, thin rhinestone bracelet.，  Three-quarter close-up shot, eye-level, focusing on her beautiful side curves, the polarized texture of her latex outfit, and the reflections on the acrylic screen.，  A dark stage enveloped in deep blue and cool purple neon halos (strictly no text or letters), creating a mysterious, psychedelic, and highly textured fashion space."},
+ {"檔案名稱": "clsa016", "主題": "反光運動風 Reflective Sportswear Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她邁著大步走在伸展台上，雙手擺動自然，動作充滿運動的活力與張力。她停步時一隻手叉腰，眼神中透出不服輸的自信，散發著強烈的勞動能動性。無其他人物。，  穿著一件鑲嵌有高反光材質條紋的螢光粉色運動短版上衣，搭配黑色反光亮條短褲，腳穿亮銀運動鞋，無字。，  稍微低角度仰拍的近景鏡頭，捕捉她走步停頓瞬間具有張力的運動姿態與衣服上亮白色的反光線條。，  現代簡約的灰色混凝土風格舞台，背後是一整面閃爍著抽象幾何白光的LED螢幕（無任何文字與符號），冷冽而純粹。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She strides confidently down the runway with natural arm swings, her movements full of athletic energy and tension. Pausing with one hand on her hip, her gaze radiates a defiant confidence. Single person, no others.，  Wearing a neon pink sporty cropped top embedded with highly reflective stripes, paired with black shorts featuring reflective silver bands, and shiny silver sneakers, textless.，  Slightly low-angle close-up shot, capturing her tense athletic pose at the moment of pausing, alongside the bright white reflective lines on her clothing.，  A modern minimalist gray concrete-style stage, backed by a large LED screen flashing abstract white geometric patterns (completely free of text or symbols), cold and pure."},
+ {"檔案名稱": "clsa017", "主題": "閃爍深紫風 Glittering Purple Shimmer Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她輕盈地在伸展台上滑步，身體線條流暢優美。她站定後一隻手輕撫胸口，嘴角揚起甜美、自信的微笑，雙眼在紫色的光暈中顯得亮麗動人。無其他人物。，  穿著一襲深紫色亮粉材質的細肩帶低胸超短裙，全身散發著星空般細密的紫色閃光，佩戴亮銀色鎖骨鍊。，  斜前方中景鏡頭，水平視角，完美展現她優美的動態站姿與服裝上深紫閃粉的迷人光澤。，  夜晚的街頭風格舞台，背景是倒映在微濕地面上、模糊而閃爍的粉紫色孔雀霓虹燈光（完全無任何文字與字母）。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She slides gracefully down the runway with smooth, beautiful body lines. Pausing with one hand gently resting on her chest, her lips curve into a sweet, confident smile, her eyes sparkling beautifully under the purple halo. Single person, no others.，  Wearing a dark purple glittering low-cut spaghetti-strap micro-minidress, sparkling like a starry sky with fine purple glitter, paired with a shiny silver collarbone chain.，  Three-quarter medium shot, eye-level, perfectly presenting her elegant dynamic stance and the charming luster of the deep purple glitter on her outfit.，  A nighttime street-style stage, backed by blurry and flashing purple-pink peacock-shaped neon lights reflected on the slightly damp floor (completely textless)."},
+ {"檔案名稱": "clsa018", "主題": "晶瑩湖綠風 Turquoise Sequin Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她一隻手輕輕按在透明的亞克力高腳凳上，身體優雅地微曲，頭部微側。她面帶溫柔、敬業的甜美笑容，眼神明亮，散發出極佳的親和力與自尊。無其他人物。，  身穿一襲湖綠色亮片抹胸短裙，衣服上綴滿晶瑩的鱗片狀亮片，戴著一對長長的湖綠色圓環耳環，服飾無字。，  中景平視鏡頭，從正面拍攝，將她優雅微曲的坐姿、透明亞克力高腳凳與她白皙的肌膚線條完美融合。，  溫暖白光照亮的時尚展台，背景是抽象的、閃爍著淡淡湖綠色幾何波浪光影的霓虹背景牆（無任何文字與字母）。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She gently rests one hand on a transparent acrylic high stool, her body curving elegantly with her head slightly tilted. She has a warm, professional, and sweet smile, her eyes bright, radiating approachability and self-respect. Single person, no others.，  Wearing a turquoise sequined strapless short dress, covered with crystal scale-like sequins, paired with long turquoise hoop earrings, textless.，  Medium eye-level shot, from the front, perfectly combining her elegant curved seating pose, the transparent acrylic high stool, and her fair skin lines.，  A fashion stage illuminated by warm white light, backed by an abstract neon wall flashing soft turquoise geometric wave patterns (strictly textless)."},
+ {"檔案名稱": "clsa019", "主題": "魅惑粉紅風 Hot Pink Lurex Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她在舞台中央大膽地轉過身去，回眸一笑，眼神中透著一絲俏皮與掌控舞台的自信。她的身體呈現優雅的扭轉曲線，長髮隨之微微飄動，無其他人物。，  穿著一襲螢光粉紅色金屬絲材質的露背低胸超短洋裝，在光線下折射出亮麗的粉紅金屬光圈，佩戴水鑽耳環。，  側後方近景鏡頭，水平角度，捕捉她回眸一笑時立體生動的面部表情、精緻的鎖骨與流暢的扭轉身軀線條。，  暗色調的現代舞台，上方與側面射來幾道強烈的粉紅色冷光聚光燈，在她身上與地板上折射出絢麗的粉紅光斑。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She boldly turns her back in the center of the runway, looking back with a smile, her gaze carrying a hint of playfulness and stage-commanding confidence. Her body twists elegantly, her long hair fluttering slightly. Single person, no others.，  Wearing a backless, low-cut neon pink lurex micro-minidress, refracting a vibrant pink metallic halo under the lights, accessorized with rhinestone earrings.，  Three-quarter rear close-up shot, eye-level, capturing her vivid facial expression, delicate collarbones, and the flowing lines of her twisted body as she looks back.，  A dark-toned modern stage, with several intense pink cool-toned spotlights from above and the sides, casting gorgeous pink spots on her and the floor."},
+ {"檔案名稱": "clsa020", "主題": "亮金湖藍風 Metallic Emerald Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她站姿挺拔地立於伸展台中央，雙手自然垂在身側，大腿與腹部的肌肉線條勻稱、健康。她眼神冷靜、深邃，帶著對自我美麗的無比篤定。無其他人物。，  穿著一件湖藍色亮面漆皮抹胸上衣，下搭同款湖藍色超短裙與亮銀色網襪，手腕套著一隻亮銀色粗版手圈。，  正面中景鏡頭，稍微低角度仰拍，凸顯她高挑、勻稱的身材比例、健美的肌肉線條與自信冷靜的神情。，  工業金屬風舞台，背景是密集的、閃爍著湖藍色抽象幾何圓圈的霓虹招牌光帶（完全無任何文字與字母），現代、冷艷。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She stands upright in the center of the runway, her arms resting naturally by her sides, with well-proportioned, healthy leg and abdominal muscles. Her gaze is calm and deep, exhibiting absolute certainty in her own beauty. Single person, no others.，  Wearing a metallic emerald-blue patent-leather tube top, paired with a matching miniskirt and shiny silver fishnets, and a wide silver bangle on her wrist.，  Front-facing medium shot, taken from a slightly low angle, highlighting her tall, well-proportioned physique, athletic muscles, and confident, calm expression.，  An industrial metal-style stage, backed by dense, flashing neon sign bands in emerald-blue abstract geometric circles (strictly no text or letters), modern and cool."},
+ {"檔案名稱": "clsa021", "主題": "疊加網紗風 Mesh-on-Mesh Avant-Garde Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她緩慢走在舞台上，雙手輕柔地撫在腰際，身體擺動極富律動感。她停步時微微低頭，眼神從下方注視鏡頭，帶著一絲神祕與不馴的張力。無其他人物。，  穿著雙層螢光綠與黑色相疊加的鏤空網紗連身裙，內搭黑色皮質比基尼，戴著多層亮銀色金屬細頸鍊，無字。，  側前方近景鏡頭，水平視角，聚焦於網紗疊加產生的獨特幾何紋理質感，以及她神祕、銳利的眼神。，  充滿前衛時尚感的黑鏡面伸展台，背景是模糊的、閃爍著螢光綠色與白色交替的幾何光斑（無任何文字與符號）。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She walks slowly on the stage, her hands gently resting on her waist, her body swaying with rich rhythm. As she pauses, she lowers her head slightly, gazing at the camera with a hint of mystery and defiant tension. Single person, no others.，  Wearing dual-layered open mesh overlay dress in neon green and black over a black leather bikini, accessorized with layered fine silver metallic chokers, textless.，  Three-quarter close-up shot, eye-level, focusing on the unique geometric texture created by the layered mesh and her mysterious, sharp gaze.，  A black mirrored runway full of avant-garde fashion vibe, backed by blurred geometric spots flashing in alternating neon green and white (completely textless and symbol-free)."},
+ {"檔案名稱": "clsa022", "主題": "幾何鏤空風 Geometric Cutout Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她雙手叉腰站定，身體微微前傾，展現出緊實的腹肌。她眼神高傲自信，嘴角掛著自信的微笑，在光線的雕刻下，整個人呈現出極強的雕塑美。無其他人物。，  身穿一件大膽幾何鏤空的亮面黑色乳膠連身裙，鏤空處露出她勻稱健康的腰腹皮膚，戴著大圓環金屬耳環。，  正面中景鏡頭，稍微低角度仰拍，強調幾何鏤空服飾對身體線條的分割，以及她挺拔自信的體態。，  極簡主義風格的時尚舞台，上方打下一束刺眼的白色冷光日光燈管，在黑色地面上投射出清晰、分明的幾何陰影。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She stands with hands on her hips, leaning her body slightly forward to showcase her tight abs. Her gaze is proud and confident, with a smiling mouth, presenting a highly sculptural beauty under the sculpted light. Single person, no others.，  Wearing a glossy black latex dress with daring geometric cutouts exposing her well-proportioned, healthy waist and abdomen skin, paired with bold metal hoop earrings.，  Front-facing medium shot, from a slightly low angle, emphasizing the segmentation of her body lines by the geometric cutout dress and her poised, confident posture.，  A minimalist-style fashion stage, illuminated from above by a sharp cool white fluorescent beam, casting crisp, defined geometric shadows on the black floor."},
+ {"檔案名稱": "clsa023", "主題": "龐克粗拉鍊 Oversized Zipper Accent Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她右手輕輕捏著胸口拉鍊那巨大的亮銀色金屬拉鍊頭，身體微曲，眼神銳利而冷酷。她的動作帶著一絲玩世不恭的龐克帥氣，神態充滿能動性。無其他人物。，  穿著一襲黑色漆皮材質的緊身短版無袖背心，領口至下擺鑲嵌有一條極為誇張的亮銀色粗金屬拉鍊，搭配超短裙。，  斜前方近景鏡頭，水平角度，聚焦於巨大的金屬拉鍊反光與她白皙修長的手指、冷靜銳利的神情。，  工業金屬風極簡舞台，背景是倒映著微弱冷藍色日光燈光暈的不鏽鋼拉絲背板，完全沒有任何文字與字母。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.Her right hand gently holds the giant, shiny silver metallic zipper pull at her chest, her body curving slightly with a sharp, cool gaze. Her gesture carries a hint of playful punk attitude, full of agency. Single person, no others.，  Wearing a black patent-leather tight cropped sleeveless tank top, embedded with an extremely exaggerated shiny silver thick metallic zipper from collar to hem, paired with a miniskirt.，  Three-quarter close-up shot, eye-level, focusing on the reflection of the giant metallic zipper, her fair, slender fingers, and her calm, sharp expression.，  An industrial metal minimalist stage, backed by a brushed stainless steel backplate reflecting a faint cool blue fluorescent halo, completely free of text and letters."},
+ {"檔案名稱": "clsa024", "主題": "高腰漆皮風 High-Waisted Vinyl Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她雙手撐在身前的不鏽鋼扶手上，身體大幅度前傾，眼神注視著鏡頭，嘴角含著敬業、溫馨的笑意。她的姿勢極具張力與流暢感，身材曲線完美。無其他人物。，  穿著亮紅色高腰漆皮超短熱褲，搭配黑色比基尼上衣，腰間繫著一條水鑽飾邊細腰鍊，腳踩高筒馬靴，無字。，  側面中景鏡頭，水平視角，完整展現她前傾時修長的手臂、圓潤的臀部線條與高腰漆皮短褲的亮面質感。，  昏暗的、被斑斕霓虹色塊照亮的現代舞台，背景是抽象的、閃爍著彩色燈光的刺蝟狀霓虹燈架（無文字）。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She rests both hands on the stainless steel railing in front of her, leaning her body significantly forward, looking into the camera with a warm, professional smile. Her posture is full of tension and flow, with perfect body curves. Single person, no others.，  Wearing high-waisted bright red patent-leather micro-shorts paired with a black bikini top, with a rhinestone-trimmed waist chain, and tall boots, textless.，  Side-view medium shot, eye-level, fully displaying her long arms as she leans, the rounded lines of her hips, and the glossy texture of her high-waisted patent-leather shorts.，  A dark, modern stage illuminated by colorful neon patches, backed by an abstract, flashing hedgehog-like neon rack (strictly textless)."},
+ {"檔案名稱": "clsa025", "主題": "網紗歐根紗 Organza Overlay Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她雙手輕提身側半透明的歐根紗裙擺，在伸展台上優雅地轉身，裙擺在空中劃出美麗的弧線。她面帶溫柔、高雅的微笑，整個人顯得空靈而生動。無其他人物。，  穿著一件螢光粉色與紫色拼接的歐根紗半透明短裙，內搭白色亮片抹胸，配有一隻精緻的珍珠手鍊。，  稍微低角度仰拍的中景鏡頭，定格她轉身、歐根紗裙擺半懸空狀態下的優美飄逸感與柔和的面部側面輪廓。，  白天採光極佳的玻璃貨櫃風格舞台，溫暖的自然陽光斜斜灑落，穿透歐根紗材質，折射出絢麗繽紛的彩色光暈。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She gently lifts the sides of her semi-transparent organza skirt, turning elegantly on the runway, making her skirt trace a beautiful curve in the air. She has a gentle, noble smile, looking ethereal and vivid. Single person, no others.，  Wearing a paneled semi-transparent organza minidress in neon pink and purple over a white sequined tube top, accessorized with a delicate pearl bracelet.，  Slightly low-angle medium shot, freezing her graceful flowing pose as she turns with the organza skirt semi-airborne, alongside her soft facial profile.，  A daytime, well-lit glass container-style stage, with warm natural sunlight streaming diagonally through the organza material, refracting brilliant, colorful halos."},
+ {"檔案名稱": "clsa026", "主題": "不對稱斜裁 Asymmetric Drape Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她側身走在舞台上，右手輕撫一側自然下垂的亮藍色絲綢布料。她停步時微仰起頭，眼神中滿是冷靜與自信，身軀挺拔，展現出極強的主體能動性。無其他人物。，  穿著一件大膽不對稱斜裁設計的亮藍色與黑色拼接超短連身洋裝，一側為露肩設計，另一側懸掛著垂地絲綢，無字。，  斜前方中景鏡頭，水平角度，凸顯不對稱剪裁對她身體輪廓的巧妙分割，以及衣服在行走時的飄逸動態。，  充滿前衛設計感的時尚展台，背景是閃爍著冷白色抽象幾何幾何圖形霓虹燈的背板（完全無任何文字與商標）。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She walks sideways on the stage, her right hand gently stroking the naturally draped bright blue silk fabric on one side. As she pauses, she raises her head slightly with calm, confident eyes. Single person, no others.，  Wearing a daringly asymmetrical paneled micro-minidress in bright blue and black, with an off-the-shoulder design on one side and a draped silk train on the other, textless.，  Three-quarter medium shot, eye-level, highlighting the clever segmentation of her body profile by the asymmetrical cut and the flowing movement of the dress as she walks.，  A highly stylish fashion stage, backed by a panel flashing abstract geometric patterns in cool white neon lights (completely free of text and logos)."},
+ {"檔案名稱": "clsa027", "主題": "檳榔美少女風 Betel Nut Manga Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她雙手輕巧捏著裙擺，在舞台前方優雅踱步，回頭朝鏡頭露出漫畫女主角般明亮、大圓眼的甜美微笑 。她單腳微曲，站姿活潑，體態勻稱且散發出青春的生命力 。畫面中僅有她一人，無其他人物。，  穿著結合巴西嘉年華色彩與台灣西施風格的黃綠拼接亮片露腰短裙 ，身上點綴著細緻的水鑽 ，手腕戴著綠黃相間的編織手鍊，完全無文字。，  側前方近景鏡頭，水平視角，完美捕捉她如漫畫人物般的生動神情與亮麗色彩 。，  繽紛絢麗的時尚伸展台，背景是閃爍著黃、綠、藍色幾何光斑的抽象幾何霓虹（無文字） ，散發出跨國融合的熱情活力 。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She gently pinches her skirt hem with both hands, stepping elegantly at the front of the stage, looking back at the camera with a bright, wide-eyed sweet smile reminiscent of a manga protagonist. Her posture is lively with one leg slightly bent, radiating youthful vitality. Single female model, no other people.，  Wearing a yellow-and-green paneled sequined midriff-baring minidress combining Brazilian carnival colors with Taiwanese West-She style , decorated with delicate rhinestones  and green-and-yellow braided wristbands, completely textless.，  Three-quarter close-up shot, eye-level, perfectly capturing her vivid, manga-like facial expression and brilliant colors.，  A vibrant fashion runway, backed by abstract neon flashing yellow, green, and blue geometric light spots (strictly textless) , radiating transnational energy"},
+ {"檔案名稱": "clsa028", "主題": "亮片流蘇風 Beaded Fringe Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她隨著舞台音樂輕輕擺動身體，裙擺上的亮片與流蘇也隨之有節奏地往復擺動。她眼神明亮，臉上綻放出極度開朗、充滿朝氣的自信微笑。無其他人物。，  穿著一襲淡粉色亮片流蘇超短連身裙，全身綴滿了細密的水鑽與亮銀色細流蘇，手腕戴著發亮的水鑽手鍊。，  側前方近景鏡頭，水平視角，聚焦於流蘇飛動時的動態模糊美感，以及她白皙的肌膚線條與生動甜美的微笑。，  溫暖黃光照亮的時尚舞台，背景是無文字的、閃爍著溫馨淡粉色圓點光暈的霓虹屏風，將流蘇折射得亮晶晶。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She sways her body gently to the stage music, making the sequins and fringes on her skirt swing rhythmically. Her eyes are bright, and her face blooms with an extremely cheerful, energetic, and confident smile. Single person, no others.，  Wearing a light pink sequined fringe micro-minidress, covered in fine rhinestones and shiny silver fringes, with a sparkling rhinestone bracelet on her wrist.，  Three-quarter close-up shot, eye-level, focusing on the dynamic blur of the swinging fringes, her fair skin lines, and her sweet, vivid smile.，  A fashion stage illuminated by warm yellow light, backed by a textless neon screen flashing warm pink circular halos, making the fringes sparkle beautifully."},
+ {"檔案名稱": "clsa029", "主題": "未來霓虹帶 Cyberpunk Neon Strap Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她雙手插在身前兩條交錯的螢光綠色帶子上，身體微曲，眼神銳利而富有抗詰感。她的姿勢充滿了力量與冷酷的未來感，牢牢掌控舞台。無其他人物。，  身穿黑色漆皮與螢光綠色反光織帶拼接的比基尼套裝，大腿處套有螢光綠色細帶扣，戴著銀色金屬耳環，無字。，  正面中景鏡頭，低角度仰拍，凸顯她身上螢光綠帶子產生的強烈幾何束縛感，以及她挺拔自信的體態。，  昏暗的、籠罩在深藍色與冷紫色霓虹光暈下的舞台，背景是抽象的、閃爍著螢光綠色光暈的幾何霓虹燈管（無文字）。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She rests her hands on two crossed neon green straps in front of her, her body curving slightly with a sharp, defiant gaze. Her posture is full of power and cool futuristic vibe, firmly dominating the stage. Single person, no others.，  Wearing a paneled black patent-leather and neon green reflective webbing bikini set, with thin neon green buckle straps on her thighs, paired with silver metal earrings, textless.，  Front-facing medium shot, low-angle, highlighting the intense geometric binding feel created by the neon green straps and her poised, confident posture.，  A dark stage enveloped in deep blue and cool purple neon halos, backed by abstract geometric neon tubes flashing with a neon green glow (no text)."},
+ {"檔案名稱": "clsa030", "主題": "解構牛仔風 Deconstructed Denim Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她單手插在破損牛仔褲口袋中，身體微曲，側過臉去望向伸展台一側。她的神情冷峻、自信，帶有一絲不羈而獨立的勞動者職業自尊。無其他人物。，  穿著一件解構設計的藍色牛仔超短連身褲，大膽的剪裁與破損抽絲效果，內搭螢光橘色抹胸，戴著細黑細帶頸鍊。，  斜側方的中景鏡頭，水平視角，完美定格她不羈而優雅的側身站姿、破損牛仔材質的粗糙質感與精緻側臉。，  工業金屬風極簡舞台，背景是倒映著微弱冷藍色日光燈光暈的不鏽鋼拉絲背板，冷冽、乾淨、完全無任何文字。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She rests one hand in her distressed denim pocket, her body curving slightly as she turns her profile to look to one side of the runway. Her expression is cool, confident, carrying a hint of rebellious and independent working pride. Single person, no others.，  Wearing a deconstructed blue denim micro-romper, featuring daring cuts and distressed fraying effects, over a neon orange tube top, accessorized with a thin black cord choker.，  Three-quarter side medium shot, eye-level, perfectly freezing her rebellious yet elegant profile stance, the raw texture of the distressed denim, and her refined profile.，  An industrial metal minimalist stage, backed by a brushed stainless steel backplate reflecting a faint cool blue fluorescent halo, cold, clean, completely free of text."},
+ {"檔案名稱": "clsa031", "主題": "復古九零風 90s Retro Glam Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她雙手優雅地扶在一側腰間，身體隨之優雅擺動，雙眼明亮而柔和地看著鏡頭。她嘴角掛著一抹溫暖、誠懇的復古微笑，散發出獨特的常民美學。無其他人物。，  穿著大紅色亮片低胸吊帶短裙，全身覆滿細密的紅色亮片，在燈光下折射出溫暖、香豔的光芒，戴著一對大銀環耳環。，  斜前方中景鏡頭，水平角度，捕捉她優雅、富有韻律感的步伐，以及大紅色亮片在燈光折射下的豐富層次。，  裝飾著曖昧粉紫色孔雀霓虹燈管的復古風格舞台（無任何文字與字母），在黑鏡面地板上折射出斑斕、迷幻的光影。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She rests her hands elegantly on one side of her waist, her body swaying gracefully, looking into the camera with bright, soft eyes. Her lips carry a warm, sincere retro smile, radiating a unique everyday aesthetic. Single person, no others.，  Wearing a bright red sequined low-cut slip minidress, covered in fine red sequins that refract a warm, glamorous glow, paired with bold silver hoop earrings.，  Three-quarter medium shot, eye-level, capturing her elegant, rhythmic stride and the rich layers of the red sequins under light refractions.，  A retro-style stage decorated with abstract pink-purple peacock-shaped neon tubes (strictly no text or letters), casting colorful, dreamy reflections on the black mirrored floor."},
+ {"檔案名稱": "clsa032", "主題": "龐克酸洗風 Acid Wash Punk Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她右手拿著一把亮銀色的剪刀，做修剪綠色檳榔蒂頭的動態手勢，身體側過。她眼神專注，眉頭微抿，整個人散發出勞動的精確力與自信。無其他人物。，  穿著酸洗雪花效果的藍色牛仔超短裙，內搭黑色皮質比基尼，戴著多層次帶有鉚釘的黑色皮質手環，無字。，  稍微高角度的近景鏡頭，聚焦於亮銀色剪刀、她白皙的手指以及被精心修剪的綠色檳榔蒂頭，背景是她溫和專注的臉。，  現代極簡風格的舞台，上方射下明亮的冷白色日光燈，照亮了不鏽鋼檯面的銀色金屬反光，質感硬朗、冷酷。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.Holding a pair of shiny silver shears in her right hand, she makes a dynamic gesture of trimming green areca nut stems, her body turned sideways. Her gaze is focused with an expression of working precision and confidence. Single person, no others.，  Wearing an acid-wash snow-pattern denim miniskirt over a black leather bikini, accessorized with layered black leather rivet bracelets, textless.，  Slightly high-angle close-up shot, focusing on the silver shears, her fair fingers, and the trimmed green stems, with her gently focused face in the background.，  A modern minimalist stage, illuminated from above by bright cool white fluorescent lamps, lighting up the silver reflections of the stainless steel counter, hard and cool in texture."},
+ {"檔案名稱": "clsa033", "主題": "高剪裁緊身衣 High-Cut Bodysuit Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她站立在伸展台最前端，雙腿微分，身體挺拔，一隻手輕扶著大腿外側。她眼神堅定，嘴角帶著自信的微笑，健康的肌膚在強光照耀下顯得極具光澤。無其他人物。，  身穿一件螢光綠色高剪裁緊身連身衣，側邊及後側為大膽露背設計，完美呈現出她修長的雙腿與健美的臀部線條，無字。，  正面中景鏡頭，低角度仰拍，凸顯她高挑的身材比例、高剪裁緊身衣帶來的強烈視覺張力與健美身姿。，  裝飾著密集的、閃爍著白色抽象幾何線條的霓虹舞台（無任何文字與符號），在乾淨的不鏽鋼地板上折射出明亮的反光。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She stands at the very front of the runway, legs slightly apart, body upright, with one hand resting lightly on her outer thigh. Her gaze is firm, her lips smiling confidently, her healthy skin appearing highly glossy under the intense light. Single person, no others.，  Wearing a neon green high-cut tight bodysuit with a daring backless design, perfectly showcasing her long legs and toned hips, textless.，  Front-facing medium shot, low-angle, highlighting her tall physique, the intense visual tension of the high-cut bodysuit, and her athletic build.，  A neon stage decorated with dense, flashing white abstract geometric lines (completely free of text or symbols), casting bright reflections on the polished stainless steel floor."},
+ {"檔案名稱": "clsa034", "主題": "野性豹紋風 Animal Print Glam Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她右手輕拉著身上外罩的一件亮藍色薄紗外套邊緣，身體側微曲。她歪著頭看著鏡頭，雙眼亮麗，嘴角含著俏皮而自信的甜美微笑，長髮飄動。無其他人物。，  穿著一襲豹紋圖案的低胸超短連身洋裝，外罩一件半透明亮藍色薄紗短外套，手腕戴著多層亮銀色細手鍊。，  側前方近景鏡頭，水平視角，聚焦於野性豹紋與亮藍薄紗交融產生的鮮豔色彩對比，以及她生動俏皮的表情。，  昏暗的、籠罩在深藍色與冷紫色霓虹光暈下的現代舞台，背景是倒映著微弱彩色光暈的抽象霓虹幾何光條（無文字）。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.Her right hand gently pulls the edge of her outer sheer blue mesh jacket, her body curving slightly. She tilts her head with bright eyes and a playful, confident sweet smile, her long hair fluttering. Single person, no others.，  Wearing a leopard-print low-cut micro-minidress, covered by a semi-transparent bright blue sheer jacket, paired with layered fine silver bracelets on her wrist.，  Three-quarter close-up shot, eye-level, focusing on the vibrant color contrast between the leopard print and the blue sheer jacket, alongside her vivid, playful expression.，  A dark, modern stage enveloped in deep blue and cool purple neon halos, backed by abstract neon geometric strips reflecting faint colorful halos (strictly textless)."},
+ {"檔案名稱": "clsa035", "主題": "絲絨美洲豹 Velvet Leopard Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她緩緩蹲在舞台上，單手按在膝蓋上，身體拉伸出優美曲線。她微微仰起頭注視鏡頭，眼神中滿是冷靜、高傲與野性的張力，牢牢掌控著全場。無其他人物。，  穿著一件深藍色絲絨材質的豹紋圖案吊帶超短裙，手腕戴著精緻的水鑽手鍊，指甲塗著深藍色漆油，無字。，  稍微低角度拍攝的近景鏡頭，定格她優美、富有野性張力的蹲姿輪廓，以及深藍絲絨材質在光線下散發出的高雅反光。，  鏡面黑色的時尚舞台，上方射下兩束強烈的白色冷光日光燈管，在黑色地面上投射出清晰、分明的幾何陰影，無文字。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She crouches slowly on the stage, resting one hand on her knee, stretching her body into elegant curves. Looking up slightly at the camera, her gaze is full of calm, proud, and wild tension, dominating the venue. Single person, no others.，  Wearing a dark blue velvet leopard-print slip micro-minidress, with an exquisite rhinestone bracelet on her wrist and deep blue nail polish, textless.，  Slightly low-angle close-up shot, freezing her elegant and wild crouching silhouette, alongside the noble reflections of the dark blue velvet under the light.，  A mirrored black fashion stage, illuminated from above by two intense cool white fluorescent beams, casting crisp, defined geometric shadows on the black floor, no text."},
+ {"檔案名稱": "clsa036", "主題": "斑馬亮片風 Zebra Print Sequin Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她雙手優雅地扶在一側腰間，身體隨之優雅擺動，雙眼明亮而柔和地看著鏡頭。她嘴角掛著一抹溫暖、誠懇的微笑，散發出獨特的常民美學。無其他人物。，  穿著一襲黑白相間斑馬紋亮片低胸吊帶短裙，全身覆滿細密的亮片，在燈光下折射出亮麗的光澤，戴著大銀環耳耳環。，  斜前方中景鏡頭，水平角度，捕捉她優雅、富有韻律感的步伐，以及黑白斑馬紋亮片在燈光折射下的豐富層次。，  裝飾著曖昧粉紫色孔雀霓虹燈管的復古風格舞台（無任何文字與字母），在黑鏡面地板上折射出斑斕、迷幻的光影。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She rests her hands elegantly on one side of her waist, her body swaying gracefully, looking into the camera with bright, soft eyes. Her lips carry a warm, sincere smile, radiating a unique everyday aesthetic. Single person, no others.，  Wearing a black-and-white zebra-striped sequined low-cut slip minidress, covered in fine sequins that refract a brilliant luster, paired with bold silver hoop earrings.，  Three-quarter medium shot, eye-level, capturing her elegant, rhythmic stride and the rich layers of the zebra-striped sequins under light refractions.，  A retro-style stage decorated with abstract pink-purple peacock-shaped neon tubes (strictly no text or letters), casting colorful, dreamy reflections on the black mirrored floor."},
+ {"檔案名稱": "clsa037", "主題": "復古圓點風 Retro Polka Dot Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她雙腳微曲坐在工作椅上，雙手捧著一疊新鮮翠綠的荖葉，正做挑選與整理動作。她眼神溫柔，面帶輕鬆、愉悅的淡雅淺笑，整個人散發溫馨生活感。無其他人物。，  身穿亮紅色與白色大圓點相間的抹胸超短洋裝，手腕上戴著多層亮白色塑料手環，手指塗著大紅色，無字。，  俯角特寫鏡頭，從斜上方俯視，聚焦於她白皙修長的手指、翠綠的荖葉以及紅色圓點衣服，背景是她專注美麗的臉龐。，  陽光充足、空氣感極強的透明玻璃房內，金黃色的自然陽光穿透大片玻璃灑落，照亮了飛揚的微小金色塵埃，溫暖自然。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.Sitting on a work chair with her legs slightly bent, she holds a stack of fresh emerald-green piper leaves with both hands, making a sorting gesture. Her gaze is gentle, with a relaxed, cheerful, and elegant soft smile, full of warm lifelike feel. Single person, no others.，  Wearing a strapless micro-minidress in a bold red-and-white polka dot print, with layered shiny white plastic bracelets on her wrist and red nail polish, textless.，  High-angle close-up shot, looking down, focusing on her fair, slender fingers, the emerald leaves, and her red polka-dot outfit, with her focused, beautiful face in the background.，  A well-lit, airy transparent glass booth, with golden natural sunlight streaming through large glass panes, illuminating dancing fine golden dust motes, warm and natural."},
+ {"檔案名稱": "clsa038", "主題": "迷幻印花風 Flower Power Retro Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她一隻腳跨在玻璃櫃檯上，一隻手扶著櫃檯邊緣，身體側傾，歪著頭注視鏡頭。她的眼神亮麗，嘴角掛著自信、活潑的甜美微笑，體態極具張力。無其他人物。，  穿著一襲由黃、藍、綠交織而成的大膽迷幻幾何花紋超短吊帶裙，戴著一對誇張的黃色圓形塑料耳環，無字。，  斜前方中景鏡頭，水平視角，捕捉她大膽跨步櫃檯時優雅、富有張力的身體曲線與衣服上繽紛燦爛的印花圖案。，  裝飾著彩色幾何霓虹光帶的現代舞台，五彩的燈光與冷白色的日光燈在玻璃檯面上投射出絢麗斑斕的色彩，無任何文字。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She rests one foot on the glass counter, holding the edge of the counter with one hand, leaning her body sideways and tilting her head to look at the camera. Her eyes are bright, her lips carrying a confident, lively, sweet smile. Single person, no others.，  Wearing a micro-slip dress featuring a bold, psychedelic geometric floral pattern in interwoven yellow, blue, and green, paired with statement yellow round plastic hoop earrings, textless.，  Three-quarter medium shot, eye-level, capturing her elegant, tense body curves as she boldly steps on the counter, alongside the vibrant, colorful prints on her dress.，  A modern stage decorated with colorful geometric neon strips, with multicolored lights and cool white fluorescent lamps casting gorgeous, vibrant colors on the glass counter, strictly textless."},
+ {"檔案名稱": "clsa039", "主題": "迪斯可氨綸 Spandex Disco Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她高舉雙臂做拉伸動作，十指交扣，身體微微向後仰，展現出緊緻健康的腹肌與流暢的身體曲線。她眼神溫柔，嘴角泛著輕鬆、舒暢的微笑。無其他人物。，  身穿一襲螢光粉色氨綸材質的緊身超短連身褲，大膽的露背設計，佩戴亮銀色金屬項鍊，服飾乾淨無文字。，  正面中景鏡頭，稍微低角度仰拍，完美呈現她舒展雙臂時流暢的身體拉伸線條、纖細的腰肢與健康的運動感。，  昏暗的、籠罩在粉藍色與冷紫色霓虹光暈下的現代舞台，背景是倒映著微弱彩色光暈的抽象霓虹幾何光條（無文字）。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She raises her arms high to stretch, fingers interlocked, leaning her body slightly back to showcase her tight, healthy abs and flowing body curves. Her gaze is gentle, with a relaxed, comfortable smile on her lips. Single person, no others.，  Wearing an ultra-tight micro-romper made of neon pink spandex material, featuring a bold backless design, paired with a shiny silver metal necklace, textless.，  Front-facing medium shot, taken from a slightly low angle, perfectly presenting the flowing body lines, slender waist, and healthy athletic posture as she stretches her arms.，  A dark, modern stage enveloped in cool pink-blue and purple neon halos, backed by abstract neon geometric strips reflecting faint colorful halos (strictly textless)."},
+ {"檔案名稱": "clsa040", "主題": "格紋法蘭絨 Grunge Flannel Patchwork Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她單手插在破損牛仔褲口袋中，身體微曲，側過臉去望向伸展台一側。她的神情冷峻、自信，帶有一絲不羈而獨立的勞動者職業自尊。無其他人物。，  穿著一雙由紅黑格紋與藍黑格紋法蘭絨布料拼接而成的露臍吊帶超短裙，內搭黑色比基尼，戴著多層黑皮質手環，無字。，  斜側方的中景鏡頭，水平視角，完美定格她不羈而優雅的側身站姿、拼接格紋法蘭絨材質的粗糙質感與精緻側臉。，  工業金屬風極簡舞台，背景是倒映著微弱冷藍色日光燈光暈的不鏽鋼拉絲背板，冷冽、乾淨、完全無任何文字。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She rests one hand in her distressed denim pocket, her body curving slightly as she turns her profile to look to one side of the runway. Her expression is cool, confident, carrying a hint of rebellious and independent working pride. Single person, no others.，  Wearing a cropped midriff-baring slip dress made of red-and-black and blue-and-black flannel patchwork, over a black bikini, and layered black leather bracelets, textless.，  Three-quarter side medium shot, eye-level, perfectly freezing her rebellious yet elegant profile stance, the raw texture of the deconstructed flannel patchwork, and her refined profile.，  An industrial metal minimalist stage, backed by a brushed stainless steel backplate reflecting a faint cool blue fluorescent halo, cold, clean, completely free of text."},
+ {"檔案名稱": "clsa041", "主題": "運動網眼風 Athletic Mesh Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她邁著大步走在伸展台上，雙手擺動自然，動作充滿運動的活力與張力。她停步時一隻手叉腰，眼神中透出不服輸的自信，散發著強烈的勞動能動性。無其他人物。，  穿著一件鑲嵌有高反光材質條紋的螢光黃色運動網眼短版上衣，搭配黑色短褲，腳穿亮銀運動鞋，無字。，  稍微低角度仰拍的近景鏡頭，捕捉她走步停頓瞬間具有張力的運動姿態與衣服上亮白色的反光線條。，  現代簡約的灰色混凝土風格舞台，背後是一整面閃爍著抽象幾何白光的LED螢幕（無任何文字與符號），冷冽而純粹。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She strides confidently down the runway with natural arm swings, her movements full of athletic energy and tension. Pausing with one hand on her hip, her gaze radiates a defiant confidence. Single person, no others.，  Wearing a neon yellow athletic mesh cropped top embedded with highly reflective stripes, paired with black shorts, and shiny silver sneakers, textless.，  Slightly low-angle close-up shot, capturing her tense athletic pose at the moment of pausing, alongside the bright white reflective lines on her clothing.，  A modern minimalist gray concrete-style stage, backed by a large LED screen flashing abstract white geometric patterns (completely free of text or symbols), cold and pure."},
+ {"檔案名稱": "clsa042", "主題": "短版機車夾克 Cropped Moto Jacket Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她側身站立在舞台上，右手扶在不鏽鋼展示架的邊緣，身體微曲，眼神銳利地看向鏡頭。她的面部在金屬光澤的折射下，線條顯得極具雕塑感。無其他人物。，  身穿一件黑色亮皮短版機車外套，內搭螢光橙色抹胸，下身搭同材質亮皮熱褲，戴著一對大銀環耳環，乾淨無字。，  側前方近景鏡頭，低角度仰拍，強調她機車風服飾與不鏽鋼架產生的冷冽、前衛視覺對比。，  工業風極簡舞台，四周點亮了高飽和度的冷色藍光日光燈，在地面與不鏽鋼架上反射出耀眼的鏡面反光。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She stands sideways on the stage, resting her right hand on the edge of a stainless steel display rack, her body curving slightly with a sharp gaze at the camera. Her facial lines appear sculptural under the metallic glare. Single person, no others.，  Wearing a black patent-leather cropped moto jacket over a neon orange tube top, paired with matching patent-leather hot pants, and bold silver hoop earrings, clean and textless.，  Three-quarter close-up shot, low-angle, emphasizing the cold, avant-garde visual contrast between her moto-style outfit and the stainless steel rack.，  An industrial minimalist stage, surrounded by highly saturated cool blue fluorescent lamps, reflecting brilliant mirror-like reflections on the floor and the stainless steel rack."},
+ {"檔案名稱": "clsa043", "主題": "連帽短版背心 Hooded Crop Top Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她右手輕輕捏著胸口拉鍊那巨大的亮銀色金屬拉鍊頭，身體微曲，眼神銳利而冷酷。她的動作帶著一絲玩世不恭的龐克帥氣，神態充滿能動性。無其他人物。，  穿著一襲帶有兜帽設計的深灰色亮面乳膠連帽短版無袖背心，拉鍊微開露出鎖骨，搭配超短裙，無字。，  斜前方近景鏡頭，水平角度，聚焦於巨大的金屬拉鍊反光與她白皙修長的手指、冷靜銳利的神情。，  工業金屬風極簡舞台，背景是倒映著微弱冷藍色日光燈光暈的不鏽鋼拉絲背板，完全沒有任何文字與字母。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.Her right hand gently holds the giant, shiny silver metallic zipper pull at her chest, her body curving slightly with a sharp, cool gaze. Her gesture carries a hint of playful punk attitude, full of agency. Single person, no others.，  Wearing a dark gray glossy latex hooded cropped sleeveless tank top, with the zipper slightly open revealing her collarbones, paired with a miniskirt, textless.，  Three-quarter close-up shot, eye-level, focusing on the reflection of the giant metallic zipper, her fair, slender fingers, and her calm, sharp expression.，  An industrial metal minimalist stage, backed by a brushed stainless steel backplate reflecting a faint cool blue fluorescent halo, completely free of text and letters."},
+ {"檔案名稱": "clsa044", "主題": "螢光風衣外套 Neon Windbreaker Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她雙手叉腰站立在伸展台中央，雙腳微分，身體挺得筆直。她眼神堅定而驕傲，臉上帶著一絲不馴而自信的野性微笑，體態勻稱、富有力量感。無其他人物。，  穿著一件大膽剪裁的螢光綠色防風超短連帽外套，領口大開露出胸膛與黑色運動比基尼，戴著大圓環耳耳環，無字。，  正面中景鏡頭，低角度仰拍，完美呈現她充滿力量的挺拔站姿與螢光綠風衣帶來的強烈視覺張力。，  裝飾著密集的、閃爍著螢光綠色幾何線條霓虹燈管的舞台（無任何文字），冷調的光線在黑鏡面地板上反射出斑斕光影。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She stands in the center of the runway with hands on her hips, feet slightly apart, her body perfectly upright. Her gaze is firm and proud, with a wild, confident smile, displaying a well-proportioned, powerful physique. Single person, no others.，  Wearing a daringly cut neon green windbreaker cropped hooded jacket, wide open at the neck revealing her chest and a black sports bikini, paired with bold hoop earrings, textless.，  Front-facing medium shot, low-angle, perfectly presenting her powerful, upright stance and the intense visual tension of the neon green windbreaker.，  A stage decorated with dense, flashing geometric neon light tubes in neon green (strictly textless), with cool lights reflecting colorful patterns on the black mirrored floor."},
+ {"檔案名稱": "clsa045", "主題": "針織鏤空背心 Ribbed Knit Cutout Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她側過身去，一隻手輕輕搭在半透明的亞克力屏風邊緣，身體微曲成完美的S形。她歪著頭看著鏡頭，眼神充滿了令人心醉的自信魅力。無其他人物。，  身穿一襲由亮黃色粗針織材質製成的幾何鏤空貼身超短裙，鏤空處隱約露出她健美的肌膚，配有珍珠耳環，無字。，  斜前方近景鏡頭，水平視角，聚焦於針織材質與幾何鏤空產生的強烈紋理質感，以及她神祕而令人著迷的眼神。，  昏暗的、籠罩在深藍色與冷紫色霓虹光暈下的舞台（無文字與字母），營造出一種神祕、迷幻且極富質感的時尚空間。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.Turning sideways, she gently rests one hand on the edge of a semi-transparent acrylic screen, her body curving into a perfect S-line. She tilts her head, looking into the camera with an enchanting, confident charm. Single person, no others.，  Wearing a tight micro-minidress made of bright yellow chunky ribbed knit material with geometric cutouts, faintly revealing her toned skin, with pearl earrings, textless.，  Three-quarter close-up shot, eye-level, focusing on the intense texture contrast of the knit material and geometric cutouts, and her mysterious, fascinating gaze.，  A dark stage enveloped in deep blue and cool purple neon halos (strictly no text or letters), creating a mysterious, psychedelic, and highly textured fashion space."},
+ {"檔案名稱": "clsa046", "主題": "運動夾克套裝 Track Jacket Glam Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她邁著大步走在伸展台上，雙手擺動自然，動作充滿運動的活力與張力。她停步時一隻手叉腰，眼神中透出不服輸的自信，散發著強烈的勞動能動性。無其他人物。，  穿著螢光橙色與黑色拼接的緞面短版拉鍊運動夾克，搭配同材質超短熱褲與銀色絲襪，佩戴水鑽項鍊，無字。，  稍微低角度仰拍的近景鏡頭，捕捉她走步停頓瞬間具有張力的運動姿態與衣服上亮亮的光澤感。，  現代簡約的灰色混凝土風格舞台，背後是一整面閃爍著抽象幾何白光的LED螢幕（無任何文字與符號），冷冽而純粹。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She strides confidently down the runway with natural arm swings, her movements full of athletic energy and tension. Pausing with one hand on her hip, her gaze radiates a defiant confidence. Single person, no others.，  Wearing a cropped paneled track jacket in neon orange and black satin, paired with matching micro-shorts and silver stockings, accessorized with a rhinestone necklace, textless.，  Slightly low-angle close-up shot, capturing her tense athletic pose at the moment of pausing, alongside the shiny, lustrous textures of her outfit.，  A modern minimalist gray concrete-style stage, backed by a large LED screen flashing abstract white geometric patterns (completely free of text or symbols), cold and pure."},
+ {"檔案名稱": "clsa047", "主題": "螢光迷彩印花 Neon Camo Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她在伸展台前端站定，微微歪著頭，雙手抓著裙擺兩側輕巧向外拉開，臉上露出俏皮而自信的甜美微笑。她單腳微張，體態輕盈舒展。畫面中僅有一人，無其他人物。，  穿著螢光黃、螢光綠與黑色交織的螢光迷彩印花短版背心，搭配同印花超短裙，戴著大圓環耳環，無字。，  側前方近景鏡頭，水平角度，聚焦於迷彩圖案與亮麗螢光色彩交融產生的強烈視覺張力，以及她生動甜美的微笑。，  現代極簡風格的伸展台，背景是無文字的放射狀藍白幾何霓虹燈帶，散發著冷艷的夜色氛圍。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She pauses at the front of the runway, tilting her head slightly, her hands gently spreading the sides of her skirt, with a playful and confident sweet smile. Her posture is light and expressive. Single person, no others.，  Wearing a cropped tank top featuring a neon camo print in interwoven neon yellow, neon green, and black, paired with a matching miniskirt and bold hoop earrings, textless.，  Three-quarter close-up shot, eye-level, focusing on the intense visual tension created by the camo pattern and bright neon colors, alongside her sweet, vivid smile.，  A modern minimalist runway, backed by textless radial blue-and-white geometric neon light strips, radiating a cool, glamorous night atmosphere."},
+ {"檔案名稱": "clsa048", "主題": "機能工裝口袋 Cargo Techwear Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她站立在伸展台中央，雙手大膽地搭在腰際幾何綁帶卡扣上。她眼神冷酷而堅定，微微仰起下巴，展現出掌控舞台的霸氣與不屈的自我意識。無其他人物。，  穿著一雙亮面黑色漆皮機能超短工裝短裙，裙擺鑲嵌有大立體工裝口袋，上身搭配螢光綠色運動比基尼，無字。，  正面中景鏡頭，低角度仰拍，凸顯機能風格口袋帶來的硬朗線條感與她充滿力量感的站姿。，  裝飾著強烈藍紅色幾何冷光霓虹燈的舞台，冷調的霓虹在地面上折射出變幻莫測的迷幻色彩，完全無文字。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She stands in the center of the runway, boldly resting both hands on her geometric waist harness buckles. Her gaze is cool and resolute, chin raised slightly, displaying a commanding stage presence and defiant self-awareness. Single person, no others.，  Wearing a micro cargo skirt in shiny black patent leather featuring large prominent cargo pockets, paired with a neon green sports bikini top, textless.，  Front-facing medium shot, low-angle, highlighting the hard lines of the techwear pockets and her powerful, poised stance.，  A stage decorated with intense blue-and-red geometric cool-toned neon lights, casting shifting, psychedelic patterns on the floor, strictly textless."},
+ {"檔案名稱": "clsa049", "主題": "多重交叉綁帶 Strappy Bodycon Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她輕巧地走到伸展台中央，身體微微側傾，雙臂自然向上伸展。她的面部在交錯陰影下，線條顯得極具雕塑感。畫面中僅有她一人，無其他人物。，  身穿黑色緊身超短洋裝，全身上下環繞著多重亮銀色與螢光綠色相交錯的交叉反光綁帶，戴著發亮的水鑽長細耳環。，  斜前方近景鏡頭，水平視角，聚焦於反光綁帶在強光照射下產生的強烈幾何束縛線條，以及她自信專注的神情。，  鏡面黑色的時尚舞台，上方射下兩束強烈的白色冷光日光燈管，在黑色地面上投射出清晰、分明的幾何陰影，無文字。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She walks gracefully to the center of the runway, her body slightly tilted sideways, with both arms stretching naturally upward. Her facial lines appear highly sculptural under the crisscross shadows. Single person, no others.，  Wearing a black tight micro-minidress, enveloped in multiple crisscrossing reflective straps in shiny silver and neon green, paired with long, sparkling rhinestone thread earrings.，  Three-quarter close-up shot, eye-level, focusing on the intense geometric binding lines of the reflective straps under the bright lights, alongside her confident, focused expression.，  A mirrored black fashion stage, illuminated from above by two intense cool white fluorescent beams, casting crisp, defined geometric shadows on the black floor, no text."},
+ {"檔案名稱": "clsa050", "主題": "運動網紗拼接 Activewear Chic Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她邁著大步走在伸展台上，雙手擺動自然，動作充滿運動的活力與張力。她停步時一隻手叉腰，眼神中透出不服輸的自信，散發著強烈的勞動能動性。無其他人物。，  穿著大紅色與白色網紗拼接的運動背心，下搭同款大紅色漆皮超短裙，戴著一對發亮的水鑽耳環，服飾無文字。，  稍微低角度仰拍的近景鏡頭，捕捉她走步停頓瞬間具有張力的運動姿態與衣服上亮白色的反光線條。，  現代簡約的灰色混凝土風格舞台，背後是一整面閃爍著抽象幾何白光的LED螢幕（無任何文字與符號），冷冽而純粹。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She strides confidently down the runway with natural arm swings, her movements full of athletic energy and tension. Pausing with one hand on her hip, her gaze radiates a defiant confidence. Single person, no others.，  Wearing a sporty tank top featuring paneled red and white mesh, paired with a matching red patent-leather miniskirt and sparkling rhinestone earrings, textless.，  Slightly low-angle close-up shot, capturing her tense athletic pose at the moment of pausing, alongside the bright white reflective lines on her clothing.，  A modern minimalist gray concrete-style stage, backed by a large LED screen flashing abstract white geometric patterns (completely free of text or symbols), cold and pure."},
+ {"檔案名稱": "clsa051", "主題": "漆皮羽毛飾邊 Feather-Trimmed Vinyl Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她站立在伸展台最前端，一隻手臂搭在半透明壓克力屏風上，身體微曲。她眼神中透出高傲與不馴的張力，在強光下整個人呈現極強的雕塑美。無其他人物。，  穿著一件亮紅色漆皮超短裙，領口與裙擺邊緣鑲嵌有一圈粉色的鬆軟羽毛飾邊，搭配銀色網襪，無文字。，  側前方近景鏡頭，水平角度，聚焦於光滑漆皮與鬆軟羽毛、亮晶晶網襪產生的強烈材質對比。，  充滿前衛時尚感的黑鏡面伸展台，背景是模糊的、閃爍著亮紅色幾何幾何圖形霓虹燈的背板（完全無任何文字與商標）。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She stands at the very front of the runway, resting one arm on a semi-transparent acrylic screen, her body curving slightly. Her gaze radiates a proud and defiant tension, presenting a highly sculptural beauty under the intense light. Single person, no others.，  Wearing a bright red patent-leather minidress, with its collar and hem trimmed in fluffy pink feathers, paired with silver fishnets, textless.，  Three-quarter close-up shot, eye-level, focusing on the strong texture contrast between the smooth patent leather, fluffy feathers, and glittering fishnets.，  A black mirrored runway full of avant-garde fashion vibe, backed by a panel flashing abstract geometric shapes in bright red neon lights (completely free of text and logos)."},
+ {"檔案名稱": "clsa052", "主題": "螢光蕾絲罩衫 Neon Lace Overlay Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她輕巧地走到伸展台中央，雙手將精緻的蕾絲無字小托盤捧在身前，身體微微前傾。她眼神溫柔，嘴角帶著敬業且誠懇的微笑，完美展現職業尊嚴。無其他人物。，  穿著一襲螢光黃色蕾絲半透明長版外套，內搭黑色皮質比基尼與同款超短熱褲，戴著水鑽耳環，完全無字。，  斜前方近景鏡頭，水平視角，聚焦於蕾絲材質微弱的透光感，以及她白皙的肌膚線條與專注、敬業的面部表情。，  鏡面黑色的時尚舞台，背後閃爍著淡粉色與白色的抽象不規則圓形霓虹燈暈（無任何文字與商標）。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She walks gracefully to the center of the runway, holding an exquisite lace-trimmed textless mini-tray in front of her, leaning slightly forward. Her eyes are gentle, carrying a sincere and professional smile. Single person, no others.，  Wearing a semi-transparent neon yellow lace long cardigan over a black leather bikini and matching hot pants, with rhinestone earrings, textless.，  Three-quarter close-up shot, eye-level, focusing on the subtle translucent quality of the lace material, her fair skin lines, and her focused, professional facial expression.，  A mirrored black fashion stage, backed by flashing abstract irregular circular neon halos in light pink and white (completely textless and logo-free)."},
+ {"檔案名稱": "clsa053", "主題": "粗鉤針織網眼 Crochet Mesh Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她雙手叉腰站立在伸展台中央，雙腳微分，身體挺得筆直。她眼神堅定而驕傲，臉上帶著一絲不馴而自信的野性微笑，體態勻稱、富有力量感。無其他人物。，  身穿螢光橙色粗線鉤針編織鏤空網眼短背心，內搭白色比基尼，下身搭同色鉤針超短裙，戴著大圓環耳環，無字。，  正面中景鏡頭，低角度仰拍，凸顯粗鉤針編織材質獨特的立體粗糙感、她挺拔自信的體態與運動美感。，  裝飾著密集的、閃爍著螢光橙色幾何線條霓虹燈管的舞台（無任何文字），冷調的光線在黑鏡面地板上反射出斑斕光影。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She stands in the center of the runway with hands on her hips, feet slightly apart, her body perfectly upright. Her gaze is firm and proud, with a wild, confident smile, displaying a well-proportioned, powerful physique. Single person, no others.，  Wearing a neon orange chunky crochet open-mesh cropped tank top over a white bikini, paired with a matching crochet miniskirt and bold hoop earrings, textless.，  Front-facing medium shot, low-angle, highlighting the unique stereoscopic and raw texture of the chunky crochet mesh and her poised, confident posture.，  A stage decorated with dense, flashing geometric neon light tubes in neon orange (strictly textless), with cool lights reflecting colorful patterns on the black mirrored floor."},
+ {"檔案名稱": "clsa054", "主題": "歐根紗荷葉邊 Organza Ruffled Drama Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她提著裙擺在舞台中央大膽地轉過身去，回眸一笑，眼神中透著一絲俏皮與掌控舞台的自信。她的身體呈現優雅的扭轉曲線，長髮隨之微微飄動，無其他人物。，  穿著一襲由半透明歐根紗層層疊疊製成的螢光粉色與白色拼接荷葉邊短洋裝，蓬鬆有張力，佩戴亮銀色細手鍊。，  側後方近景鏡頭，水平角度，定格她歐根紗裙擺半懸空狀態下的優美飄逸感與柔和的面部側面輪廓。，  暗色調的現代舞台，上方與側面射來幾道強烈的粉紅色冷光聚光燈，在她身上與地板上折射出絢麗的粉紅光斑。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She boldly turns her back in the center of the runway while holding her skirt, looking back with a smile, her gaze carrying a hint of playfulness and stage-commanding confidence. Her body twists elegantly, her long hair fluttering slightly. Single person, no others.，  Wearing a tiered ruffles micro-minidress made of semi-transparent organza in neon pink and white patchwork, fluffy and dynamic, with a shiny silver bracelet.，  Three-quarter rear close-up shot, eye-level, freezing her graceful flowing pose with the organza skirt semi-airborne, alongside her soft facial profile.，  A dark-toned modern stage, with several intense pink cool-toned spotlights from above and the sides, casting gorgeous pink spots on her and the floor."},
+ {"檔案名稱": "clsa055", "主題": "彩虹編織流蘇 Multi-Colored Tassel Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她隨著舞台音樂輕輕擺動身體，裙擺上的亮片與流蘇也隨之有節奏地往復擺動。她眼神明亮，臉上綻放出極度開朗、充滿朝氣的自信微笑。無其他人物。，  身穿一件由紅、黃、藍、綠、粉五彩斑斕編織而成的比基尼，邊緣懸掛著大量的細密七彩細繩流蘇，手戴塑料大圓環。，  斜前方近景鏡頭，水平視角，聚焦於彩色細流蘇在舞動瞬間產生的動態殘影，以及她白皙勻稱的身體。，  溫暖黃光照亮的時尚舞台，背景是無文字的、閃爍著溫馨淡粉色圓點光暈的霓虹屏風，將流蘇折射得亮晶晶。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She sways her body gently to the stage music, making the sequins and fringes on her skirt swing rhythmically. Her eyes are bright, and her face blooms with an extremely cheerful, energetic, and confident smile. Single person, no others.，  Wearing a colorful woven bikini in vibrant red, yellow, blue, green, and pink, trimmed with dense, fine multi-colored string tassels, paired with bold plastic bangles.，  Three-quarter close-up shot, eye-level, focusing on the dynamic trail of the multi-colored fine tassels as they swing, alongside her fair, well-proportioned body.，  A fashion stage illuminated by warm yellow light, backed by a textless neon screen flashing warm pink circular halos, making the fringes sparkle beautifully."},
+ {"檔案名稱": "clsa056", "主題": "拼接亮片風 Patchwork Sequins Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她在伸展台中央大膽地轉過身去，回眸一笑，眼神中透著一絲俏皮與掌控舞台的自信。她的身體呈現優雅的扭轉曲線，長髮隨之微微飄動，無其他人物。，  穿著一雙由銀色、金色、粉色、藍色不同顏色亮片布料拼接而成的吊帶超短裙，全身閃耀著耀眼的光華，佩戴長水鑽耳環。，  側後方近景鏡頭，水平角度，捕捉她回眸一笑時立體生動的面部表情、精緻的鎖骨與流暢的扭轉身軀線條。，  暗色調的現代舞台，上方與側面射來幾道強烈的粉紅色冷光聚光燈，在她身上與地板上折射出絢麗的粉紅光斑。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She boldly turns her back in the center of the runway, looking back with a smile, her gaze carrying a hint of playfulness and stage-commanding confidence. Her body twists elegantly, her long hair fluttering slightly. Single person, no others.，  Wearing a paneled slip micro-minidress made of silver, gold, pink, and blue sequin patches, glittering intensely all over, paired with long rhinestone earrings.，  Three-quarter rear close-up shot, eye-level, capturing her vivid facial expression, delicate collarbones, and the flowing lines of her twisted body as she looks back.，  A dark-toned modern stage, with several intense pink cool-toned spotlights from above and the sides, casting gorgeous pink spots on her and the floor."},
+ {"檔案名稱": "clsa057", "主題": "高對比條紋風 High-Contrast Stripe Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她雙手叉腰站立在伸展台中央，雙腳微分，身體挺得筆直。她眼神堅定而驕傲，臉上帶著一絲不馴而自信的野性微笑，體態勻稱、富有力量感。無其他人物。，  身穿大紅色與黑色相間高對比橫條紋貼身超短洋裝，領口為一字領設計，搭配黑色網襪，手套亮銀色細手鍊，無字。，  正面中景鏡頭，低角度仰拍，強調高對比橫條紋對身體視覺輪廓的加寬與凸顯，以及她挺拔自信的體態。，  裝飾著密集的、閃爍著螢光橙色幾何線條霓虹燈管的舞台（無任何文字），冷調的光線在黑鏡面地板上反射出斑斕光影。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She stands in the center of the runway with hands on her hips, feet slightly apart, her body perfectly upright. Her gaze is firm and proud, with a wild, confident smile, displaying a well-proportioned, powerful physique. Single person, no others.，  Wearing a tight off-the-shoulder micro-minidress with high-contrast red-and-black stripes, paired with black fishnets and a shiny silver bracelet, textless.，  Front-facing medium shot, low-angle, highlighting how the high-contrast horizontal stripes define and emphasize her body profile, alongside her poised, confident posture.，  A stage decorated with dense, flashing geometric neon light tubes in neon orange (strictly textless), with cool lights reflecting colorful patterns on the black mirrored floor."},
+ {"檔案名稱": "clsa058", "主題": "漆皮乳膠塑身 High-Gloss Latex Corset Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她一隻手輕輕按在透明的亞克力高腳凳上，身體優雅地微曲，頭部微側。她面帶溫柔、敬業的甜美笑容，眼神明亮，散發出極佳的親和力與自尊。無其他人物。，  身穿一襲高光澤黑色漆皮塑身連身超短裙，束腰設計凸顯腰部極致線條，胸前為低胸大膽設計，搭配銀色細項鍊，無字。，  中景平視鏡頭，從正面拍攝，將她優雅微曲的坐姿、透明亞克力高腳凳與她白皙的肌膚線條完美融合。，  溫暖白光照亮的時尚展台，背景是抽象的、閃爍著淡淡湖綠色幾何波浪光影的霓虹背景牆（無任何文字與字母）。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She gently rests one hand on a transparent acrylic high stool, her body curving elegantly with her head slightly tilted. She has a warm, professional, and sweet smile, her eyes bright, radiating approachability and self-respect. Single person, no others.，  Wearing a high-gloss black patent-leather waist-cinching corset micro-dress, with a daring low-cut neckline, paired with a delicate silver necklace, textless.，  Medium eye-level shot, from the front, perfectly combining her elegant curved seating pose, the transparent acrylic high stool, and her fair skin lines.，  A fashion stage illuminated by warm white light, backed by an abstract neon wall flashing soft turquoise geometric wave patterns (strictly textless)."},
+ {"檔案名稱": "clsa059", "主題": "幻彩雨衣套裝 Holographic Raincoat Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她側過身去，一隻手輕輕拉著半開的拉鍊邊緣，身體微曲成完美的S形。她歪著頭看著鏡頭，眼神充滿了令人心醉的自信魅力。無其他人物。，  身穿一雙由半透明全息幻彩塑料製成的長版雨衣外套，內搭亮藍色比基尼，戴著多層亮銀色金屬細頸鍊，無字。，  側前方近景鏡頭，水平視角，聚焦於幻彩雨衣外套在強光照耀下產生的耀眼七彩反光，以及她白皙的肌膚。，  昏暗的、籠罩在深藍色與冷紫色霓虹光暈下的舞台（無文字與字母），營造出一種神祕、迷幻且極富質感的時尚空間。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.Turning sideways, she gently pulls the edge of her half-open zipper, her body curving into a perfect S-line. She tilts her head, looking into the camera with an enchanting, confident charm. Single person, no others.，  Wearing a long translucent holographic vinyl raincoat over a bright blue bikini, accessorized with layered fine silver metallic chokers, textless.，  Three-quarter close-up shot, eye-level, focusing on the dazzling multicolored reflections on the holographic raincoat under the bright lights, alongside her fair skin.，  A dark stage enveloped in deep blue and cool purple neon halos (strictly no text or letters), creating a mysterious, psychedelic, and highly textured fashion space."},
+ {"檔案名稱": "clsa060", "主題": "不對稱針織風 Asymmetric Knit Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她側身走在舞台上，右手輕撫一側懸垂的亮粉色細針織裙。她停步時微仰起頭，眼神中滿是冷靜與自信，身軀挺拔，展現出極強的主體能動性。無其他人物。，  穿著一件大膽不對稱斜剪裁設計的螢光粉色與灰色拼接超短針織洋裝，一側露肩，一側裙擺不規則懸垂，配珍珠耳環。，  斜前方中景鏡頭，水平角度，凸顯不對稱剪裁對她身體輪廓的巧妙分割，以及衣服在行走時的飄逸動態。，  充滿前衛設計感的時尚展台，背景是閃爍著冷白色抽象幾何幾何圖形霓虹燈的背板（完全無任何文字與商標）。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She walks sideways on the stage, her right hand gently stroking the draped bright pink fine knit skirt. As she pauses, she raises her head slightly with calm, confident eyes. Single person, no others.，  Wearing an asymmetrical paneled micro-minidress in neon pink and gray fine knit, off-the-shoulder on one side with an irregular draped hem on the other, with pearl earrings.，  Three-quarter medium shot, eye-level, highlighting the clever segmentation of her body profile by the asymmetrical cut and the flowing movement of the dress as she walks.，  A highly stylish fashion stage, backed by a panel flashing abstract geometric patterns in cool white neon lights (completely free of text and logos)."},
+ {"檔案名稱": "clsa061", "主題": "金箔貼膜飾邊 Gold Leaf Accent Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她站立在伸展台最前端，雙手大膽地向兩側展開，身體微微後仰，完美呈現出她充滿自信的優雅身段。她抬起頭，雙眼在五彩折射光芒中閃爍，無其他人物。，  穿著一件黑色漆皮抹胸連身褲，胸前、腰側及下擺處貼滿了不規則亮金色的立體金箔貼膜飾邊，戴著亮銀色細手環。，  正面中景鏡頭，水平視角，捕捉她大膽展開雙臂的自信姿態與服裝上璀璨金箔在聚光燈下折射出的耀眼光華。，  時尚感極強的暗色舞台，無數道五彩的抽象雷射光束射向她，與她身上的幻彩材質交相輝映，顯得魔幻而耀眼。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She stands at the very front of the runway, boldly spreading her arms to both sides and leaning slightly back, perfectly showcasing her confident, elegant physique. Her eyes sparkle under the multicolored light refractions. Single person, no others.，  Wearing a black patent-leather bustier jumpsuit, decorated at the chest, waist, and hem with irregular, glossy gold-leaf accents, paired with fine silver bracelets.，  Front-facing medium shot, eye-level, capturing her bold, confident arm-spreading pose and the brilliant glare refracted by the glossy gold leaf on her outfit under the spotlight.，  A highly fashionable dark stage, with countless abstract multicolored laser beams focusing on her, interweaving with her holographic outfit, appearing magical and dazzling."},
+ {"檔案名稱": "clsa062", "主題": "鏡面馬賽克 Mirror Mosaic Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她在伸展台前端站定，微微歪著頭，雙手抓著裙擺兩側輕巧向外拉開，臉上露出俏皮而自信的甜美微笑。她單腳微張，體態輕盈舒展。畫面中僅有一人，無其他人物。，  身穿一襲覆滿亮銀色方形鏡面馬賽克的比基尼胸衣與超短裙，隨著她的走動折射出斑駁紛亂的亮白色光點，無字。，  側前方近景鏡頭，水平角度，聚焦於馬賽克鏡面折射出的大量亮白光點動態虛影，以及她生動甜美的微笑。，  現代極簡風格的伸展台，背景是無文字的放射狀藍白幾何霓虹燈帶，散發著冷艷的夜色氛圍。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She pauses at the front of the runway, tilting her head slightly, her hands gently spreading the sides of her skirt, with a playful and confident sweet smile. Her posture is light and expressive. Single person, no others.，  Wearing a bikini top and miniskirt covered in shiny silver square mirror mosaics, refracting scattered patterns of bright white spots as she moves, textless.，  Three-quarter close-up shot, eye-level, focusing on the dynamic trails of bright white light spots refracted by the mirror mosaics, alongside her sweet, vivid smile.，  A modern minimalist runway, backed by textless radial blue-and-white geometric neon light strips, radiating a cool, glamorous night atmosphere."},
+ {"檔案名稱": "clsa063", "主題": "水鑽網紗長裙 Crystal Mesh Showstopper Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她輕巧地走到伸展台中央，身體微微側傾，雙臂自然向上伸展。她的面部在交錯陰影下，線條顯得極具雕塑感。畫面中僅有她一人，無其他人物。，  穿著一件全透明的黑色細網紗長袖超短連身洋裝，整件衣服上細密鑲嵌了數萬顆耀眼水鑽，閃爍著鑽石般耀眼光華。，  斜前方近景鏡頭，水平視角，聚焦於數萬顆水鑽在強光照耀下產生的極致璀璨光芒，以及她高雅專注的神情。，  鏡面黑色的時尚舞台，上方射下兩束強烈的白色冷光日光燈管，在黑色地面上投射出清晰、分明的幾何陰影，無文字。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She walks gracefully to the center of the runway, her body slightly tilted sideways, with both arms stretching naturally upward. Her facial lines appear highly sculptural under the crisscross shadows. Single person, no others.，  Wearing a fully transparent black fine-mesh long-sleeved micro-minidress, densely encrusted with tens of thousands of dazzling tiny rhinestones.，  Three-quarter close-up shot, eye-level, focusing on the ultimate sparkling brilliance of the thousands of tiny rhinestones under the bright lights, alongside her elegant, focused expression.，  A mirrored black fashion stage, illuminated from above by two intense cool white fluorescent beams, casting crisp, defined geometric shadows on the black floor, no text."},
+ {"檔案名稱": "clsa064", "主題": "絲絨懸垂雅緻 Velvet Draped Elegance Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她緩慢走在舞台上，雙手輕柔地撫在腰際，身體擺動極富律動感。她停步時微微低頭，眼神從下方注視鏡頭，帶著一絲神祕與不馴的張力。無其他人物。，  身穿一件深紫紅色絲絨材質的低胸吊帶超短裙，一側裙擺垂落著細長懸垂的絲絨布料，戴著大金屬圓環耳環，無字。，  側前方近景鏡頭，水平視角，聚焦於深紫紅絲絨的高雅光澤與不規則懸垂產生的動態美感，以及她神祕而令人著迷的眼神。，  充滿前衛時尚感的黑鏡面伸展台，背景是模糊的、閃爍著螢光綠色與白色交替的幾何光斑（無任何文字與符號）。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She walks slowly on the stage, her hands gently resting on her waist, her body swaying with rich rhythm. As she pauses, she lowers her head slightly, gazing at the camera with a hint of mystery and defiant tension. Single person, no others.，  Wearing a dark wine-red velvet low-cut slip micro-minidress, featuring long, elegant drapes of velvet fabric hanging on one side, paired with bold metal hoop earrings, textless.，  Three-quarter close-up shot, eye-level, focusing on the noble luster of the dark wine-red velvet, the dynamic beauty of the asymmetrical drape, and her mysterious, fascinating gaze.，  A black mirrored runway full of avant-garde fashion vibe, backed by blurred geometric spots flashing in alternating neon green and white (completely textless and symbol-free)."},
+ {"檔案名稱": "clsa065", "主題": "亮片細網魚網 Glittering Fishnet Layering Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她站立在伸展台中央，雙手大膽地搭在腰際。她眼神冷酷而堅定，微微仰起下巴，展現出掌控舞台的霸氣與不屈的自我意識。無其他人物。，  穿著一件螢光粉色與亮銀色細亮片相交織的網眼連身超短裙，搭配大網格魚網襪與亮皮馬靴，佩戴細黑頸鍊，無字。，  正面中景鏡頭，低角度仰拍，凸顯亮片細網與大網格魚網襪相疊加產生的獨特幾何視覺層次。，  裝飾著強烈藍紅色幾何冷光霓虹燈的舞台，冷調的霓虹在地面上折射出變幻莫測的迷幻色彩，完全無文字。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She stands in the center of the runway, boldly resting both hands on her waist. Her gaze is cool and resolute, chin raised slightly, displaying a commanding stage presence and defiant self-awareness. Single person, no others.，  Wearing an open-mesh micro-minidress woven with neon pink and shiny silver sequins, paired with bold wide-mesh fishnet stockings and patent-leather tall boots, textless.，  Front-facing medium shot, low-angle, highlighting the unique geometric visual layering created by the sequined mesh and bold fishnet stockings.，  A stage decorated with intense blue-and-red geometric cool-toned neon lights, casting shifting, psychedelic patterns on the floor, strictly textless."},
+ {"檔案名稱": "clsa066", "主題": "螢光流蘇舞動 Neon Fringe Runway Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她隨著舞台音樂輕輕擺動身體，裙擺上的亮片與流蘇也隨之有節奏地往復擺動。她眼神明亮，臉上綻放出極度開朗、充滿朝氣的自信微笑。無其他人物。，  身穿一襲螢光綠色細細亮流蘇超短連身裙，全身覆滿了大量細長柔軟的螢光綠細流蘇，戴著發亮的水鑽長細耳環。，  側前方近景鏡頭，水平視角，聚焦於細流蘇隨動作大幅飛動時產生的亮亮動態模糊線條，以及她動人甜美的微笑。，  溫暖黃光照亮的時尚舞台，背景是無文字的、閃爍著溫馨淡粉色圓點光暈的霓虹屏風，將流蘇折射得亮晶晶。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She sways her body gently to the stage music, making the sequins and fringes on her skirt swing rhythmically. Her eyes are bright, and her face blooms with an extremely cheerful, energetic, and confident smile. Single person, no others.，  Wearing a micro-minidress made of dense, long, and soft neon green fine tassels, paired with long, sparkling rhinestone thread earrings.，  Three-quarter close-up shot, eye-level, focusing on the bright dynamic blur of the fine tassels swinging dramatically with her movements, and her sweet, touching smile.，  A fashion stage illuminated by warm yellow light, backed by a textless neon screen flashing warm pink circular halos, making the fringes sparkle beautifully."},
+ {"檔案名稱": "clsa067", "主題": "歐根紗荷葉邊拖尾 Ruffled Chiffon Train Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她提著裙擺在舞台中央大膽地轉過身去，回眸一笑，眼神中透著一絲俏皮與掌控舞台的自信。她的身體呈現優雅的扭轉曲線，長髮隨之微微飄動，無其他人物。，  穿著一件大紅色荷葉邊超短洋裝，後側懸垂著一條極其飄逸半透明的大紅色雪紡紗荷葉邊長拖尾，佩戴水鑽耳環。，  側後方近景鏡頭，水平角度，定格大紅色雪紡長拖尾半懸空狀態下的優美飄逸感與柔和的面部側面輪廓。，  暗色調的現代舞台，上方與側面射來幾道強烈的粉紅色冷光聚光燈，在她身上與地板上折射出絢麗的粉紅光斑。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She boldly turns her back in the center of the runway while holding her skirt, looking back with a smile, her gaze carrying a hint of playfulness and stage-commanding confidence. Her body twists elegantly, her long hair fluttering slightly. Single person, no others.，  Wearing a bright red ruffled minidress, featuring an extremely flowing, semi-transparent red ruffled chiffon train draped from the back, paired with rhinestone earrings.，  Three-quarter rear close-up shot, eye-level, freezing her graceful flowing pose with the red chiffon train semi-airborne, alongside her soft facial profile.，  A dark-toned modern stage, with several intense pink cool-toned spotlights from above and the sides, casting gorgeous pink spots on her and the floor."},
+ {"檔案名稱": "clsa068", "主題": "珍珠奢華鑲嵌 Pearl-Embellished Glam Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她在伸展台前端站定，微微歪著頭，雙手抓著裙擺兩側輕巧向外拉開，臉上露出俏皮而自信的甜美微笑。她單腳微張，體態輕盈舒展。畫面中僅有一人，無其他人物。，  穿著一雙由白色亮片布料製成的超短洋裝，領口與裙身表面細密鑲嵌了數百顆晶瑩剔透的大珍珠，手腕戴珍珠手鍊。，  側前方近景鏡頭，水平角度，聚焦於晶瑩大珍珠的高雅光澤與亮片相互交融產生的奢華質感，以及她生動甜美的微笑。，  現代極簡風格的伸展台，背景是無文字的放射狀藍白幾何霓虹燈帶，發散著冷艷的夜色氛圍。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She pauses at the front of the runway, tilting her head slightly, her hands gently spreading the sides of her skirt, with a playful and confident sweet smile. Her posture is light and expressive. Single person, no others.，  Wearing a micro-minidress made of white sequined fabric, with its collar and surface densely embellished with hundreds of glossy white pearls, paired with a pearl bracelet.，  Three-quarter close-up shot, eye-level, focusing on the noble luster of the glossy pearls blending with the sequins for a luxurious texture, alongside her sweet, vivid smile.，  A modern minimalist runway, backed by textless radial blue-and-white geometric neon light strips, radiating a cool, glamorous night atmosphere."},
+ {"檔案名稱": "clsa069", "主題": "亮彩亮片連身褲 Sequin Jumpsuit Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她雙手叉腰站立在伸展台中央，雙腳微分，身體挺得筆直。她眼神堅定而驕傲，臉上帶著一絲不馴而自信的野性微笑，體態勻稱、富有力量感。無其他人物。，  身穿一件由螢光綠、黃、藍三色亮片交織而成的貼身超短連身褲，大膽的高剪裁露背設計，戴著金屬大圓環耳環，無字。，  正面中景鏡頭，低角度仰拍，凸顯三色亮片相交織產生的耀眼幾何光華，以及她挺拔自信、充滿力量的體態。，  裝飾著密集的、閃爍著螢光橙色幾何線條霓虹燈管的舞台（無任何文字），冷調的光線在黑鏡面地板上反射出斑斕光影。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She stands in the center of the runway with hands on her hips, feet slightly apart, her body perfectly upright. Her gaze is firm and proud, with a wild, confident smile, displaying a well-proportioned, powerful physique. Single person, no others.，  Wearing a tight micro-romper woven with neon green, yellow, and blue sequins, featuring a daring high-cut and backless design, paired with bold metal hoop earrings, textless.，  Front-facing medium shot, low-angle, highlighting the dazzling geometric brilliance of the tri-color sequins and her poised, confident, powerful posture.，  A stage decorated with dense, flashing geometric neon light tubes in neon orange (strictly textless), with cool lights reflecting colorful patterns on the black mirrored floor."},
+ {"檔案名稱": "clsa070", "主題": "水鑽流蘇閃耀 Diamond Strand Shimmer Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她輕巧地走到伸展台中央，身體微微側傾，雙臂自然向上伸展。她的面部在交錯陰影下，線條顯得極具雕塑感。畫面中僅有她一人，無其他人物。，  穿著一連黑色抹胸超短裙，胸前與下擺處垂掛著數百條由亮晶晶水鑽製成的細長流蘇，隨著動作折射出密集的鑽石光。，  斜前方近景鏡頭，水平視角，聚焦於水鑽細流蘇在強光下反射出的極致璀璨光芒，以及她白皙勻稱的肌膚與高雅神情。，  鏡面黑色的時尚舞台，上方射下兩束強烈的白色冷光日光燈管，在黑色地面上投射出清晰、分明的幾何陰影，無文字。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She walks gracefully to the center of the runway, her body slightly tilted sideways, with both arms stretching naturally upward. Her facial lines appear highly sculptural under the crisscross shadows. Single person, no others.，  Wearing a black tube micro-minidress, with its chest and hem trimmed with hundreds of long, delicate rhinestones strands that refract intense diamond lights as she moves.，  Three-quarter close-up shot, eye-level, focusing on the ultimate sparkling brilliance of the delicate rhinestone strands under the bright lights, alongside her fair skin and elegant expression.，  A mirrored black fashion stage, illuminated from above by two intense cool white fluorescent beams, casting crisp, defined geometric shadows on the black floor, no text."},
+ {"檔案名稱": "clsa071", "主題": "液態黃金緞面 Liquid Gold Satin Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她緩慢走在舞台上，雙手輕柔地撫在腰際，身體擺動極富律動感。她停步時微微低頭，眼神從下方注視鏡頭，帶著一絲神祕與不馴的張力。無其他人物。，  身穿一襲黃金色高光澤緞面材質的露背低胸超短連身洋裝，面料流動著如液態黃金般耀眼、絲滑的高貴反光。，  側前方近景鏡頭，水平視角，聚焦於液態黃金般面料的高貴絲滑光澤與不規則懸垂產生的動態美感，以及她神祕而令人著迷的眼神。，  充滿前衛時尚感的黑鏡面伸展台，背景是模糊的、閃爍著螢光綠色與白色交替的幾何光斑（無任何文字與符號）。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She walks slowly on the stage, her hands gently resting on her waist, her body swaying with rich rhythm. As she pauses, she lowers her head slightly, gazing at the camera with a hint of mystery and defiant tension. Single person, no others.，  Wearing a backless, low-cut gold-colored high-gloss satin micro-minidress, with the fabric reflecting a silky, dazzling gold luster like liquid gold.，  Three-quarter close-up shot, eye-level, focusing on the noble, silky luster of the liquid-gold-like satin, the dynamic beauty of the asymmetrical drape, and her mysterious, fascinating gaze.，  A black mirrored runway full of avant-garde fashion vibe, backed by blurred geometric spots flashing in alternating neon green and white (completely textless and symbol-free)."},
+ {"檔案名稱": "clsa072", "主題": "鉻黃金屬未來 Chrome Metallic Cyber Style", "中文生圖用提示詞": "一個25歲台灣女人，有著黑色長髮、瓜子臉，   她站立在伸展台最前端，雙手大膽地向兩側展開，身體微微後仰，完美呈現出她充滿自信的優雅身段。她抬起頭，雙眼在五彩折射光芒中閃爍，無其他人物。，  穿著一襲鉻黃金屬色反光貼身超短裙，面料呈現如鍍鉻鏡面般的銀黃金屬光圈，折射出極強的未來感與硬朗線條。，  正面中景鏡頭，水平視角，捕捉她大膽展開雙臂的自信姿態與服裝上鉻金屬反光在強光照耀下折射出的強烈視覺張力。，  時尚感極強的暗色舞台，無數道五彩的抽象雷射光束射向她，與她身上的幻彩材質交相輝映，顯得魔幻而耀眼。", "English Prompt": "A 25-year-old Taiwanese woman has long black hair and an oval face.She stands at the very front of the runway, boldly spreading her arms to both sides and leaning slightly back, perfectly showcasing her confident, elegant physique. Her eyes sparkle under the multicolored light refractions. Single person, no others.，  Wearing a tight micro-minidress in reflective chrome metallic yellow, its surface reflecting a chrome-like silver-yellow metallic halo with sharp futuristic lines.，  Front-facing medium shot, eye-level, capturing her bold, confident arm-spreading pose and the intense visual tension refracted by the chrome-metallic reflections under the bright lights.，  A highly fashionable dark stage, with countless abstract multicolored laser beams focusing on her, interweaving with her holographic outfit, appearing magical and dazzling."}
+ ];
+
+  /* =========================================================
+   * 工具函式
+   * ========================================================= */
+  let toastTimer = null;
+
+  function showToast(msg) {
+    const el = document.getElementById("toast");
+    el.textContent = msg;
+    el.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove("show"), CONFIG.toastDuration);
+  }
+
+  async function copyToClipboard(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      // 降級方案
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.cssText = "position:fixed;top:-999px;left:-999px;opacity:0";
+      document.body.appendChild(ta);
+      ta.focus(); ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return ok;
+    }
+  }
+
+  /* =========================================================
+   * Lightbox
+   * ========================================================= */
+  const lightbox     = document.getElementById("lightbox");
+  const lightboxImg  = document.getElementById("lightbox-img");
+  const lightboxCap  = document.getElementById("lightbox-caption");
+  const lightboxClose= document.getElementById("lightbox-close");
+
+  function openLightbox(src, title) {
+    lightboxImg.src = src;
+    lightboxImg.alt = title;
+    lightboxCap.textContent = title;
+    lightbox.classList.add("active");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeLightbox() {
+    lightbox.classList.remove("active");
+    document.body.style.overflow = "";
+    // 延遲清空避免閃爍
+    setTimeout(() => { lightboxImg.src = ""; }, 300);
+  }
+
+  lightbox.addEventListener("click", e => { if (e.target === lightbox || e.target === lightboxImg) closeLightbox(); });
+  lightboxClose.addEventListener("click", closeLightbox);
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closeLightbox(); });
+
+  /* =========================================================
+   * 建立圖片卡片
+   * ========================================================= */
+  function buildCard(item) {
+    const filename = item["檔案名稱"];
+    const title    = item["主題"];
+    const twPrompt = item["中文生圖用提示詞"];
+    const enPrompt = item["English Prompt"];
+    const imgSrc   = `${CONFIG.imgFolder}/${filename}${CONFIG.imgExt}`;
+
+    const card = document.createElement("div");
+    card.className = "card";
+
+    // 圖片區域
+    const imgWrap = document.createElement("div");
+    imgWrap.className = "card__img-wrap";
+    imgWrap.title = "點擊放大";
+
+    // 佔位（當圖片尚未載入或不存在時顯示）
+    const placeholder = document.createElement("div");
+    placeholder.className = "img-placeholder";
+    placeholder.innerHTML = `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><span>${filename}</span>`;
+    imgWrap.appendChild(placeholder);
+
+    const img = document.createElement("img");
+    img.alt   = title;
+    img.loading = "lazy";
+    img.src   = imgSrc;
+
+    img.addEventListener("load",  () => { img.classList.add("loaded"); placeholder.style.display = "none"; });
+    img.addEventListener("error", () => { img.style.display = "none"; });
+
+    imgWrap.appendChild(img);
+    imgWrap.addEventListener("click", () => openLightbox(imgSrc, title));
+
+    // 資訊區域
+    const info = document.createElement("div");
+    info.className = "card__info";
+
+    const titleEl = document.createElement("div");
+    titleEl.className = "card__title";
+    titleEl.textContent = title;
+
+    const filenameEl = document.createElement("div");
+    filenameEl.className = "card__filename";
+    filenameEl.textContent = filename;
+
+    const btns = document.createElement("div");
+    btns.className = "card__btns";
+
+    const btnTW = document.createElement("button");
+    btnTW.className = "btn btn--tw";
+    btnTW.textContent = "tw Prompt";
+    btnTW.title = twPrompt;
+    btnTW.addEventListener("click", async () => {
+      await copyToClipboard(twPrompt);
+      showToast(CONFIG.toastTW);
+    });
+
+    const btnEN = document.createElement("button");
+    btnEN.className = "btn btn--en";
+    btnEN.textContent = "en Prompt";
+    btnEN.title = enPrompt;
+    btnEN.addEventListener("click", async () => {
+      await copyToClipboard(enPrompt);
+      showToast(CONFIG.toastEN);
+    });
+
+    btns.appendChild(btnTW);
+    btns.appendChild(btnEN);
+
+    info.appendChild(titleEl);
+    info.appendChild(filenameEl);
+    info.appendChild(btns);
+
+    card.appendChild(imgWrap);
+    card.appendChild(info);
+
+    return card;
+  }
+
+  /* =========================================================
+   * 初始化
+   * ========================================================= */
+  const gallery = document.getElementById("gallery");
+  IMAGES.forEach(item => gallery.appendChild(buildCard(item)));
+
+  document.getElementById("imgCount").textContent = `共 ${IMAGES.length} 張圖片`;
+</script>
+</body>
+</html>
