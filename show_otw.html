@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>提示詞畫廊 - 懷舊台灣篇</title>
+  <style>
+    /* ===== 全域設定 ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --card-bg: #1e2130;
+      --card-hover: #252840;
+      --border: #2e3350;
+      --accent: #7c6ff7;
+      --accent2: #5bc8d4;
+      --text-main: #e8eaf6;
+      --text-sub: #9ba1c0;
+      --btn-tw-bg: #3d3580;
+      --btn-tw-hover: #5548b0;
+      --btn-en-bg: #1e5a63;
+      --btn-en-hover: #2a7d8a;
+      --radius: 12px;
+      --transition: 0.22s ease;
+
+      /* ===== 可調整：圖片資料夾路徑 ===== */
+      --img-folder: face;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text-main);
+      font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+      min-height: 100vh;
+    }
+
+    /* ===== 頁首 ===== */
+    header {
+      text-align: center;
+      padding: 48px 24px 24px;
+      background: linear-gradient(160deg, #12142099 0%, transparent 100%);
+      border-bottom: 1px solid var(--border);
+    }
+
+    header h1 {
+      font-size: clamp(1.4rem, 4vw, 2.4rem);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 14px;
+    }
+
+    header .subtitle {
+      font-size: clamp(0.8rem, 2vw, 0.95rem);
+      color: var(--text-sub);
+    }
+
+    header .subtitle a {
+      color: var(--accent2);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: border-color var(--transition);
+    }
+    header .subtitle a:hover { border-color: var(--accent2); }
+
+    .img-count {
+      display: inline-block;
+      margin-top: 12px;
+      font-size: 0.82rem;
+      color: var(--text-sub);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 14px;
+    }
+
+    /* ===== 圖片格線 ===== */
+    main {
+      padding: 28px 20px 60px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 20px;
+    }
+
+    /* ===== 圖片卡片 ===== */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: transform var(--transition), box-shadow var(--transition), background var(--transition);
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 28px rgba(124, 111, 247, 0.18);
+      background: var(--card-hover);
+    }
+
+    .card__img-wrap {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      overflow: hidden;
+      cursor: zoom-in;
+      background: #10111a;
+    }
+
+    .card__img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.35s ease, opacity 0.3s ease;
+      opacity: 0;
+    }
+
+    .card__img-wrap img.loaded { opacity: 1; }
+    .card__img-wrap:hover img { transform: scale(1.06); }
+
+    /* 圖片載入失敗時的佔位 */
+    .card__img-wrap .img-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: var(--text-sub);
+      font-size: 0.75rem;
+      background: #14161f;
+      position: absolute;
+      inset: 0;
+    }
+    .card__img-wrap { position: relative; }
+    .card__img-wrap .img-placeholder svg { opacity: 0.35; }
+
+    .card__info {
+      padding: 12px 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1;
+    }
+
+    .card__title {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--text-main);
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    .card__filename {
+      font-size: 0.72rem;
+      color: var(--text-sub);
+      text-align: center;
+      opacity: 0.7;
+    }
+
+    .card__btns {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 6px 4px;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 0.03em;
+      transition: background var(--transition), transform 0.12s ease;
+      font-family: inherit;
+    }
+
+    .btn:active { transform: scale(0.96); }
+
+    .btn--tw {
+      background: var(--btn-tw-bg);
+      color: #ccc8ff;
+    }
+    .btn--tw:hover { background: var(--btn-tw-hover); }
+
+    .btn--en {
+      background: var(--btn-en-bg);
+      color: #b3efef;
+    }
+    .btn--en:hover { background: var(--btn-en-hover); }
+
+    /* ===== Toast 通知 ===== */
+    #toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(30, 33, 55, 0.95);
+      color: var(--text-main);
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      padding: 10px 22px;
+      font-size: 0.88rem;
+      font-weight: 500;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.28s ease, transform 0.28s ease;
+      z-index: 9999;
+      white-space: nowrap;
+      box-shadow: 0 4px 18px rgba(124, 111, 247, 0.3);
+    }
+
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ===== Lightbox 全畫面 ===== */
+    #lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(8, 9, 16, 0.92);
+      z-index: 1000;
+      cursor: zoom-out;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+
+    #lightbox.active { display: flex; }
+
+    #lightbox img {
+      max-width: 92vw;
+      max-height: 88vh;
+      border-radius: 10px;
+      box-shadow: 0 20px 80px rgba(0, 0, 0, 0.7);
+      object-fit: contain;
+      animation: lb-in 0.22s ease;
+    }
+
+    @keyframes lb-in {
+      from { opacity: 0; transform: scale(0.9); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    #lightbox-caption {
+      position: fixed;
+      bottom: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(20, 22, 38, 0.88);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 8px 20px;
+      border-radius: 20px;
+      font-size: 0.88rem;
+      pointer-events: none;
+    }
+
+    #lightbox-close {
+      position: fixed;
+      top: 18px;
+      right: 22px;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: rgba(30, 33, 55, 0.8);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background var(--transition);
+      z-index: 1001;
+      line-height: 1;
+    }
+    #lightbox-close:hover { background: var(--card-hover); }
+
+    /* ===== 頁尾 ===== */
+    footer {
+      text-align: center;
+      padding: 18px 20px;
+      font-size: 0.8rem;
+      color: var(--text-sub);
+      border-top: 1px solid var(--border);
+      opacity: 0.7;
+    }
+
+    /* ===== RWD ===== */
+    @media (max-width: 600px) {
+      header { padding: 32px 16px 18px; }
+      main { padding: 20px 12px 40px; }
+      .gallery-grid { gap: 14px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+      .btn { font-size: 0.72rem; padding: 5px 2px; }
+      .card__title { font-size: 0.85rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== 頁首 ===== -->
+<header>
+  <a href="https://vocus.cc/salon/aicg18" target="_blank"><img src="logo.png" border="0" ?</a>
+  <h1>提示詞畫廊 - 懷舊台灣篇</h1>
+  <p class="subtitle">
+    <a href="https://vocus.cc/article/69f95329fd89780001bff885" target="_blank" rel="noopener">
+      推薦您去玩玩台灣 AutoIP 生圖、動畫產生平台生成。
+    </a> (※審查程度較低)
+  </p>
+  <p>
+  </p>
+  <span class="img-count" id="imgCount"></span>
+</header>
+
+<!-- ===== 畫廊主體 ===== -->
+<main>
+  <div class="gallery-grid" id="gallery"></div>
+</main>
+
+<!-- ===== 頁尾 ===== -->
+<footer>提示詞畫廊 &copy; 2026 ｜ 懷舊台灣篇</footer>
+
+<!-- ===== Lightbox ===== -->
+<div id="lightbox" role="dialog" aria-modal="true" aria-label="圖片放大檢視">
+  <button id="lightbox-close" aria-label="關閉" title="關閉 (點擊任意處也可關閉)">✕</button>
+  <img id="lightbox-img" src="" alt="" />
+  <div id="lightbox-caption"></div>
+</div>
+
+<!-- ===== Toast ===== -->
+<div id="toast" role="alert" aria-live="polite"></div>
+
+<script>
+  /* =========================================================
+   * 設定區 — 如需修改只需調整此處
+   * ========================================================= */
+  const CONFIG = {
+    imgFolder: "otw",          // 圖片資料夾路徑（相對於 HTML 檔案）
+    imgExt:    ".jpg",          // 圖片副檔名
+    pageTitle: "提示詞畫廊 - 懷舊台灣篇",
+    siteLink:  "https://vocus.cc/article/69f95329fd89780001bff885",
+    siteLinkText: "推薦您玩玩台灣 AutoIP 生圖、動畫產生平台生成。",
+    toastTW:   "已經複製提示詞至剪貼簿中",
+    toastEN:   "The prompt has been copied to the clipboard.",
+    toastDuration: 2000,        // 毫秒
+  };
+
+  /* =========================================================
+   * 圖片資料 — 新增圖片只需在此陣列加入物件
+   * ========================================================= */
+  const IMAGES = [
+   {"檔案名稱": "otw001", "主題": "三合院曬穀場的午後 Afternoon at the Sanheyuan Courtyard", "中文生圖用提示詞": "暖陽灑在紅磚三合院的寬敞曬穀場上。地面是古樸的灰色磨石子，旁邊堆著一疊疊金黃稻草。屋頂由紅瓦覆蓋，角落種著高聳的香蕉樹。畫面帶著安詳、寧靜的氛圍。底片質感，35mm鏡頭，Kodak Gold 200，無任何文字。", "English Prompt": "A wide shot of a traditional Taiwanese red-brick Sanheyuan courtyard with warm sunlight. Golden hour light glows on the old grey terrazzo ground and neat haystacks. Red-tiled roof, banana trees in the corner. Highly peaceful, serene, nostalgic atmosphere. 35mm lens, cinematic film grain, Kodak Gold 200, no text, no letters."},
+ {"檔案名稱": "otw002", "主題": "紅磚牆下的石磨角 Stone Mill Corner by the Red Brick Wall", "中文生圖用提示詞": "在一堵長滿些許青苔的紅色磚牆下，靜靜放置著一具歷史悠久的灰色石磨。午後的陽光穿過樹葉縫隙，投射下斑駁的光影。地面是質樸的泥土，散落著幾片枯葉。整幅畫面流露出時間靜止的祥和感。底片風格，candid photo，無字。", "English Prompt": "An old grey stone mill resting quietly next to a mossy red brick wall. Soft dappled afternoon sunlight filters through leaves above, casting beautiful shadows on the earthen ground with scattered autumn leaves. Peaceful and timeless countryside atmosphere. Film photo texture, candid, no text, no letters."},
+ {"檔案名稱": "otw003", "主題": "壓花玻璃與午後斜光 Begonia Glass and Afternoon Light", "中文生圖用提示詞": "陽光穿透台灣老屋特有的海棠花紋壓花玻璃窗，在室內的磨石子地板上折射出複雜而美麗的幾何光影。深木色的窗框顯得溫潤，旁邊是一盆安靜的綠色萬年青。空氣中帶著微小的塵埃感，營造出寧靜的午後時光。Fujifilm Superia 400。", "English Prompt": "Sunlight streaming through traditional Taiwanese begonia-patterned embossed glass windows, casting detailed geometric light patterns on a terrazzo floor. Deep warm-toned wooden window frames, a small green plant in a pot nearby. Quiet, serene indoor scene. Film grain, Fujifilm Superia 400, no text."},
+ {"檔案名稱": "otw004", "主題": "阿嬤的紅磚大灶 Grandma's Traditional Brick Stove", "中文生圖用提示詞": "充滿歷史感的三合院廚房（灶腳）內，矗立著一座巨大的雙孔紅磚大灶。灶台上放置著大鐵鍋與木蓋，灶口旁整齊地堆疊著劈好的柴火。晨光從木窗射入，與裊裊上升的白色蒸氣交織在一起。溫暖而令人懷念的鄉土氣息。Kodak Portra 400。", "English Prompt": "Inside a rustic traditional Taiwanese kitchen (灶腳), a large double-burner red brick stove with wooden lids on cast iron pots. Neat stacks of firewood beside the hearth. Morning light beams cut through the wooden window, mingling with soft white steam. Nostalgic and cozy countryside warmth. Kodak Portra 400, no text."},
+ {"檔案名稱": "otw005", "主題": "水泥花磚與九重葛牆面 Floral Tiles and Bougainvillea Wall", "中文生圖用提示詞": "一面斑駁的洗石子矮牆上，鑲嵌著幾塊鏤空的復古水泥花磚。牆頭上盛開著艷麗的粉紅色九重葛，花瓣在微風中輕輕飄落在水泥路面上。陽光燦爛而柔和，展現出台灣南部鄉村特有的午後寂靜。35mm鏡頭，Kodak Gold 200。", "English Prompt": "A weathered pebble-washed low wall embedded with several hollowed retro cement floral tiles. Vibrant pink bougainvillea flowers blooming over the wall, petals gently falling on the concrete path. Bright yet soft sunlight, serene Southern Taiwan countryside vibe. 35mm lens, Kodak Gold 200, no text."},
+ {"檔案名稱": "otw006", "主題": "舊式竹木豬圈 Vintage Bamboo and Wooden Pigsty", "中文生圖用提示詞": "在三合院後方，由竹子與粗糙木頭搭建而成的老式豬圈。周圍長滿了高聳的綠色香蕉葉，地面鋪著稻草。午後的陽光透過竹棚的縫隙灑下，空氣中瀰漫著一種古樸、與世無爭的鄉村生活氣息。自然寫實風格，底片質感。", "English Prompt": "An old-fashioned pigsty made of bamboo and rough wooden logs behind a traditional Sanheyuan. Surrounded by lush banana leaves, floor covered with dry straw. Soft afternoon sunbeams filtering through the gaps of the bamboo roof. Rustic, peaceful rural life scene. Natural realism, analog film style, no text."},
+ {"檔案名稱": "otw007", "主題": "稻田旁的土地公廟 Tudigong Temple beside Rice Fields", "中文生圖用提示詞": "一座小巧精緻的石造土地公廟，靜靜坐落在金黃色稻田的田埂旁。廟頂有著簡樸的燕尾脊，門口擺著一尊小香爐。微風吹過，稻浪起伏，遠方是連綿的藍色山脈。畫面呈現極致的平靜與神聖祥和感。Kodak Gold 200。", "English Prompt": "A small, simple stone Tudigong (Earth Deity) temple standing by the ridge of a golden rice paddy. Simple swallowtail roof, a small incense burner at the entrance. Gentle wind creating ripples in the rice field, distant blue mountains. Ultimate peace, tranquil and sacred atmosphere. Kodak Gold 200, no text."},
+ {"檔案名稱": "otw008", "主題": "廟埕前的老榕樹 Old Banyan Tree at the Temple Square", "中文生圖用提示詞": "一棵巨大的百年老榕樹矗立在紅磚鋪成的廟埕旁，茂密的氣根如簾幕般垂下。樹下擺放著幾張長條木椅，陽光穿過樹蔭在地面形成斑駁的光圈。遠處是靜謐的廟宇屋簷。充滿悠閒與時光沉澱的感覺。35mm鏡頭，Kodak Portra 400。", "English Prompt": "A massive century-old banyan tree next to a red-brick temple courtyard, its dense aerial roots hanging down like curtains. A few long wooden benches rest under the shade. Dappled sunlight on the ground, serene temple eaves in the background. Nostalgic, peaceful afternoon. 35mm lens, Kodak Portra 400, no text."},
+ {"檔案名稱": "otw009", "主題": "柑仔店門口的竹藤椅 Bamboo Chair at the Ganzi Shop Entrance", "中文生圖用提示詞": "一家老舊的台灣雜貨店（柑仔店）木門口，放置著一張磨損卻泛著溫潤光澤的竹藤搖椅。門旁掛著一個老舊的鐵製郵筒，木質層架上隱約可見玻璃糖果罐。午後的光線溫柔地照在椅子上，散發出濃厚的童年鄉愁。底片色調，無字。", "English Prompt": "A worn yet glowing bamboo rocking chair sits at the wooden entrance of an old Taiwanese grocery store (Ganzi shop). An old iron mailbox on the wall, glass jars visible on shelves. Soft afternoon light on the chair, evoking childhood nostalgia. Cinematic color grading, film grain, no text."},
+ {"檔案名稱": "otw010", "主題": "磨石子階梯與盆栽 Terrazzo Steps and Potted Plants", "中文生圖用提示詞": "三合院側門的幾階磨石子階梯上，整齊排列著紅色陶盆種植的萬年青與蘆薈。階梯邊緣因歲月摩擦而顯得圓潤，紅磚牆面上有著淡淡的白色鹽析痕跡。陰涼的角落顯得格外幽靜與清爽。Fujifilm Superia 400，無文字。", "English Prompt": "A few terrazzo steps at the side door of a Sanheyuan, lined with red clay pots of evergreen plants and aloe vera. The steps are worn smooth from years of use, adjacent to a weathered red brick wall. Cool, shady, quiet corner. Fujifilm Superia 400, no text, no letters."},
+ {"檔案名稱": "otw011", "主題": "樟樹下的竹編躺椅 Bamboo Lounger under the Camphor Tree", "中文生圖用提示詞": "一棵老樟樹的巨大樹蔭下，擺放著一張古老的手工竹編躺椅。微風徐徐，陽光透過綠葉在躺椅上投射出移動的光影。旁邊放置著一柄蒲扇，呈現出台灣鄉間炎熱午後最悠閒、安詳的避暑畫面。Kodak Portra 400。", "English Prompt": "An old handcrafted bamboo lounge chair rests under the dense shade of a large camphor tree. Gentle breeze, sunlight patterns dancing on the chair. A traditional cattail leaf fan lies nearby. Capturing the ultimate leisure of a hot summer afternoon in rural Taiwan. Kodak Portra 400, no text."},
+ {"檔案名稱": "otw012", "主題": "晨霧裊裊的鄉村煙囪 Countryside Chimney in Morning Mist", "中文生圖用提示詞": "清晨的台灣村落，一座紅磚瓦房的灰色水泥煙囪正冒出細細的白色炊煙。四周薄霧繚繞，遠處的翠綠稻田在晨光中若隱若現。整個村莊安靜得彷彿能聽到露水滴落的聲音。清晨冷色調與炊煙的暖意交織。底片質感，無文字。", "English Prompt": "In the misty early morning of a Taiwanese village, a thin stream of white smoke rises from a concrete chimney on a red-tiled house. Surrounded by light fog, green rice paddies faint in the morning light. Cold morning tones contrasting with the warm smoke. Serene and quiet. Analog film look, no text."},
+ {"檔案名稱": "otw013", "主題": "土埆壁與竹籬笆 Wattle-and-daub Wall with Bamboo Fence", "中文生圖用提示詞": "一面由稻草和泥土混合築成的土埆壁，牆面有著不規則的剝落與風化痕跡。牆邊立著一排由青竹編織而成的低矮籬笆，幾朵無名的小黃花在籬笆下靜靜盛開。展現台灣早期最質樸、自然的農家美學。Kodak Gold 200，無文字。", "English Prompt": "An ancient wattle-and-daub wall made of mud and straw, with beautiful weathered cracks. A low fence made of woven green bamboo stands beside it, with tiny wild yellow flowers blooming at the base. Pure, rustic, organic agricultural beauty of early Taiwan. Kodak Gold 200, no text."},
+ {"檔案名稱": "otw014", "主題": "舊木門旁的紅磚門檻 Red Brick Threshold by Old Wooden Door", "中文生圖用提示詞": "斑駁的雙開老木門下方，是一道磨損卻依然穩固的清水紅磚門檻。門檻上落著幾顆榕樹子，門上掛著一對有些褪色的紅色春聯（無文字，僅有紅色紙質紋理）。午後的光線斜斜照入，充滿歸家的溫馨與懷舊感。底片質感。", "English Prompt": "An weathered double-leaf wooden door with a sturdy red brick threshold underneath. A few banyan seeds lie on the threshold. Faded red paper decorations on the door without any text. Warm oblique afternoon light, welcoming, nostalgic homecoming feeling. Film texture, no text."},
+ {"檔案名稱": "otw015", "主題": "水田倒影中的紅瓦厝 Reflection of Red-Tile House in Water Paddy", "中文生圖用提示詞": "剛插秧的清澈水田中，完美倒影出一棟傳統的紅磚紅瓦三合院農舍。天空呈現出淡藍色，飄著幾朵白雲。水面平靜如鏡，偶爾有一隻白鷺鷥在田埂上優雅站立。畫面構圖對稱，散發著極致的安寧。Fujifilm Superia 400。", "English Prompt": "A clear, flooded rice field reflecting a traditional red-brick, red-tiled Sanheyuan farmhouse. Light blue sky with soft white clouds. Mirror-like water surface, a single white egret standing gracefully on the ridge. Symmetrical composition, deeply serene and tranquil. Fujifilm Superia 400, no text."},
+ {"檔案名稱": "otw016", "主題": "灶腳內的木質蒸籠與柴火 Wooden Steamer and Firewood in the Kitchen", "中文生圖用提示詞": "在昏暗溫暖的廚房一角，大灶上的多層木製蒸籠正冒著白色熱氣。旁邊高高堆疊著粗細不一的乾燥荔枝木柴。陽光從瓦片縫隙間透入，形成一道清晰的金色光束（廷得耳效應），照亮了空氣中的煙霧。溫馨而古老。35mm底片質感。", "English Prompt": "In a warm, dimly lit corner of a traditional kitchen, multi-tiered wooden steamers stacked on a brick stove emit gentle white steam. Dried lychee wood logs piled neatly nearby. A golden sunbeam pierces through a roof tile gap, illuminating the warm smoky air. Cinematic 35mm film style, no text."},
+ {"檔案名稱": "otw017", "主題": "復古花磚拼貼的浴室一角 Bathroom Corner with Retro Floral Tiles", "中文生圖用提示詞": "台灣老屋浴室內，牆面鋪設著色彩斑斕、圖案精緻的幾何復古花磚，與洗石子浴缸相接。銅色的古董水龍頭微微垂著水滴，浴缸裡盛著清澈的水。光線透過小窗灑在色彩豐富的花磚上，冷熱色調交融，精緻而懷舊。35mm鏡頭。", "English Prompt": "A corner of an old Taiwanese bathroom, walls adorned with colorful, patterned retro floral tiles meeting a pebble-washed bathtub. A vintage brass faucet with a slow drip, clear water in the tub. Soft window light illuminating the vibrant tiles. Exquisite and deeply nostalgic. 35mm lens, no text."},
+ {"檔案名稱": "otw018", "主題": "藍綠木窗框上的黑貓 Black Cat on the Blue-Green Wooden Window", "中文生圖用提示詞": "一扇漆成石綠色（帶藍綠調）的復古木質窗框上，一隻黑貓正慵懶地趴著曬太陽。窗上鑲嵌著十字花紋的壓花玻璃。窗外是翠綠的竹林，微風吹動。畫面色調和諧，帶著一種午後靜謐、不受打擾的溫柔。Kodak Portra 400。", "English Prompt": "A black cat napping lazily on a vintage stone-green (blue-green) wooden window sill. Embedded with cross-patterned embossed glass on the window. Green bamboo forest visible outside, swaying in the wind. Soft, harmonious tones, peaceful and undisturbed afternoon. Kodak Portra 400, no text."},
+ {"檔案名稱": "otw019", "主題": "廊道上的紅塑膠凳 Red Plastic Stool on the Veranda", "中文生圖用提示詞": "在三合院古樸的洗石子廊道上，孤零零地放置著一張台灣最常見的紅色圓形塑膠椅凳。牆面是清水紅磚與斑駁水泥，夕陽的餘暉將廊道拉出長長的陰影。這張鮮艷的椅子與古老空間形成強烈對比，卻充滿生活感。自然寫實。", "English Prompt": "A single iconic red round plastic stool sits on the quiet pebble-washed veranda of a Sanheyuan. Background of red bricks and weathered plaster walls. Evening sun casting long shadows across the hallway. A striking contrast of modern folk object in old space, full of life. Realistic film style, no text."},
+ {"檔案名稱": "otw020", "主題": "爬滿牽牛花的紅瓦房頂 Red-Tiled Roof Covered with Morning Glories", "中文生圖用提示詞": "傳統紅磚瓦房的斜屋頂上，密密麻麻地爬滿了翠綠的藤蔓與盛開的紫色、藍色牽牛花。陽光灑在微凹的紅色瓦片上，花瓣上還帶著清晨的露珠。背景是純淨的藍天。畫面朝氣蓬勃卻又十分安祥。Fujifilm Superia 400。", "English Prompt": "A pitched roof of a traditional Taiwanese red-tiled house covered in lush green vines and blooming purple and blue morning glories. Bright sunlight glistening on the curved tiles and morning dewdrops on petals. Pure blue sky backdrop. Cheerful yet tranquil. Fujifilm Superia 400, no text."},
+ {"檔案名稱": "otw021", "主題": "手工竹篩曬乾貨物 Drying Goods on Handmade Bamboo Sieves", "中文生圖用提示詞": "三合院曬穀場的木架上，擺放著數個巨大的圓形竹編篩子，裡面鋪滿了正在曝曬的紅色辣椒與黃色金針花。陽光強烈而溫暖，竹篩的陰影投射在水泥地上，呈現出農家純樸的豐收美學與靜謐日常。35mm鏡頭，Kodak Gold 200。", "English Prompt": "Large circular woven bamboo sieves filled with red chili peppers and yellow daylilies drying on wooden racks in a Sanheyuan courtyard. Intense warm sunlight, distinct bamboo shadows cast on the ground. Rustic agricultural harvest aesthetics, quiet rural daily life. 35mm lens, Kodak Gold 200, no text."},
+ {"檔案名稱": "otw022", "主題": "鐵窗花上的落葉與斜陽 Fallen Leaves and Sunlight on Iron Window Grilles", "中文生圖用提示詞": "台灣老屋典型的綠色幾何鐵窗花上，卡著幾片乾枯的褐色落葉。夕陽金色的光芒穿過窗花，在後面的白色油漆剝落牆面上投射出複雜而美麗的鐵窗花陰影。畫面充滿詩意、淡淡的憂傷與平靜。Candid photo，底片質感。", "English Prompt": "A green geometric iron window grille, signature of old Taiwanese houses, holding a few dry brown fallen leaves. Golden sunset light streams through the grille, casting a complex, artistic shadow on the peeling white wall behind. Poetic, slightly melancholic, and peaceful. Film photo style, no text."},
+ {"檔案名稱": "otw023", "主題": "剝落青苔中的舊石磨 Old Stone Mill in peeling Moss", "中文生圖用提示詞": "放在農舍角落、早已停用的古老雙圓形石磨，其灰色粗糙的表面上長滿了鮮綠色的青苔。周圍散落著一些紅磚碎屑與枯乾的樹枝。露水在青苔上閃閃發光，展現出大自然與歷史物件融合的寂靜之美。自然光，Kodak Portra 400。", "English Prompt": "An abandoned traditional double-circular grey stone mill resting in the corner of a farmyard, its rough surface covered in bright green moss. Scattered red brick fragments and dry twigs nearby. Dewdrops glistening on the moss, capturing a serene merge of nature and relics. Natural light, Kodak Portra 400, no text."},
+ {"檔案名稱": "otw024", "主題": "三合院雨天的小天井 Small Courtyard in Sanheyuan on a Rainy Day", "中文生圖用提示詞": "細雨斜斜地飄落在三合院的天井中，雨水順著紅色瓦簷匯聚成線，滴落在長滿青苔的紅磚地面上。空氣中帶著濕潤的泥土與老木頭氣味，畫面色調偏冷，帶著一種台灣梅雨季節特有的安靜與思念。底片質感，無文字。", "English Prompt": "Fine rain falling diagonally into the small courtyard of a Sanheyuan, water dripping from red roof tiles onto the mossy red brick ground in streams. Wet earthy and old wood scent in the air. Cool-toned color palette, reflecting the quiet longing of Taiwan's rainy season. Analog film look, no text."},
+ {"檔案名稱": "otw025", "主題": "舊廚房內的木製菜櫥 Traditional Wooden Kitchen Cupboard", "中文生圖用提示詞": "台灣鄉村廚房（灶腳）內靠牆立著的一座斑駁木製菜櫥（紗網櫥門）。櫥櫃內整齊擺放著藍花大碗與陶瓷盤子，隔著綠色鐵砂網隱約可見。一束午後的陽光照亮了櫥櫃一角，透出溫暖而充滿生活溫度的樸實質感。Kodak Portra 400。", "English Prompt": "A vintage wooden kitchen cabinet with green wire mesh doors leaning against a wall in a rural kitchen. Inside, blue-and-white patterned ceramic bowls and plates are neatly stacked. A single beam of afternoon sun illuminates the cabinet corner, cozy and full of life's warmth. Kodak Portra 400, no text."},
+ {"檔案名稱": "otw026", "主題": "稻草堆下的耕作黃牛 Farming Water Buffalo under Haystacks", "中文生圖用提示詞": "一隻溫馴的台灣黃牛靜靜地站在三合院旁的巨大稻草堆下。牠的雙眼溫和，身上有著泥土的痕跡。天空是溫暖的黃昏色調，遠處是收割後的開闊稻田。整幅畫面傳遞出早期農村社會人與動物之間和諧、平靜的牽絆。35mm底片質感。", "English Prompt": "A gentle Taiwanese yellow cow standing peacefully beside a giant haystack next to a Sanheyuan. Gentle eyes, traces of dried mud on its coat. Sunset sky over a harvested wide rice field. A harmonious, quiet bond between humans, animals, and land in early rural life. 35mm film feel, no text."},
+ {"檔案名稱": "otw027", "主題": "老屋洗石子外牆與階梯 Pebble-washed Outer Wall and Steps", "中文生圖用提示詞": "一棟台灣鄉村老房子的洗石子外牆，牆面上鑲嵌著帶有淡雅藍色與綠色圖案的水泥水泥花磚。台階邊緣長著一簇小草，夕陽在洗石子不平整的表面上折射出細微的光斑，畫面顯得安詳而有深度。Fujifilm Superia 400。", "English Prompt": "A pebble-washed exterior wall of an old rural house, embedded with pale blue and green patterned cement tiles. A small cluster of wild grass grows on the steps. Golden evening light sparkling on the rough texture of the wall. Serene, profound, and textured. Fujifilm Superia 400, no text."},
+ {"檔案名稱": "otw028", "主題": "絲瓜瓜棚下的清涼午後 Shady Afternoon under Loofah Trellis", "中文生圖用提示詞": "粗糙木架與竹竿搭建的瓜棚上，垂掛著幾條翠綠的絲瓜與盛開的鮮黃色絲瓜花。陽光透過茂密的綠葉灑下碎金般的光斑，下方擺著一桶清涼的井水。畫面展現出台灣農家夏天獨有的消暑綠意與寧靜。Kodak Gold 200。", "English Prompt": "A rustic wooden and bamboo trellis covered with lush green vines, hanging loofahs, and blooming yellow flowers. Sunlight filtering through the leaves creates shimmering light flecks on the ground below, where a bucket of cold well water sits. Serene Taiwanese summer greenery. Kodak Gold 200, no text."},
+ {"檔案名稱": "otw029", "主題": "黑瓦與黃土泥牆的舊瓦房 Old Tile House with Black Tiles and Clay Walls", "中文生圖用提示詞": "一座偏遠鄉間的古老單層瓦房，屋頂鋪設著黑色的小片瓦，牆壁則是由黃土和稻草混合建成的泥牆。牆角長滿了野草，一隻白色的蝴蝶在瓦簷下飛舞。畫面構圖簡約，透出禪意般的孤寂與平靜。底片質感，無文字。", "English Prompt": "A remote old single-story house with traditional small black roof tiles and yellow clay-and-straw walls. Wild grass grows around the foundation, a single white butterfly fluttering under the eaves. Minimalist composition with a Zen-like solitude and quietness. Analog film style, no text."},
+ {"檔案名稱": "otw030", "主題": "磨石子洗衣槽與木水瓢 Terrazzo Washbasin and Wooden Dipper", "中文生圖用提示詞": "三合院後院一口巨大的戶外磨石子洗衣槽，槽內盛滿了清澈的水。一柄手柄磨得光滑的舊木水瓢靜靜漂浮在水面上，折射出天空的淡藍。四周是由紅磚圍繞的矮牆，透露出純樸的日常家務溫情。35mm鏡頭，Kodak Portra 400。", "English Prompt": "A large outdoor terrazzo washbasin in a Sanheyuan backyard, filled with clear water. A worn, smooth wooden water dipper floats on the surface, reflecting the pale blue sky. Low red brick walls surround the area, conveying a quiet and warm domestic feel. 35mm lens, Kodak Portra 400, no text."},
+ {"檔案名稱": "otw031", "主題": "溪邊灌溉圳溝與野薑花 Irrigation Canal and Butterfly Gingers", "中文生圖用提示詞": "鄉間清澈的灌溉圳溝旁，盛開著成片潔白的野薑花。溪水在鵝卵石間潺潺流動，花朵散發出淡淡的清香，引來幾隻蜻蜓。陽光溫和地照亮花瓣與水面，呈現出台灣野外最自然、純淨的夏日記憶。Fujifilm Superia 400。", "English Prompt": "A clear countryside irrigation canal lined with wild white butterfly ginger flowers blooming in clusters. Water flowing gently over river stones, attracting dragonflies with its fragrance. Gentle sun rays illuminating the petals and water. Pure, natural summer nostalgia of Taiwan. Fujifilm Superia 400, no text."},
+ {"檔案名稱": "otw032", "主題": "阿公的復古黑色鐵馬 Grandpa's Classic Vintage Black Bicycle", "中文生圖用提示詞": "一部沉重的老式黑色雙管鐵馬，靜靜斜靠在三合院的紅磚牆邊。車後座綁著一個竹編魚簍，車身斑駁有銹跡，皮質坐墊磨損。午後的金色陽光將車影拉長在磨石子地面上，訴說著一生的辛勞與平靜。Kodak Gold 200。", "English Prompt": "A heavy vintage black double-bar bicycle resting against the red brick wall of a Sanheyuan. A woven bamboo basket is tied to the rear rack. Rusty frame, worn leather seat. Golden afternoon sun stretches the bicycle's shadow across the terrazzo ground. Poetic and nostalgic. Kodak Gold 200, no text."},
+ {"檔案名稱": "otw033", "主題": "灶台旁的紅土磚牆 Red Clay Brick Wall by the Brick Stove", "中文生圖用提示詞": "在溫馨的廚房（灶腳）內，灶台一側是由未施釉的粗糙紅土磚砌成的牆面。牆上用大鐵釘掛著一柄乾枯的絲瓜絡與木製鍋鏟。微弱的火光從灶口溢出，照亮了紅磚上的粗糙質地。極具質樸溫度的感官畫面。底片質感。", "English Prompt": "Inside a cozy traditional kitchen, a wall built of unglazed raw red clay bricks next to the stove. A dried loofah sponge and a wooden spatula hang on the wall from iron nails. Warm fire glow flickering from the hearth, highlighting the textures of the bricks. Warm rustic scene. Film feel, no text."},
+ {"檔案名稱": "otw034", "主題": "曬衣繩上的碎花被單 Floral Printed Bedsheet on the Clothesline", "中文生圖用提示詞": "在三合院前的草地上，兩根竹竿之間拉著一條白色粗繩，上面晾曬著一張台灣傳統的紅色碎花大被單。微風吹過，被單輕輕鼓起、飄動。陽光透過布料，使花紋顯得明亮而半透明。畫面充滿慵懶與洗滌後的清香。Kodak Portra 400。", "English Prompt": "A traditional red floral-patterned bedsheet hanging on a clothesline between two bamboo poles on the grass in front of a Sanheyuan. Gentle breeze inflates the fabric. Sunlight shines through, making the patterns bright and translucent. Cozy, nostalgic, clean summer air. Kodak Portra 400, no text."},
+ {"檔案名稱": "otw035", "主題": "釀造陶甕的陰涼角落 Cool Corner with Brewing Clay Pots", "中文生圖用提示詞": "三合院的屋簷陰涼處，整齊地排列著數個巨大的深褐色陶製酒甕與醬油缸。甕身上有著手工捏製的粗糙紋理，角落長著幾朵綠色蕨類。陽光照不到這裡，顯得格外幽靜、清涼，散發著時光釀造的深沉氣味。35mm底片質感。", "English Prompt": "A shady spot under the eaves of a Sanheyuan, where several large dark brown clay pots for brewing wine or soy sauce are lined up. Handcrafted rough clay textures, small green ferns growing in the corner. Cool, quiet, and deeply nostalgic. 35mm film aesthetic, no text."},
+ {"檔案名稱": "otw036", "主題": "手搖式汲水井與青苔 Hand Pump Water Well and Green Moss", "中文生圖用提示詞": "鄉村後院中，一口古老的手搖式鑄鐵汲水井（水泵）靜靜立在水泥台上。水泵表面漆面剝落、帶有暗紅色鐵銹，周圍的水道上長滿了濕潤的鮮綠色青苔。一桶剛打上來的清水正溢出水花，波光粼粼。Kodak Gold 200，無文字。", "English Prompt": "An old cast iron hand-pump water well standing on a concrete platform in a rural backyard. Peeling dark red paint with rust, bright green moss growing along the damp water channel. A bucket of freshly pumped water overflowing, sparkling under the sun. Kodak Gold 200, no text."},
+ {"檔案名稱": "otw037", "主題": "芭蕉樹影下的古樸石椅 Simple Stone Bench under Banana Tree Shadows", "中文生圖用提示詞": "一條由粗糙花崗岩鑿成的長石椅，靜靜置於幾株高大芭蕉樹的寬大綠葉下。微風吹動芭蕉葉，葉影在石椅表面如水波般晃動。周圍是安靜的黃土路，散發著台灣南部純樸、祥和、避暑的農村景致。Fujifilm Superia 400。", "English Prompt": "A long rough-cut granite stone bench resting under the wide green leaves of towering banana trees. Breezes rustling the leaves, casting fluid leaf shadows across the bench. Quiet earthen path nearby, conveying a peaceful summer afternoon in Southern Taiwan. Fujifilm Superia 400, no text."},
+ {"檔案名稱": "otw038", "主題": "榻榻米房與綠色紗門 Tatami Room with Green Screen Door", "中文生圖用提示詞": "從半開的綠色鋁製防蚊網紗門望進去，是一間鋪設著淡綠色榻榻米（疊蓆）的日式老房間。房間中央擺著一張低矮的圓形木桌，午後溫柔的斜光透過拉門射入，將榻榻米的草編紋理勾勒得無比細緻。寧靜、安詳。底片質感。", "English Prompt": "Looking through a half-open green aluminum screen door into a traditional room with light green tatami mats. A low wooden round table sits in the center. Gentle afternoon sun rays stream in, highlighting the woven straw texture of the tatami. Calm, peaceful interior. Vintage film look, no text."},
+ {"檔案名稱": "otw039", "主題": "磚牆縫隙生長的小草花 Wild Tiny Flowers in Brick Wall Crevices", "中文生圖用提示詞": "一堵歷經風雨的紅磚牆，磚與磚之間的灰色水泥縫隙中，生長出一株頑強的小草，頂端綻放著一朵白色的小野花。微小的水珠懸掛在花瓣上，陽光將紅磚的顆粒質感照得無比清晰。微距鏡頭，Kodak Portra 400。", "English Prompt": "A macro shot of a weathered red brick wall, where a tiny green plant with a single white wild flower grows from the cement crevice. Tiny water droplets cling to the petal, sunlight highlighting the coarse texture of the red bricks. Shallow depth of field, Kodak Portra 400, no text."},
+ {"檔案名稱": "otw040", "主題": "竹編籃子裡的紫紅蔥頭 Shallots in a Woven Bamboo Basket", "中文生圖用提示詞": "在灶腳的木窗台上，一個手工編織的淺竹籃裡盛滿了帶有乾燥外皮的紫紅色紅蔥頭。窗外是模糊的稻田景色，陽光照亮了蔥頭乾燥如紙的表皮，反射出淡雅的紅紫色調。充滿台灣傳統料理的靈魂與生活氣息。35mm鏡頭。", "English Prompt": "A shallow handcrafted bamboo basket filled with purple-red shallots with paper-dry skins, resting on a kitchen wooden window sill. Out-of-focus rice field scenery outside. Warm light highlighting the papery texture of the shallots. Authentic Taiwanese culinary essence. 35mm lens, no text."},
+ {"檔案名稱": "otw041", "主題": "老屋瓦簷下的燕子巢 Swallows Nest under Old House Eaves", "中文生圖用提示詞": "在紅磚三合院的屋簷與木質梁柱交接處，一個由泥土和稻草築成的燕子巢。幾隻羽毛油亮的小燕子正探出頭來，旁邊停歇著一隻黑白相間的成燕。背景是瓦簷下的陰影與遠處明亮的藍天。溫馨而自然的和諧畫面。Kodak Gold 200。", "English Prompt": "A mud and straw swallow's nest built at the junction of the eaves and wooden beams of a red-brick Sanheyuan. Little swallows peeking out, an adult black-and-white swallow resting nearby. Dark wooden eaves contrasting with the bright blue sky. Warm and natural harmony. Kodak Gold 200, no text."},
+ {"檔案名稱": "otw042", "主題": "磨石子扶手的古木階梯 Old Wooden Stairs with Terrazzo Handrail", "中文生圖用提示詞": "通往老洋樓二樓的狹窄木製樓梯，一側是光滑、帶著黃色與黑色碎石顆粒的磨石子扶手。樓梯踏板有些許磨損凹陷，角落堆積著溫柔的光影。空氣中彷彿能聞到老木頭與洗石子的安靜氣息。底片質感，candid photo，無字。", "English Prompt": "A narrow old wooden staircase leading upstairs, bounded by a smooth yellow-and-black flecked terrazzo handrail. The wooden steps are worn and slightly concave from age. Soft shadows gather in the corners. Quiet smell of old wood and polished stone. Nostalgic analog look, no text."},
+ {"檔案名稱": "otw043", "主題": "廚房角落的老式保溫瓶 Old-fashioned Thermos Bottle in Kitchen Corner", "中文生圖用提示詞": "在老廚房的水泥台面上，放置著一只紅色塑料外殼、印有復古牡丹花圖案的老式玻璃內膽保溫瓶。旁邊是一只倒扣的藍色條紋瓷碗。背景是因常年柴火而燻黑的牆壁，這抹鮮艷的紅色顯得特別親切溫馨。Kodak Portra 400。", "English Prompt": "On a concrete kitchen counter, an old-fashioned thermos bottle with a red plastic casing printed with a vintage peony flower pattern. A blue-striped ceramic bowl sits upside down beside it. Background wall darkened by years of firewood soot. Warm, nostalgic kitchen corner. Kodak Portra 400, no text."},
+ {"檔案名稱": "otw044", "主題": "竹竿上晾曬的絲瓜絡 Dried Loofah Sponge Drying on Bamboo Poles", "中文生圖用提示詞": "三合院側邊，幾根橫跨的竹竿上吊掛著數個已經完全曬乾、呈現淡黃色纖維網狀的天然絲瓜絡。陽光穿透絲瓜絡細密的孔洞，在黃土牆上投影出如蕾絲般精緻的陰影。畫面乾淨、溫暖、純樸。Fujifilm Superia 400。", "English Prompt": "Several pale yellow dried natural loofah sponges with intricate fibrous mesh structures hang from horizontal bamboo poles beside a Sanheyuan. Sunlight streams through the mesh holes, casting lace-like delicate shadows on the earthen wall. Clean, warm, rustic. Fujifilm Superia 400, no text."},
+ {"檔案名稱": "otw045", "主題": "鄉村小廟的斑駁紅燈籠 Weathered Red Lanterns of Rural Temple", "中文生圖用提示詞": "一座位於村口的小型媽祖廟前，屋簷下懸掛著一排圓形的紅色布製燈籠。燈籠因長年風吹日曬而有些褪色和斑駁（無任何文字與圖案）。黃昏的微風中，燈籠輕輕搖曳，背後是深藍色的夜空與溫暖的廟宇黃光。35mm底片風格。", "English Prompt": "A row of round red fabric lanterns hanging under the eaves of a small rural temple at the village entrance. Faded and weathered from wind and sun, without any text or patterns. Lanterns sway gently in the dusk breeze against a deep indigo sky and warm temple glow. 35mm film style, no text."},
+ {"檔案名稱": "otw046", "主題": "綠油油水稻秧苗與田埂 Lush Green Rice Seedlings and Field Paths", "中文生圖用提示詞": "一片無邊無際的翠綠水稻田，整齊的秧苗在水中挺立，倒映著雪白的雲朵。一條窄窄的泥土田埂穿過田野，田埂旁長滿了開著紫色小花的小草。微風吹過，綠浪滾滾，展現出台灣農村最經典、祥和的夏日地景。Kodak Gold 200。", "English Prompt": "A vast expanse of lush green rice paddies, neat seedlings standing in clear water reflecting fluffy white clouds. A narrow dirt field path cuts through the fields, lined with wild purple wildflowers. Waves of green rippling in the breeze. Serene and peaceful. Kodak Gold 200, no text."},
+ {"檔案名稱": "otw047", "主題": "壓花玻璃窗上的細雨滴 Fine Raindrops on Patterned Begonia Glass", "中文生圖用提示詞": "台灣特有的海棠花紋壓花玻璃窗上，落滿了密密麻麻的小雨滴，窗外的綠色竹林變得模糊而寫意。窗框是斑駁的白漆木框，一顆雨水正順著玻璃的花紋緩緩滑落。畫面色彩單純，極具靜謐與雨天的憂鬱美學。底片質感。", "English Prompt": "Fine raindrops clinging to a Taiwanese begonia-patterned glass window pane, blurring the green bamboo forest outside into an impressionistic painting. Weathered white-painted wooden frame, a single teardrop of water sliding down the pattern. Intimate, quiet, rainy day mood. Film texture, no text."},
+ {"檔案名稱": "otw048", "主題": "灶腳門檻旁的薪柴堆 Stack of Firewood by the Kitchen Threshold", "中文生圖用提示詞": "三合院廚房（灶腳）門口那道紅磚門檻旁，整齊地碼放著一疊劈好的龍眼木柴火。門檻上的漆面已經磨光，露出了紅磚最原始的土紅色。一隻黃色的橘貓正在柴堆旁蜷縮著睡覺，畫面溫馨而安詳。Kodak Portra 400，無文字。", "English Prompt": "Beside the red brick threshold of a traditional kitchen (灶腳) door, a neat stack of split longan firewood is piled. The worn threshold reveals the raw terracotta color of the brick. A ginger tabby cat sleeps curled up beside the woodpile. Warm, peaceful rural cottage life. Kodak Portra 400, no text."},
+ {"檔案名稱": "otw049", "主題": "廢棄古老磚窯與野草 Abandoned Brick Kiln and Wild Grass", "中文生圖用提示詞": "一座已經廢棄、由紅磚砌成的拱形古老目仔窯，半掩在茂密的綠色野草與芒草之中。窯口的磚塊有些破損，藤蔓順著磚縫攀爬。陽光透過厚重的雲層灑下柔和的光芒，呈現出一種廢墟特有的時間沉澱與寂靜。Fujifilm Superia 400。", "English Prompt": "An abandoned traditional red-brick arch kiln half-buried in tall green wild grass and silvergrass. Some bricks at the kiln entrance are broken, overgrown with creeping vines. Soft light filtering through overcast clouds, capturing a serene, quiet beauty of relics. Fujifilm Superia 400, no text."},
+ {"檔案名稱": "otw050", "主題": "鄉間土路的黃昏歸途 Walking Home on Dirt Path at Dusk", "中文生圖用提示詞": "一條蜿蜒在金黃稻田之間的泥土小路，兩旁長滿了毛茸茸的狗尾草。夕陽將天空染成一片溫暖的橘紅色，將稻田與泥土路鍍上一層金邊。遠處是黑瓦紅磚的三合院農舍冒出淡淡炊煙。極致的歸家祥和感。35mm鏡頭，Kodak Gold 200。", "English Prompt": "A winding dirt path cutting through golden rice paddies, lined with wild foxtail grass. Sunset painting the sky in warm orange and red, casting a golden rim on the fields and path. In the distance, faint kitchen smoke rises from a red-brick farmhouse. Ultimate peaceful homecoming. 35mm, Kodak Gold 200, no text."},
+ {"檔案名稱": "otw051", "主題": "竹編謝籃與紅色剪紙花 Bamboo Gift Basket and Red Paper-cut Flowers", "中文生圖用提示詞": "三合院廳堂的木質神桌上，放置著一個精緻的雙層紅色竹編謝籃。籃蓋上貼著一張手工剪裁的圓形紅色「雙喜」剪紙（僅有幾何裝飾圖騰，無任何中文字）。神桌的深色木頭在燭光下閃爍著溫潤的光芒，肅穆而溫馨。底片風格。", "English Prompt": "An exquisite double-tiered red-lacquered woven bamboo gift basket resting on a dark wooden ancestral table in a Sanheyuan. The lid is decorated with a geometric red paper-cut flower ornament (no text/letters). Warm candlelight reflecting on the polished dark wood, solemn and warm. Film style, no text."},
+ {"檔案名稱": "otw052", "主題": "三合院前嬉戲的米克斯幼犬 Mixed-breed Puppies playing in front of Sanheyuan", "中文生圖用提示詞": "在三合院空曠的水泥地上，兩隻土黃色與黑白相間的米克斯幼犬正在一隻舊木鞋旁互相追逐嬉戲。陽光溫柔地照在牠們毛茸茸的身體上，背景是斑駁的紅磚牆與木質大門。畫面生機勃勃卻又無比單純安詳。Kodak Portra 400。", "English Prompt": "Two mixed-breed puppies (one golden, one black-and-white) playfully chasing each other near an old wooden clog on the concrete courtyard of a Sanheyuan. Warm sun highlighting their fluffy fur, against weathered red brick walls and wooden doors. Vibrant yet deeply innocent and peaceful. Kodak Portra 400, no text."},
+ {"檔案名稱": "otw053", "主題": "磚雕窗櫺透出的微弱燭光 Dim Candlelight through Carved Brick Window", "中文生圖用提示詞": "夜幕低垂，一棟古老磚造房屋的幾何鏤空磚雕窗櫺中，透出溫暖而微弱的黃色燭光。窗下堆放著一些陶罐，牆面上落滿了斑駁的夜色陰影。畫面寧靜而神秘，彷彿在訴說著牆內古老的故事。Candid photo，底片質感，無文字。", "English Prompt": "At dusk, a dim, warm yellow candlelight glows through the geometric hollowed brick-carved window of an old brick building. Clay jars sit quietly beneath the window, soft night shadows dancing on the wall. Quiet, mysterious, historical narrative. Analog film look, no text."},
+ {"檔案名稱": "otw054", "主題": "菜園裡的竹架與木柵欄 Bamboo Trellis and Fences in Vegetable Garden", "中文生圖用提示詞": "三合院旁一處打理整齊的農家菜園，裡面插著一排排歪斜卻穩固的竹竿支架，攀爬著豆角藤蔓。菜園四周圍繞著低矮的老木柵欄，地面鋪滿了濕潤的黑色泥土。夕陽灑落，泛著清新的泥土與葉片芳香。Fujifilm Superia 400。", "English Prompt": "A well-kept vegetable garden next to a Sanheyuan, featuring rows of tilted but sturdy bamboo stakes support climbing bean vines. Enclosed by a low, weathered wooden fence, wet dark soil bed. Evening sun shining, fresh scent of earth and leaves. Fujifilm Superia 400, no text."},
+ {"檔案名稱": "otw055", "主題": "田野旁廢置的舊牛車 Abandoned Ox Cart beside the Field", "中文生圖用提示詞": "一部古老的雙輪木製牛車，車輪是巨大的木幅條，半沉在田埂旁的雜草叢中。車身木質已經開裂、泛灰，記錄著幾十年的風雨。後方是無邊無際的綠色水稻田，整幅畫面呈現出滄桑而平靜的歷史厚重感。Kodak Gold 200，無文字。", "English Prompt": "An ancient two-wheeled wooden ox cart with large spoked wooden wheels, half-sunk in the wild grass beside a field ridge. The grey, cracked wood reflects decades of hard work. Endless green rice paddies stretch behind it. Heavy with history yet profoundly tranquil. Kodak Gold 200, no text."},
+ {"檔案名稱": "otw056", "主題": "柑仔店內的彩色糖果玻璃罐 Colorful Candy Glass Jars in Retro Grocery Store", "中文生圖用提示詞": "老式柑仔店的深色木質櫃台上，整齊排列著數個巨大的圓形玻璃糖果罐，裡面裝滿了紅色、黃色與綠色的條紋糖果。一束午後的陽光穿過老舊的木門，照亮了玻璃罐，使其反射出如寶石般繽紛的光芒，安靜而夢幻。Kodak Portra 400。", "English Prompt": "Inside an old-fashioned grocery store, several large spherical glass jars filled with red, yellow, and green striped hard candies sit on a dark wooden counter. A beam of afternoon light shines through the wooden door, making the jars glow like vibrant gemstones. Dreamy nostalgia. Kodak Portra 400, no text."},
+ {"檔案名稱": "otw057", "主題": "磨石子玄關上的黑木屐 Black Wooden Clogs on Terrazzo Entrance", "中文生圖用提示詞": "三合院廂房的磨石子玄關上，靜靜擺放著一雙帶有紅色皮帶的黑色木屐。磨石子地面呈現出黑、白、黃三色碎石相間的精緻紋理，門檻是洗石子工藝。這雙常穿的鞋子帶有一種隨時有人歸來的溫馨生活感。35mm鏡頭，無文字。", "English Prompt": "A pair of black wooden clogs with red leather straps rests on the terrazzo entrance of a Sanheyuan side room. The terrazzo floor has a detailed pattern of black, white, and yellow stone chips. A pebble-washed threshold. Warm, lived-in feel, waiting for someone to return. 35mm lens, no text."},
+ {"檔案名稱": "otw058", "主題": "竹篩上鋪曬的碧綠茶葉 Green Tea Leaves drying on a Bamboo Sieve", "中文生圖用提示詞": "在高山農舍的陽台上，一個巨大的竹編平篩上鋪滿了剛剛採摘、呈現鮮亮碧綠色的茶葉。陽光照在茶葉柔軟的葉片上，葉脈清晰可見，散發出清新的茶香氣息。背景是遠處雲霧繞繞的藍色茶山。自然寫實，Fujifilm Superia 400。", "English Prompt": "A large flat woven bamboo sieve filled with freshly picked, bright emerald-green tea leaves drying on the veranda of a mountain farmhouse. Sunlight illuminating the soft leaves and detailed veins. Foggy blue tea plantations in the distant background. Natural realism, Fujifilm Superia 400, no text."},
+ {"檔案名稱": "otw059", "主題": "三合院廂房的紅磚圓拱門 Red Brick Archway of Sanheyuan Side Room", "中文生圖用提示詞": "三合院主屋與廂房之間，一道由清水紅磚砌成的優美圓拱形過道門。拱門邊緣長著一些細小的青苔，過道彼端是一片陽光燦爛的菜園。拱門內的陰影與拱門外的明亮光線形成極佳的層次對比。35mm底片質感。", "English Prompt": "A graceful round archway built of red bricks connecting the main house and the wing of a Sanheyuan. Tiny moss patches along the brick joints of the arch, leading to a sun-drenched vegetable garden in the background. High contrast of light and shadow, cinematic 35mm film style, no text."},
+ {"檔案名稱": "otw060", "主題": "瓦房頂上的夕陽餘暉 Sunset Glow on Old Tile-Roofed House", "中文生圖用提示詞": "金色的夕陽餘暉斜斜地照在紅磚老瓦房那層層疊疊的波浪形紅瓦屋頂上。屋瓦的邊緣在夕陽下閃爍著溫暖的紅金色光芒，一隻麻雀靜靜停在脊頭的瓦片上。天空是漸變的紫紅色。畫面寧靜而充滿詩意。Kodak Gold 200。", "English Prompt": "Golden sunset light grazing the wavy, overlapping red roof tiles of a traditional Taiwanese farmhouse. The edges of the tiles glow in warm red and gold, a single sparrow perched quietly on the ridge tile. Pastel violet and orange gradient sky. Serene, poetic, Kodak Gold 200, no text."},
+ {"檔案名稱": "otw061", "主題": "覆滿青苔的古老石鋪路 Ancient Mossy Stone-paved Path", "中文生圖用提示詞": "一條蜿蜒在老竹林與紅磚矮牆之間的古老石鋪小路，不規則的花崗岩石塊縫隙間長滿了濕潤的綠色青苔。陽光穿過竹葉，在石路上灑下斑駁的圓形光點。空氣中瀰漫著竹林特有的清幽與寂靜。底片風格，無字。", "English Prompt": "An old stone-paved path winding between an ancient bamboo forest and a low red brick wall, with damp green moss growing between irregular granite slabs. Sunlight filtering through bamboo leaves, casting circular light spots on the stones. Serene, cool, and peaceful. Film style, no text."},
+ {"檔案名稱": "otw062", "主題": "灶腳裊裊升起的午餐炊煙 Lunch Smoke rising from Traditional Kitchen", "中文生圖用提示詞": "中午時分，三合院廚房（灶腳）的瓦片縫隙間冒出裊裊上升的淡藍色炊煙。院子裡剛曬乾的衣服在微風中輕飄，空氣中仿佛能聞到柴火燒水與煮飯的溫馨香氣。這是一幅充滿台灣農家生活溫度的經典懷舊畫面。Kodak Portra 400。", "English Prompt": "At noon, soft blue smoke gently rises from the tiled roof gaps of a traditional kitchen (灶腳). Dry laundry sways in the courtyard breeze. An incredibly nostalgic image capturing the warm aroma of burning wood and home-cooked meals. Comforting, cozy, Kodak Portra 400, no text."},
+ {"檔案名稱": "otw063", "主題": "夜晚稻田裡飛舞的螢火蟲 Fireflies flying in the Night Rice Fields", "中文生圖用提示詞": "夜幕下的台灣鄉村稻田，無數點狀的綠色螢火蟲光芒在翠綠的稻葉間輕輕飛舞、閃爍。天空中有一彎明亮的月牙，照亮了遠處靜謐的三合院黑影。整幅畫面呈現出如夢境般空靈、寧靜、祥和的夏夜景致。極低光照攝影質感。", "English Prompt": "A night scene of a Taiwanese rural rice field, with countless glowing green fireflies dancing and shimmering among the deep green rice plants. A bright crescent moon in the sky illuminates the silhouette of a quiet Sanheyuan in the background. Dreamy, ethereal, and deeply peaceful summer night. Low-light cinema, no text."},
+ {"檔案名稱": "otw064", "主題": "竹製躺椅與葵扇的黃昏 Dusk with Bamboo Lounger and Cattail Fan", "中文生圖用提示詞": "在三合院的廊道上，一張手工竹製長躺椅靜靜立著，椅面上放著一柄有些破損的黃色葵扇。天空是火紅的晚霞，晚風輕輕吹動廊道旁的九重葛花瓣。這是一幅定格了台灣農村最悠閒、安詳的黃昏避暑記憶。35mm鏡頭，Kodak Gold 200。", "English Prompt": "A handcrafted bamboo lounge chair sits on a Sanheyuan veranda at dusk, a slightly frayed yellow cattail leaf fan lying on it. The sky is filled with brilliant fiery red clouds, warm evening breeze rustling nearby bougainvillea. A captured memory of rural summer cooling. 35mm lens, Kodak Gold 200, no text."},
+ {"檔案名稱": "otw065", "主題": "三合院前筆直的檳榔樹林 Straight Betel Nut Trees in front of Sanheyuan", "中文生圖用提示詞": "一排筆直高聳的檳榔樹，整齊地排列在紅磚三合院前方的草地上。樹冠在淡藍色的天空下隨風搖曳，修長的樹影斜斜地投射在紅磚牆面與泥土地上。畫面線條簡約、拉伸，具有台灣中南部鄉村特有的開闊與寧靜。Fujifilm Superia 400。", "English Prompt": "A row of tall, straight betel nut palms standing neatly on the grassy area in front of a red-brick Sanheyuan. Palm crowns swaying gently under a pale blue sky, casting long, slender shadows across the brick walls and soil. Symmetrical, open, and peaceful Southern Taiwan countryside. Fujifilm Superia 400, no text."},
+ {"檔案名稱": "otw066", "主題": "洗石子牆壁上的牽牛花藤 Morning Glory Vines on Pebble-washed Wall", "中文生圖用提示詞": "一面由灰色細沙和鵝卵石組成的老屋洗石子外牆，牆腳攀爬著一株翠綠的牽牛花藤，上面盛開著三兩朵淡粉色的牽牛花。晨光溫柔地照在粗糙的洗石子牆面上，折射出極富顆粒感的光澤，寧靜、細緻。底片質感。", "English Prompt": "An old pebble-washed exterior wall composed of grey sand and tiny pebbles, with a green morning glory vine climbing from the base, blooming with a few pale pink flowers. Gentle morning light on the rough, textured wall surface. Serene, detailed, high-texture analog film look, no text."},
+ {"檔案名稱": "otw067", "主題": "瓦房外老榕樹的斑駁樹影 Dappled Shadow of Banyan Tree outside Tile House", "中文生圖用提示詞": "一棟紅磚黑瓦的傳統農舍外牆上，投影著一棵巨大老榕樹那繁複、搖曳的樹葉陰影。陽光強烈，使得陰影與紅磚的亮部對比無比鮮明。地面上鋪著一層乾燥的落葉，落葉在風中輕輕滾動，展現出台灣午後的寂靜美學。Kodak Gold 200。", "English Prompt": "The exterior wall of a traditional red-brick and black-tiled farmhouse, patterned with the intricate, swaying shadow of a massive banyan tree. Intense sunlight creating high contrast between brick colors and dark leaf shadows. Dry leaves on the ground roll in the wind. Quiet afternoon aesthetic, Kodak Gold 200, no text."},
+ {"檔案名稱": "otw068", "主題": "灶台上溫熱的黑砂鍋 Warm Black Clay Pot on the Brick Stove", "中文生圖用提示詞": "在溫馨的灶腳內，紅磚灶台上的小火正慢慢熄滅，只剩紅色的餘燼。大鐵鍋旁放置著一口粗糙的黑色陶製砂鍋，正冒出細細的白色熱氣。木窗外是漸深的天色，整幅畫面傳遞出台灣農家晚餐後的溫馨、安全與富足感。Kodak Portra 400。", "English Prompt": "Inside a cozy kitchen, the fire in the red brick stove is dying down to red embers. A rough black clay pot sits next to the iron pot on the hearth, releasing a thin stream of warm steam. Dusk falling outside the wooden window. Cozy, warm, and secure feeling after a rustic dinner. Kodak Portra 400, no text."},
+ {"檔案名稱": "otw069", "主題": "金黃稻田與守護的稻草人 Golden Rice Field and Guardian Scarecrow", "中文生圖用提示詞": "一片即將收割的廣闊金黃稻田中央，立著一個身穿舊碎花藍布衫、戴著破草帽的稻草人。稻子沉甸甸地低著頭，在微風中沙沙作響。陽光溫暖而耀眼，遠方是連綿的灰色山脈與幾棟散落的紅瓦房。安詳的農村豐收畫卷。Fujifilm Superia 400。", "English Prompt": "In the center of a vast, golden rice field ready for harvest, stands a classic scarecrow wearing an old blue floral shirt and a frayed straw hat. Heavy ears of rice drooping, rustling in the breeze. Bright warm sun, distant soft grey mountains and scattered red-tiled houses. Peaceful harvest scenery. Fujifilm Superia 400, no text."},
+ {"檔案名稱": "otw070", "主題": "復古花磚裝飾的斑駁矮牆 Weathered Low Wall with Retro Floral Tiles", "中文生圖用提示詞": "三合院庭院的一側，一面有些剝落的水泥矮牆，牆頂上鑲嵌著一排綠色和黃色圖案的釉面復古花磚。幾株野草從牆角的裂縫中頑強地生長出來，在微風中輕輕搖曳。陽光灑落，呈現出一種時間沉澱的精緻與滄桑。Kodak Gold 200。", "English Prompt": "A weathered, slightly crumbling low concrete wall along a Sanheyuan courtyard, topped with a row of glazed retro floral tiles in green and yellow patterns. A few wild grass stalks grow from cracks in the foundation, swaying in the breeze. Beautiful textures of time and rustic elegance. Kodak Gold 200, no text."},
+ {"檔案名稱": "otw071", "主題": "鄉野黃昏中農舍透出的暖光 Warm Light from Farmhouses in Rural Dusk", "中文生圖用提示詞": "暮色四合的台灣鄉村，連綿的翠綠田野中央散落著幾棟紅磚三合院瓦房。天空中有一道紫紅色的晚霞，農舍那貼著海棠花玻璃的木窗內透出溫暖、明亮的黃色燈火。整個世界安靜下來，呈現出溫暖而和諧的家園印象。35mm底片風格。", "English Prompt": "In the darkening twilight of rural Taiwan, a few red-brick Sanheyuan houses are scattered among endless green fields. A purple-red sunset glow in the sky, warm bright yellow light glowing from the begonia-glass wooden windows of the farmhouses. The world quietens down, peaceful home sanctuary. 35mm film style, no text."},
+ {"檔案名稱": "otw072", "主題": "雨後如鏡的水田與遠山 Mirror-like Rice Paddy after Rain and Distant Hills", "中文生圖用提示詞": "一場午後雷陣雨過後，鄉間的水田積水如鏡，完美地倒映著天空中大片散開的粉藍色雲朵與遠方翠綠的中央山脈。空氣清新通透，田埂上的紅磚排水口正流出清澈的水流。極致的純淨、空靈與和平之美。Fujifilm Superia 400，無字。", "English Prompt": "After an afternoon thunderstorm, rural water paddies are flooded like mirrors, reflecting pastel blue parting clouds and distant emerald green mountains. Crisp, clean air, clear water flowing from a red brick drain on the ridge. Ethereal, pure, and peaceful beauty of rural Taiwan. Fujifilm Superia 400, no text."}
+ 
+ ];
+
+  /* =========================================================
+   * 工具函式
+   * ========================================================= */
+  let toastTimer = null;
+
+  function showToast(msg) {
+    const el = document.getElementById("toast");
+    el.textContent = msg;
+    el.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove("show"), CONFIG.toastDuration);
+  }
+
+  async function copyToClipboard(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      // 降級方案
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.cssText = "position:fixed;top:-999px;left:-999px;opacity:0";
+      document.body.appendChild(ta);
+      ta.focus(); ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return ok;
+    }
+  }
+
+  /* =========================================================
+   * Lightbox
+   * ========================================================= */
+  const lightbox     = document.getElementById("lightbox");
+  const lightboxImg  = document.getElementById("lightbox-img");
+  const lightboxCap  = document.getElementById("lightbox-caption");
+  const lightboxClose= document.getElementById("lightbox-close");
+
+  function openLightbox(src, title) {
+    lightboxImg.src = src;
+    lightboxImg.alt = title;
+    lightboxCap.textContent = title;
+    lightbox.classList.add("active");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeLightbox() {
+    lightbox.classList.remove("active");
+    document.body.style.overflow = "";
+    // 延遲清空避免閃爍
+    setTimeout(() => { lightboxImg.src = ""; }, 300);
+  }
+
+  lightbox.addEventListener("click", e => { if (e.target === lightbox || e.target === lightboxImg) closeLightbox(); });
+  lightboxClose.addEventListener("click", closeLightbox);
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closeLightbox(); });
+
+  /* =========================================================
+   * 建立圖片卡片
+   * ========================================================= */
+  function buildCard(item) {
+    const filename = item["檔案名稱"];
+    const title    = item["主題"];
+    const twPrompt = item["中文生圖用提示詞"];
+    const enPrompt = item["English Prompt"];
+    const imgSrc   = `${CONFIG.imgFolder}/${filename}${CONFIG.imgExt}`;
+
+    const card = document.createElement("div");
+    card.className = "card";
+
+    // 圖片區域
+    const imgWrap = document.createElement("div");
+    imgWrap.className = "card__img-wrap";
+    imgWrap.title = "點擊放大";
+
+    // 佔位（當圖片尚未載入或不存在時顯示）
+    const placeholder = document.createElement("div");
+    placeholder.className = "img-placeholder";
+    placeholder.innerHTML = `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><span>${filename}</span>`;
+    imgWrap.appendChild(placeholder);
+
+    const img = document.createElement("img");
+    img.alt   = title;
+    img.loading = "lazy";
+    img.src   = imgSrc;
+
+    img.addEventListener("load",  () => { img.classList.add("loaded"); placeholder.style.display = "none"; });
+    img.addEventListener("error", () => { img.style.display = "none"; });
+
+    imgWrap.appendChild(img);
+    imgWrap.addEventListener("click", () => openLightbox(imgSrc, title));
+
+    // 資訊區域
+    const info = document.createElement("div");
+    info.className = "card__info";
+
+    const titleEl = document.createElement("div");
+    titleEl.className = "card__title";
+    titleEl.textContent = title;
+
+    const filenameEl = document.createElement("div");
+    filenameEl.className = "card__filename";
+    filenameEl.textContent = filename;
+
+    const btns = document.createElement("div");
+    btns.className = "card__btns";
+
+    const btnTW = document.createElement("button");
+    btnTW.className = "btn btn--tw";
+    btnTW.textContent = "tw Prompt";
+    btnTW.title = twPrompt;
+    btnTW.addEventListener("click", async () => {
+      await copyToClipboard(twPrompt);
+      showToast(CONFIG.toastTW);
+    });
+
+    const btnEN = document.createElement("button");
+    btnEN.className = "btn btn--en";
+    btnEN.textContent = "en Prompt";
+    btnEN.title = enPrompt;
+    btnEN.addEventListener("click", async () => {
+      await copyToClipboard(enPrompt);
+      showToast(CONFIG.toastEN);
+    });
+
+    btns.appendChild(btnTW);
+    btns.appendChild(btnEN);
+
+    info.appendChild(titleEl);
+    info.appendChild(filenameEl);
+    info.appendChild(btns);
+
+    card.appendChild(imgWrap);
+    card.appendChild(info);
+
+    return card;
+  }
+
+  /* =========================================================
+   * 初始化
+   * ========================================================= */
+  const gallery = document.getElementById("gallery");
+  IMAGES.forEach(item => gallery.appendChild(buildCard(item)));
+
+  document.getElementById("imgCount").textContent = `共 ${IMAGES.length} 張圖片`;
+</script>
+</body>
+</html>
